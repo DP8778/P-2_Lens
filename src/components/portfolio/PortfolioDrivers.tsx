@@ -1,5 +1,6 @@
 import type { PortfolioAnalysis } from "@/lib/finance/portfolio-engine";
-import { allocation, points } from "@/components/charts/chart-formatters";
+import { points } from "@/components/charts/chart-formatters";
+import { ConcentrationPanel } from "./ConcentrationPanel";
 export function PortfolioDrivers({
   analysis,
   locale,
@@ -36,31 +37,7 @@ export function PortfolioDrivers({
           )}
         </div>
       </div>
-      <div>
-        <h2>Rozložení portfolia</h2>
-        <div
-          className="allocation-strip"
-          role="img"
-          aria-label={analysis.holdings
-            .map((p) => `${p.asset.symbol}: ${allocation(p.allocationPct, locale)}`)
-            .join(", ")}
-        >
-          {analysis.holdings.map((p, i) => (
-            <span
-              key={p.assetId}
-              style={{ flex: p.allocationPct, background: `hsl(230 7% ${76 - (i % 6) * 10}%)` }}
-            />
-          ))}
-        </div>
-        <div className="allocation-labels">
-          {analysis.holdings.map((p) => (
-            <span key={p.assetId}>
-              <strong>{p.asset.symbol}</strong>
-              {allocation(p.allocationPct, locale)}
-            </span>
-          ))}
-        </div>
-      </div>
+      <ConcentrationPanel analysis={analysis} locale={locale} />
     </section>
   );
 }

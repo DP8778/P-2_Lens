@@ -1,14 +1,9 @@
-export type AssetType = "stock" | "etf" | "crypto" | "cash";
-export type Timeframe = "1D" | "1W" | "1M" | "3M" | "YTD" | "1Y" | "ALL";
+import type { Asset as DomainAsset, AssetType, TimeRange } from "@/lib/finance/domain";
 
-export interface Asset {
-  id: string;
-  symbol: string;
-  name: string;
-  type: AssetType;
-  quoteCurrency: string;
-  sector: string;
-}
+export type { AssetType };
+export type Timeframe = TimeRange;
+
+export type Asset = DomainAsset;
 
 export interface Position {
   assetId: string;

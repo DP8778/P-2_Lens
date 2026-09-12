@@ -1,60 +1,97 @@
 "use client";
-import { useId, useRef, useState } from "react";
-import type { Timeframe } from "@/types/finance";
+import { useId, useMemo, useRef, useState } from "react";
 import type { PortfolioAnalysis } from "@/lib/finance/portfolio-engine";
+import { timeline } from "@/lib/finance/portfolio-engine";
+import { useAnalysisContext } from "@/components/portfolio/AnalysisProvider";
+import { usePortfolio } from "@/components/portfolio/PortfolioProvider";
+import {
+  mapClientXToPointIndex,
+  mapDateToPointIndex,
+  mapSelectedRangeToIndices,
+  mapTransactionsToAnnotations,
+} from "@/lib/chart/chart-series";
 import { chartGeometry } from "./chart-data";
 import { chartOptions as o } from "./chart-options";
 import { ChartControls, type ChartSettings } from "./ChartControls";
 import { HeroChartTooltip } from "./HeroChartTooltip";
 import { ChartNavigator } from "./ChartNavigator";
 import { ChartAnnotations } from "./ChartAnnotations";
+import { ChartSummary } from "./ChartSummary";
+import { ChartLegend } from "./ChartLegend";
+import { ContributionView } from "./ContributionView";
+import { DrawdownSummary } from "./DrawdownSummary";
 import { money, percent, points, dateLabel } from "./chart-formatters";
 import { exportPortfolioChart } from "./chart-export";
 
 export function PortfolioHeroChart({
   analysis,
+  visibleAnalysis,
   overview,
-  settings,
-  onSettings,
-  range,
-  onRange,
-  timeframe,
-  onTimeframe,
-  selected,
-  onSelect,
   locale,
 }: {
   analysis: PortfolioAnalysis;
+  visibleAnalysis: PortfolioAnalysis;
   overview: PortfolioAnalysis;
-  settings: ChartSettings;
-  onSettings: (s: ChartSettings) => void;
-  range: [number, number];
-  onRange: (range: [number, number]) => void;
-  timeframe: Timeframe | "CUSTOM";
-  onTimeframe: (t: Timeframe) => void;
-  selected: number | null;
-  onSelect: (i: number | null) => void;
   locale: string;
 }) {
+  const { state, dispatch } = useAnalysisContext();
+  const { transactions } = usePortfolio();
   const [hover, setHover] = useState<number | null>(null);
+  const [rangeMode, setRangeMode] = useState(false);
+  const [rangeStart, setRangeStart] = useState<number | null>(null);
+  const [rangeHover, setRangeHover] = useState<number | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string>();
   const svgRef = useRef<SVGSVGElement>(null);
   const gradient = useId().replaceAll(":", "");
-  const data = analysis.points;
-  const g = chartGeometry(
-    data,
-    settings.mode,
-    settings.display,
-    settings.showBenchmark,
-    !!settings.compare,
+  const data = state.mode === "performance" ? visibleAnalysis.points : analysis.points;
+  const settings: ChartSettings = {
+    mode: state.mode,
+    display: state.display,
+    benchmark: state.benchmarkId,
+    showBenchmark: state.showBenchmark,
+    compare: state.compareAssetId,
+    annotations: state.annotations,
+    navigator: state.navigator,
+  };
+  const range = mapSelectedRangeToIndices(state.viewportRange, timeline);
+  const selected = mapDateToPointIndex(data, state.selectedPoint);
+  const onSelect = (index: number | null) =>
+    dispatch({ type: "point", value: index === null ? null : (data[index]?.timestamp ?? null) });
+  const onSettings = (next: ChartSettings) =>
+    dispatch({
+      type: "settings",
+      value: {
+        mode: next.mode,
+        display: next.display,
+        benchmarkId: next.benchmark,
+        compareAssetId: next.compare,
+        showBenchmark: next.showBenchmark,
+        annotations: next.annotations,
+        navigator: next.navigator,
+      },
+    });
+  const onRange = (next: [number, number]) =>
+    dispatch({ type: "viewport", value: [timeline[next[0]], timeline[next[1]]] });
+  const g = useMemo(
+    () =>
+      chartGeometry(
+        data,
+        settings.mode,
+        settings.display,
+        settings.showBenchmark,
+        !!settings.compare,
+      ),
+    [data, settings.mode, settings.display, settings.showBenchmark, settings.compare],
+  );
+  const events = useMemo(
+    () => mapTransactionsToAnnotations(transactions, data),
+    [transactions, data],
   );
   const active =
-    selected === null && hover === null ? null : Math.min(selected ?? hover ?? 0, data.length - 1);
+    selected === null && hover === null ? null : Math.min(hover ?? selected ?? 0, data.length - 1);
   const point = active === null ? null : data[Math.min(active, data.length - 1)];
   const isDrawdown = settings.mode === "drawdown";
-  const contributionRows = [...analysis.holdings].sort(
-    (a, b) => b.contributionPctPoints - a.contributionPctPoints,
-  );
-  const maxBar = Math.max(...contributionRows.map((p) => Math.abs(p.contributionPctPoints)), 0.001);
+  const contributionRows = analysis.contribution.items;
   const baseline = isDrawdown ? g.y(0) : o.height - o.bottom;
   const exportChart = () => {
     const svg = svgRef.current;
@@ -64,68 +101,40 @@ export function PortfolioHeroChart({
   const summary = `Portfolio ${dateLabel(analysis.metrics.startDate, locale)} až ${dateLabel(analysis.metrics.endDate, locale)}: ${money(analysis.metrics.endValue, locale)}, výnos ${percent(analysis.metrics.returnPct, locale)}. Maximální pokles ${percent(analysis.metrics.maxDrawdownPct, locale)}. ${settings.showBenchmark ? `${analysis.benchmark}: ${percent(analysis.metrics.benchmarkReturnPct, locale)}.` : ""}`;
   return (
     <section className="hero-chart surface" aria-label="Analýza portfolia">
+      <ChartSummary
+        analysis={analysis}
+        timeframe={state.timeframe}
+        showBenchmark={state.showBenchmark}
+        locale={locale}
+      />
       <ChartControls
         settings={settings}
         onChange={onSettings}
-        timeframe={timeframe}
-        onTimeframe={onTimeframe}
+        timeframe={state.timeframe}
+        onTimeframe={(value) => dispatch({ type: "timeframe", value })}
         onExport={exportChart}
       />
+      <ChartLegend
+        analysis={analysis}
+        showBenchmark={state.showBenchmark}
+        compareAssetId={state.compareAssetId}
+        onBenchmark={() =>
+          dispatch({ type: "settings", value: { showBenchmark: !state.showBenchmark } })
+        }
+        onClearCompare={() => dispatch({ type: "settings", value: { compareAssetId: "" } })}
+        locale={locale}
+      />
+      {settings.mode === "drawdown" && <DrawdownSummary analysis={analysis} locale={locale} />}
       {settings.mode === "contribution" ? (
-        <div className="contribution-view">
-          <svg ref={svgRef} viewBox="0 0 1000 390" role="img" aria-label="Příspěvky aktiv k výnosu">
-            <title>Příspěvky aktiv · p. b.</title>
-            <desc>
-              {contributionRows
-                .map((p) => `${p.asset.symbol} ${points(p.contributionPctPoints)}`)
-                .join("; ")}
-            </desc>
-            <rect width="1000" height="390" fill="#0d0e11" />
-            <line x1="500" x2="500" y1="15" y2="350" stroke="#ffffff33" />
-            {contributionRows.map((p, i) => {
-              const y = 30 + i * (310 / Math.max(contributionRows.length, 1));
-              const width = (Math.abs(p.contributionPctPoints) / maxBar) * 310;
-              return (
-                <g key={p.assetId}>
-                  <text x="20" y={y + 5} fill="#eeeee9" fontSize="14" fontFamily="Arial">
-                    {p.asset.symbol}
-                  </text>
-                  <rect
-                    x={p.contributionPctPoints < 0 ? 500 - width : 500}
-                    y={y - 11}
-                    width={width}
-                    height={Math.min(20, 230 / contributionRows.length)}
-                    rx="3"
-                    fill={p.contributionPctPoints < 0 ? "#b98e94" : "#d5d6d7"}
-                  />
-                  <text
-                    x="975"
-                    y={y + 5}
-                    textAnchor="end"
-                    fill="#eeeee9"
-                    fontFamily="Arial"
-                    fontSize="14"
-                  >
-                    {points(p.contributionPctPoints, locale)}
-                  </text>
-                </g>
-              );
-            })}
-            <text
-              x="500"
-              y="378"
-              textAnchor="middle"
-              fill="#989ca5"
-              fontFamily="Arial"
-              fontSize="12"
-            >
-              0 p. b.
-            </text>
-          </svg>
-          {!contributionRows.length && <p>Portfolio zatím neobsahuje žádné pozice.</p>}
-        </div>
+        <ContributionView analysis={analysis} locale={locale} />
       ) : (
-        <div className="chart-plot" onPointerLeave={() => setHover(null)}>
+        <div
+          className={`chart-plot${rangeMode ? " range-selecting" : ""}`}
+          onPointerLeave={() => {
+            setHover(null);
+            if (rangeStart === null) setRangeHover(null);
+          }}
+        >
           <svg
             ref={svgRef}
             viewBox={`0 0 ${o.width} ${o.height}`}
@@ -149,43 +158,75 @@ export function PortfolioHeroChart({
                           Math.min(data.length - 1, index + (e.key === "ArrowRight" ? 1 : -1)),
                         ),
                 );
+                setHover(null);
               }
               if (e.key === "Escape") {
                 onSelect(null);
                 setHover(null);
+                setRangeMode(false);
+                setRangeStart(null);
+                setRangeHover(null);
               }
-              if (e.key === "Enter") onSelect(active ?? data.length - 1);
+              if (e.key === "Enter") {
+                const index = active ?? data.length - 1;
+                if (rangeMode) {
+                  if (rangeStart === null) setRangeStart(index);
+                  else {
+                    const [from, to] = [rangeStart, index].sort((a, b) => a - b);
+                    if (from !== to)
+                      dispatch({
+                        type: "range",
+                        value: [data[from].timestamp, data[to].timestamp],
+                      });
+                    setRangeMode(false);
+                    setRangeStart(null);
+                    setRangeHover(null);
+                  }
+                } else {
+                  onSelect(index);
+                  setHover(null);
+                }
+              }
             }}
             onPointerMove={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
-              setHover(
-                Math.max(
-                  0,
-                  Math.min(
-                    data.length - 1,
-                    Math.round(
-                      ((((e.clientX - rect.left) / rect.width) * o.width - o.left) /
-                        (o.width - o.left - o.right)) *
-                        (data.length - 1),
-                    ),
-                  ),
-                ),
+              const index = mapClientXToPointIndex(
+                e.clientX,
+                rect.left,
+                rect.width,
+                data.length,
+                o.left / o.width,
+                o.right / o.width,
               );
+              setHover(index);
+              if (rangeMode) setRangeHover(index);
             }}
             onPointerDown={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
-              const index = Math.max(
-                0,
-                Math.min(
-                  data.length - 1,
-                  Math.round(
-                    ((((e.clientX - rect.left) / rect.width) * o.width - o.left) /
-                      (o.width - o.left - o.right)) *
-                      (data.length - 1),
-                  ),
-                ),
+              const index = mapClientXToPointIndex(
+                e.clientX,
+                rect.left,
+                rect.width,
+                data.length,
+                o.left / o.width,
+                o.right / o.width,
               );
+              if (rangeMode) {
+                if (rangeStart === null) {
+                  setRangeStart(index);
+                  setRangeHover(index);
+                } else {
+                  const [from, to] = [rangeStart, index].sort((a, b) => a - b);
+                  if (from !== to)
+                    dispatch({ type: "range", value: [data[from].timestamp, data[to].timestamp] });
+                  setRangeMode(false);
+                  setRangeStart(null);
+                  setRangeHover(null);
+                }
+                return;
+              }
               onSelect(selected === index ? null : index);
+              if (e.pointerType !== "mouse") setHover(null);
             }}
           >
             <title>{isDrawdown ? "Pokles od maxima" : "Vývoj portfolia"}</title>
@@ -201,6 +242,37 @@ export function PortfolioHeroChart({
                 <stop offset="100%" stopColor="#dce0e8" stopOpacity="0" />
               </linearGradient>
             </defs>
+            {rangeMode && rangeStart !== null && rangeHover !== null && (
+              <rect
+                className="range-selection-overlay"
+                x={Math.min(g.x(rangeStart), g.x(rangeHover))}
+                y={o.top}
+                width={Math.abs(g.x(rangeHover) - g.x(rangeStart))}
+                height={o.height - o.top - o.bottom}
+                fill="#eef0f20b"
+                stroke="#d8dbe066"
+                strokeDasharray="4 4"
+              />
+            )}
+            {!rangeMode && state.selectedRange && settings.mode === "performance" && (() => {
+              const [from, to] = mapSelectedRangeToIndices(
+                state.selectedRange,
+                data.map((item) => item.timestamp),
+              );
+              return (
+                <rect
+                  className="range-selection-overlay"
+                  x={g.x(from)}
+                  y={o.top}
+                  width={Math.max(2, g.x(to) - g.x(from))}
+                  height={o.height - o.top - o.bottom}
+                  fill="#eef0f20b"
+                  stroke="#d8dbe055"
+                  strokeDasharray="4 4"
+                  pointerEvents="none"
+                />
+              );
+            })()}
             {g.ticks.map((t) => (
               <g key={t}>
                 <line x1={o.left} x2={o.width - o.right} y1={g.y(t)} y2={g.y(t)} stroke={o.grid} />
@@ -211,9 +283,9 @@ export function PortfolioHeroChart({
                   fontSize="12"
                   fontFamily="Arial"
                 >
-                  {isDrawdown || (!settings.compare && settings.display === "percent")
+                  {isDrawdown
                     ? `${t.toFixed(1)} %`
-                    : settings.compare
+                    : settings.compare || settings.showBenchmark || settings.display === "percent"
                       ? t.toFixed(0)
                       : `${Math.round(t / 1000)} tis.`}
                 </text>
@@ -279,14 +351,39 @@ export function PortfolioHeroChart({
                 </text>
               </g>
             )}
-            {isDrawdown && (
+            {isDrawdown && analysis.drawdown.trough && (
               <>
-                <circle
-                  cx={g.x(data.indexOf(analysis.trough))}
-                  cy={g.y(analysis.trough.drawdown)}
-                  r="5"
-                  fill="#c9a5aa"
-                />
+                {analysis.drawdown.peak && (() => {
+                  const index = data.findIndex((item) => item.timestamp === analysis.drawdown.peak?.date);
+                  return index < 0 ? null : (
+                    <g aria-label={`Vrchol ${dateLabel(analysis.drawdown.peak.date, locale)}`}>
+                      <circle cx={g.x(index)} cy={g.y(0)} r="4" fill="#aeb2ba" />
+                      <text x={g.x(index)} y={g.y(0) + 18} textAnchor="middle" fill="#989ca5" fontSize="10">Vrchol</text>
+                    </g>
+                  );
+                })()}
+                <g
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Vybrat dno maximálního poklesu"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onSelect(data.findIndex((item) => item.timestamp === analysis.drawdown.trough?.date));
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSelect(data.findIndex((item) => item.timestamp === analysis.drawdown.trough?.date));
+                    }
+                  }}
+                >
+                  <circle
+                    cx={g.x(data.indexOf(analysis.trough))}
+                    cy={g.y(analysis.trough.drawdown)}
+                    r="6"
+                    fill="#c9a5aa"
+                  />
+                </g>
                 <text
                   x={g.x(data.indexOf(analysis.trough))}
                   y={Math.max(18, g.y(analysis.trough.drawdown) - 14)}
@@ -297,12 +394,23 @@ export function PortfolioHeroChart({
                   {percent(analysis.trough.drawdown, locale)}
                 </text>
                 {analysis.recovery && (
-                  <circle
-                    cx={g.x(data.indexOf(analysis.recovery))}
-                    cy={g.y(0)}
-                    r="5"
-                    fill="#eeeee9"
-                  />
+                  <g aria-label={`Obnova ${dateLabel(analysis.recovery.timestamp, locale)}`}>
+                    <circle
+                      cx={g.x(data.indexOf(analysis.recovery))}
+                      cy={g.y(0)}
+                      r="5"
+                      fill="#eeeee9"
+                    />
+                    <text
+                      x={g.x(data.indexOf(analysis.recovery))}
+                      y={g.y(0) + 18}
+                      textAnchor="middle"
+                      fill="#989ca5"
+                      fontSize="10"
+                    >
+                      Obnova
+                    </text>
+                  </g>
                 )}
               </>
             )}
@@ -319,6 +427,52 @@ export function PortfolioHeroChart({
                 {dateLabel(data[index].timestamp, locale)}
               </text>
             ))}
+            {settings.annotations &&
+              events.slice(-6).map((event) => (
+                <g
+                  key={event.id}
+                  className="transaction-marker"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${event.type === "buy" ? "Nákup" : "Prodej"} ${event.assetId} ${event.date}`}
+                  onClick={(eventClick) => {
+                    eventClick.stopPropagation();
+                    setSelectedEventId(event.id);
+                    onSelect(event.index);
+                  }}
+                  onKeyDown={(keyboardEvent) => {
+                    if (keyboardEvent.key === "Enter" || keyboardEvent.key === " ") {
+                      keyboardEvent.preventDefault();
+                      setSelectedEventId(event.id);
+                      onSelect(event.index);
+                    }
+                  }}
+                >
+                  <line
+                    x1={g.x(event.index)}
+                    x2={g.x(event.index)}
+                    y1={o.height - o.bottom - 17}
+                    y2={o.height - o.bottom}
+                    stroke="#aeb2ba66"
+                  />
+                  <circle
+                    cx={g.x(event.index)}
+                    cy={o.height - o.bottom - 22}
+                    r="7"
+                    fill="#15171b"
+                    stroke="#bfc2c9"
+                  />
+                  <text
+                    x={g.x(event.index)}
+                    y={o.height - o.bottom - 18}
+                    textAnchor="middle"
+                    fill="#f0f0ec"
+                    fontSize="9"
+                  >
+                    {event.type === "buy" ? "+" : "−"}
+                  </text>
+                </g>
+              ))}
             {point && active !== null && (
               <g>
                 <line
@@ -343,31 +497,105 @@ export function PortfolioHeroChart({
           {point && (
             <HeroChartTooltip
               point={point}
-              selected={selected !== null}
+              selected={selected !== null && hover === null}
               benchmark={settings.showBenchmark ? analysis.benchmark : undefined}
               compare={analysis.compare}
+              mode={settings.mode}
               locale={locale}
+              positionPercent={(g.x(active ?? 0) / o.width) * 100}
             />
           )}
+          {selectedEventId &&
+            (() => {
+              const event = events.find((candidate) => candidate.id === selectedEventId);
+              if (!event) return null;
+              return (
+                <div className="chart-event-popover glass" role="status">
+                  <strong>
+                    {event.type.toUpperCase()} {event.assetId.toUpperCase()}
+                  </strong>
+                  <span>{dateLabel(`${event.date}T12:00:00.000Z`, locale)}</span>
+                  <p>
+                    {event.quantity.toLocaleString(locale, { maximumFractionDigits: 8 })} jednotek
+                  </p>
+                  <button
+                    onClick={() => setSelectedEventId(undefined)}
+                    aria-label="Zavřít detail transakce"
+                  >
+                    ×
+                  </button>
+                </div>
+              );
+            })()}
         </div>
       )}
       <div className="chart-bottom">
-        <p className="tertiary">
-          {selected !== null ? (
-            <button
-              onClick={() => {
-                onSelect(null);
-                setHover(null);
-              }}
-            >
-              Zrušit výběr bodu ×
-            </button>
-          ) : (
-            "Vyberte bod pro podrobnosti · graf lze ovládat šipkami"
-          )}
-        </p>
-        {settings.annotations && <ChartAnnotations analysis={analysis} onSelect={onSelect} />}
+        <div className="chart-selection-actions">
+          <button
+            className="range-select-button"
+            aria-pressed={rangeMode}
+            onClick={() => {
+              setRangeMode(!rangeMode);
+              setRangeStart(null);
+              setRangeHover(null);
+              setSelectedEventId(undefined);
+            }}
+          >
+            {rangeMode ? "Zrušit výběr období" : "Vybrat období"}
+          </button>
+          <p className="tertiary">
+            {rangeMode ? (
+              rangeStart === null ? (
+                "Zvolte začátek období"
+              ) : (
+                "Zvolte konec období"
+              )
+            ) : selected !== null ? (
+              <button
+                onClick={() => {
+                  onSelect(null);
+                  setHover(null);
+                }}
+              >
+                Zrušit výběr bodu ×
+              </button>
+            ) : (
+              "Vyberte bod pro podrobnosti · graf lze ovládat šipkami"
+            )}
+          </p>
+        </div>
+        {settings.annotations && <ChartAnnotations events={events} onSelect={onSelect} />}
       </div>
+      {state.selectedRange && (
+        <div className="analysis-range-chip" role="status">
+          <span>
+            Analyzováno: {dateLabel(state.selectedRange[0], locale)} — {dateLabel(state.selectedRange[1], locale)}
+          </span>
+          <button onClick={() => dispatch({ type: "clearRange" })}>Zrušit rozsah ×</button>
+        </div>
+      )}
+      {analysis.missingPriceAssetIds.length > 0 && (
+        <p className="chart-data-warning" role="status">
+          Chybí cena pro {analysis.missingPriceAssetIds.join(", ")}; dostupné řady zůstávají
+          zobrazené.
+        </p>
+      )}
+      {state.compareAssetId && !analysis.compare && (
+        <p className="chart-data-warning" role="status">
+          Vybrané aktivum nemá pro toto období dostupnou srovnávací řadu.
+        </p>
+      )}
+      {data.length < 2 && analysis.holdings.length > 0 && (
+        <p className="chart-data-warning" role="status">
+          Pro zvolené období není dost historických bodů. Aktuální hodnota zůstává dostupná.
+        </p>
+      )}
+      {!analysis.holdings.length && (
+        <div className="chart-empty-state" role="status">
+          <strong>Graf čeká na první aktivum</strong>
+          <span>Po přidání transakce zde uvidíte vývoj portfolia.</span>
+        </div>
+      )}
       {settings.navigator && (
         <ChartNavigator data={overview.points} range={range} onChange={onRange} />
       )}
@@ -393,9 +621,9 @@ export function PortfolioHeroChart({
               {settings.mode === "contribution"
                 ? contributionRows.map((p) => (
                     <tr key={p.assetId}>
-                      <td>{p.asset.symbol}</td>
+                      <td>{p.symbol}</td>
                       <td>{points(p.contributionPctPoints, locale)}</td>
-                      <td>{percent(p.returnPct, locale)}</td>
+                      <td>{percent(p.periodReturnPct, locale)}</td>
                     </tr>
                   ))
                 : data.map((p) => (

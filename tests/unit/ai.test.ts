@@ -1,18 +1,35 @@
-import { buildInsightInput } from "@/lib/ai/buildInsightInput";
-import { buildFallbackInsight } from "@/lib/ai/fallbackSummarizer";
-import { buildPortfolioMetrics } from "@/lib/finance/buildPortfolioMetrics";
-import { insightInputSchema, insightOutputSchema } from "@/lib/validation/insightSchemas";
+import { insightContextSchema, insightResponseSchema } from "@/lib/validation/insightSchemas";
+import {
+  buildDeterministicInsight,
+  buildInsightContext,
+} from "@/lib/insights/insight-context";
+import { buildAnalysis, initialTransactions, timeframeRange } from "@/lib/finance/portfolio-engine";
+import { toLensFacts } from "@/lib/finance/lens-facts";
+import type { PortfolioContext } from "@/lib/validation/portfolioContext";
+
 describe("AI trust boundary", () => {
-  const input = buildInsightInput(buildPortfolioMetrics("1M"), "1M");
-  test("accepts only structured metric input", () => {
-    expect(insightInputSchema.safeParse(input).success).toBe(true);
-    expect(insightInputSchema.safeParse({ ...input, email: "private@example.com" }).success).toBe(
+  const input: PortfolioContext = {
+    transactions: initialTransactions,
+    selectedRange: null,
+    timeframe: "1M",
+    benchmarkId: "spy",
+    compareAssetId: "",
+    mode: "performance",
+    showBenchmark: true,
+    selectedPoint: null,
+  };
+  const analysis = buildAnalysis(initialTransactions, timeframeRange("1M"));
+  const context = buildInsightContext(analysis, input, toLensFacts(analysis, "1M"));
+
+  test("accepts only the strict verified context without application state or PII", () => {
+    expect(insightContextSchema.safeParse(context).success).toBe(true);
+    expect(insightContextSchema.safeParse({ ...context, email: "private@example.com" }).success).toBe(
       false,
     );
+    expect(JSON.stringify(context)).not.toContain("transactions");
   });
-  test("creates a schema-valid deterministic fallback", () => {
-    const insight = buildFallbackInsight(input);
-    expect(insightOutputSchema.safeParse(insight).success).toBe(true);
-    expect(insight.summary).toContain("benchmark");
+
+  test("creates a schema-valid deterministic response", () => {
+    expect(insightResponseSchema.safeParse(buildDeterministicInsight(context)).success).toBe(true);
   });
 });

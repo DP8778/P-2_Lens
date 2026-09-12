@@ -10,16 +10,12 @@ export function chartGeometry(
   const key =
     mode === "drawdown"
       ? "drawdown"
-      : compare
+      : compare || benchmark
         ? "portfolioIndex"
         : display === "value"
           ? "portfolioValue"
           : "portfolioReturnPct";
-  const benchmarkKey = compare
-    ? "benchmarkIndex"
-    : display === "value"
-      ? "benchmarkValue"
-      : "benchmarkReturnPct";
+  const benchmarkKey = "benchmarkIndex";
   const values = data.flatMap((p) => [
     p[key],
     ...(mode === "performance" && benchmark ? [p[benchmarkKey]] : []),
@@ -41,7 +37,6 @@ export function chartGeometry(
       | "portfolioReturnPct"
       | "portfolioIndex"
       | "benchmarkIndex"
-      | "benchmarkValue"
       | "benchmarkReturnPct"
       | "assetIndex"
       | "drawdown"

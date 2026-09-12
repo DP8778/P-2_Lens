@@ -106,53 +106,47 @@ export function ChartControls({
           ))}
           {timeframe === "CUSTOM" && <span className="tertiary">Vlastní</span>}
         </div>
-        <div className="segmented compact" aria-label="Zobrazení hodnoty">
-          <button
-            disabled={s.mode !== "performance" || !!s.compare}
-            aria-pressed={s.display === "value" && !s.compare}
-            onClick={() => onChange({ ...s, display: "value" })}
-          >
-            Hodnota
-          </button>
-          <button
-            disabled={s.mode !== "performance" || !!s.compare}
-            aria-pressed={s.display === "percent" && !s.compare}
-            onClick={() => onChange({ ...s, display: "percent" })}
-          >
-            %
-          </button>
+        <div className="chart-view-controls">
+          <label className="quick-compare">
+            <span>Porovnat</span>
+            <select
+              aria-label="Rychlé porovnání aktiva"
+              value={s.compare}
+              onChange={(event) => onChange({ ...s, compare: event.target.value })}
+            >
+              <option value="">Žádné aktivum</option>
+              {assetCatalog
+                .filter((asset) => asset.type !== "cash")
+                .map((asset) => (
+                  <option key={asset.id} value={asset.id}>
+                    {asset.symbol}
+                  </option>
+                ))}
+            </select>
+          </label>
+          {s.compare || s.showBenchmark ? (
+            <span className="comparison-scale" title="Srovnávací řady začínají na hodnotě 100">
+              Index 100
+            </span>
+          ) : (
+            <div className="segmented compact" aria-label="Zobrazení hodnoty">
+              <button
+                disabled={s.mode !== "performance"}
+                aria-pressed={s.display === "value"}
+                onClick={() => onChange({ ...s, display: "value" })}
+              >
+                Hodnota
+              </button>
+              <button
+                disabled={s.mode !== "performance"}
+                aria-pressed={s.display === "percent"}
+                onClick={() => onChange({ ...s, display: "percent" })}
+              >
+                %
+              </button>
+            </div>
+          )}
         </div>
-      </div>
-      <div className="chart-legend">
-        <span>
-          <i className="legend-line" />
-          Portfolio
-        </span>
-        <button
-          aria-pressed={s.showBenchmark}
-          onClick={() => onChange({ ...s, showBenchmark: !s.showBenchmark })}
-        >
-          <i className="legend-line dashed" />
-          {s.benchmark.toUpperCase()}
-          <span className="tertiary">{s.showBenchmark ? "✓" : "+"}</span>
-        </button>
-        {s.compare && (
-          <button onClick={() => onChange({ ...s, compare: "" })}>
-            <i className="legend-line compare" />
-            {s.compare.toUpperCase()} ×
-          </button>
-        )}
-        <small>
-          {s.mode === "drawdown"
-            ? "Od průběžného maxima"
-            : s.compare
-              ? "Index · začátek období = 100"
-              : s.mode === "contribution"
-                ? "Příspěvek k výnosu · p. b."
-                : s.display === "value"
-                  ? "CZK"
-                  : "Od začátku období"}
-        </small>
       </div>
     </div>
   );

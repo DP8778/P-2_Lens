@@ -40,7 +40,7 @@ export function exportPortfolioChart(
   legend.setAttribute("fill", "#b2b4bc");
   legend.textContent =
     settings.mode === "performance"
-      ? `Portfolio: plná čára${settings.showBenchmark ? ` · ${analysis.benchmark}: přerušovaná` : ""}${analysis.compare ? ` · ${analysis.compare}: tečkovaná · index 100` : settings.display === "value" ? " · CZK" : " · výnos %"} · Demo data`
+      ? `Portfolio: plná čára${settings.showBenchmark ? ` · ${analysis.benchmark}: přerušovaná` : ""}${analysis.compare ? ` · ${analysis.compare}: tečkovaná` : ""}${settings.showBenchmark || analysis.compare ? " · index 100" : settings.display === "value" ? " · CZK" : " · výnos %"} · Demo data`
       : `${settings.mode === "drawdown" ? "Pokles v %" : "Příspěvek v p. b."} · Demo data`;
   clone.append(legend);
   const url = URL.createObjectURL(

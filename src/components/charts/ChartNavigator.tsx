@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { AnalysisPoint } from "@/lib/finance/portfolio-engine";
 import { timeline } from "@/lib/finance/portfolio-engine";
 import { dateLabel } from "./chart-formatters";
@@ -16,6 +16,13 @@ export function ChartNavigator({
     range: [number, number];
     mode: "start" | "end" | "move";
   } | null>(null);
+  const previewRef = useRef<[number, number]>(range);
+  const [preview, setPreview] = useState<[number, number] | null>(null);
+  const displayRange = preview ?? range;
+  const updatePreview = (next: [number, number]) => {
+    previewRef.current = next;
+    setPreview(next);
+  };
   const values = data.map((p) => p.portfolioValue);
   const min = Math.min(...values);
   const span = Math.max(...values) - min || 1;
@@ -34,11 +41,13 @@ export function ChartNavigator({
         onPointerDown={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           const local = e.clientX - rect.left;
-          const left = (range[0] / 730) * rect.width;
-          const right = (range[1] / 730) * rect.width;
+          const left = (displayRange[0] / 730) * rect.width;
+          const right = (displayRange[1] / 730) * rect.width;
           const mode =
             Math.abs(local - left) < 12 ? "start" : Math.abs(local - right) < 12 ? "end" : "move";
-          drag.current = { x: e.clientX, range, mode };
+          previewRef.current = displayRange;
+          setPreview(displayRange);
+          drag.current = { x: e.clientX, range: displayRange, mode };
           e.currentTarget.setPointerCapture(e.pointerId);
         }}
         onPointerMove={(e) => {
@@ -47,14 +56,14 @@ export function ChartNavigator({
             ((e.clientX - drag.current.x) / e.currentTarget.getBoundingClientRect().width) * 730,
           );
           if (drag.current.mode === "start") {
-            onChange([
+            updatePreview([
               Math.max(0, Math.min(drag.current.range[1] - 1, drag.current.range[0] + delta)),
               drag.current.range[1],
             ]);
             return;
           }
           if (drag.current.mode === "end") {
-            onChange([
+            updatePreview([
               drag.current.range[0],
               Math.min(730, Math.max(drag.current.range[0] + 1, drag.current.range[1] + delta)),
             ]);
@@ -62,26 +71,29 @@ export function ChartNavigator({
           }
           const width = drag.current.range[1] - drag.current.range[0];
           const start = Math.max(0, Math.min(730 - width, drag.current.range[0] + delta));
-          onChange([start, start + width]);
+          updatePreview([start, start + width]);
         }}
         onPointerUp={() => {
+          if (drag.current) onChange(previewRef.current);
           drag.current = null;
+          setPreview(null);
         }}
         onPointerCancel={() => {
           drag.current = null;
+          setPreview(null);
         }}
       >
         <path d={path} fill="none" stroke="#777b83" strokeWidth="1.3" />
         <rect
-          x={(range[0] / 730) * 1000}
+          x={(displayRange[0] / 730) * 1000}
           y="1"
-          width={((range[1] - range[0]) / 730) * 1000}
+          width={((displayRange[1] - displayRange[0]) / 730) * 1000}
           height="50"
           fill="#ffffff0b"
           stroke="#ffffff55"
           rx="4"
         />
-        {range.map((value, index) => (
+        {displayRange.map((value, index) => (
           <rect
             key={index}
             x={(value / 730) * 1000 - 3}

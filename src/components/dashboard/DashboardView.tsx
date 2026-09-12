@@ -1,18 +1,23 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, ChevronDown } from "lucide-react";
 import type { Dictionary, Locale } from "@/i18n/getDictionary";
-import type { Timeframe } from "@/types/finance";
-import { buildAnalysis, timeframeRange, type Holding } from "@/lib/finance/portfolio-engine";
+import {
+  buildAnalysis,
+  timeline,
+  timeframeRange,
+  type Holding,
+} from "@/lib/finance/portfolio-engine";
 import { PortfolioSummary } from "./PortfolioSummary";
 import { PortfolioHeroChart } from "@/components/charts/PortfolioHeroChart";
-import type { ChartSettings } from "@/components/charts/ChartControls";
 import { LensInsight } from "@/components/insights/LensInsight";
 import { HoldingsTable } from "@/components/portfolio/HoldingsTable";
 import { PortfolioDrivers } from "@/components/portfolio/PortfolioDrivers";
 import { HoldingDetail } from "@/components/portfolio/HoldingDetail";
 import { AddAssetDialog } from "@/components/portfolio/AddAssetDialog";
 import { usePortfolio } from "@/components/portfolio/PortfolioProvider";
+import { useAnalysisContext } from "@/components/portfolio/AnalysisProvider";
+import { AnalysisInspector } from "@/components/portfolio/AnalysisInspector";
 import { dateLabel } from "@/components/charts/chart-formatters";
 
 export function DashboardView({
@@ -23,40 +28,57 @@ export function DashboardView({
   dictionary?: Dictionary;
   initialAssetId?: string;
 }) {
-  const { holdings, warning } = usePortfolio();
-  const [timeframe, setTimeframe] = useState<Timeframe | "CUSTOM">("1M");
-  const [range, setRange] = useState<[number, number]>(timeframeRange("1M"));
-  const [settings, setSettings] = useState<ChartSettings>({
-    mode: "performance",
-    display: "value",
-    benchmark: "spy",
-    showBenchmark: true,
-    compare: initialAssetId ?? "",
-    annotations: false,
-    navigator: true,
-  });
-  const [selected, setSelected] = useState<number | null>(null);
+  const { holdings, transactions, warning } = usePortfolio();
+  const { state, dispatch } = useAnalysisContext();
   const [detailId, setDetailId] = useState<string | undefined>(initialAssetId);
   const [add, setAdd] = useState<{ assetId?: string; edit?: Holding }>();
-  const analysis = useMemo(
-    () => buildAnalysis(holdings, range, settings.benchmark, settings.compare),
-    [holdings, range, settings.benchmark, settings.compare],
+  useEffect(() => {
+    if (initialAssetId) dispatch({ type: "settings", value: { compareAssetId: initialAssetId } });
+  }, [dispatch, initialAssetId]);
+  const dateRange = (dates: [string, string]): [number, number] => {
+    const start = timeline.findIndex((date) => date === dates[0]);
+    const end = timeline.findIndex((date) => date === dates[1]);
+    return [Math.max(0, start), end < 1 ? 730 : end];
+  };
+  const range = useMemo<[number, number]>(
+    () =>
+      state.selectedRange
+        ? dateRange(state.selectedRange)
+        : timeframeRange(state.timeframe === "CUSTOM" ? "1M" : state.timeframe),
+    [state.selectedRange, state.timeframe],
   );
-  const overview = useMemo(() => buildAnalysis(holdings, [0, 730]), [holdings]);
-  const detail = analysis.holdings.find((p) => p.assetId === detailId);
-  const period = timeframe === "CUSTOM" ? "vlastní období" : timeframe;
-  const changeTimeframe = (t: Timeframe) => {
-    setTimeframe(t);
-    setRange(timeframeRange(t));
-    setSelected(null);
-  };
-  const changeSettings = (s: ChartSettings) => {
-    setSettings(s);
-    setSelected(null);
-  };
+  const viewportRange = useMemo<[number, number]>(
+    () => dateRange(state.viewportRange),
+    [state.viewportRange],
+  );
+  const analysis = useMemo(
+    () =>
+      buildAnalysis(
+        transactions,
+        range,
+        state.benchmarkId,
+        state.compareAssetId,
+        state.selectedPoint,
+      ),
+    [transactions, range, state.benchmarkId, state.compareAssetId, state.selectedPoint],
+  );
+  const overview = useMemo(() => buildAnalysis(transactions, [0, 730]), [transactions]);
+  const visibleAnalysis = useMemo(
+    () =>
+      buildAnalysis(
+        transactions,
+        viewportRange,
+        state.benchmarkId,
+        state.compareAssetId,
+        state.selectedPoint,
+      ),
+    [transactions, viewportRange, state.benchmarkId, state.compareAssetId, state.selectedPoint],
+  );
+  const detail = analysis.holdings.find((position) => position.assetId === detailId);
+  const period = state.selectedRange ? "vlastní období" : state.timeframe;
   const closeAdd = () => {
     setAdd(undefined);
-    setSelected(null);
+    dispatch({ type: "point", value: null });
   };
   return (
     <div className="portfolio-page page-enter">
@@ -89,7 +111,7 @@ export function DashboardView({
         analysis={analysis}
         locale={locale}
         period={period}
-        showBenchmark={settings.showBenchmark}
+        showBenchmark={state.showBenchmark}
       />
       <div className="analytics-heading">
         <h2>Portfolio v souvislostech</h2>
@@ -100,35 +122,23 @@ export function DashboardView({
       </div>
       <div className="hero-analytics">
         <PortfolioHeroChart
-          key={`${settings.mode}-${holdings.length}`}
           analysis={analysis}
+          visibleAnalysis={visibleAnalysis}
           overview={overview}
-          settings={settings}
-          onSettings={changeSettings}
-          range={range}
-          onRange={(r) => {
-            setRange(r);
-            setTimeframe("CUSTOM");
-            setSelected(null);
-          }}
-          timeframe={timeframe}
-          onTimeframe={changeTimeframe}
-          selected={selected}
-          onSelect={setSelected}
           locale={locale}
         />
         <LensInsight
           analysis={analysis}
           locale={locale}
           context={{
-            holdings,
-            range,
-            timeframe,
-            mode: settings.mode,
-            benchmark: settings.benchmark,
-            compare: settings.compare,
-            showBenchmark: settings.showBenchmark,
-            selected,
+            transactions,
+            selectedRange: state.selectedRange,
+            timeframe: state.timeframe,
+            mode: state.mode,
+            benchmarkId: state.benchmarkId,
+            compareAssetId: state.compareAssetId,
+            showBenchmark: state.showBenchmark,
+            selectedPoint: state.selectedPoint,
           }}
         />
       </div>
@@ -136,31 +146,35 @@ export function DashboardView({
       <HoldingsTable
         holdings={analysis.holdings}
         locale={locale}
-        onSelect={(p) => setDetailId(p.assetId)}
+        onSelect={(position) => setDetailId(position.assetId)}
         onAdd={() => setAdd({})}
         period={period}
       />
       <footer className="portfolio-footer">
         <span>Lens · portfolio intelligence</span>
         <p>
-          Demo ceny k 7. 9. 2026 · CZK, pevné demo měnové kurzy. Graf simuluje dnešní složení
-          portfolia v minulosti; nejde o historii skutečných transakcí.
+          Verze dat lens-demo-2026.09-v1 · CZK, pevné demo ceny a kurzy. Historie respektuje data
+          nákupů, prodejů, vkladů a výběrů.
         </p>
       </footer>
+      <AnalysisInspector state={state} analysis={analysis} />
       {detail && (
         <HoldingDetail
           holding={detail}
           locale={locale}
           onClose={() => setDetailId(undefined)}
           onCompare={() => {
-            changeSettings({ ...settings, compare: detail.assetId, mode: "performance" });
+            dispatch({
+              type: "settings",
+              value: { compareAssetId: detail.assetId, mode: "performance" },
+            });
             setDetailId(undefined);
             document
               .querySelector(".hero-analytics")
               ?.scrollIntoView({ behavior: "instant", block: "start" });
           }}
           onEdit={() => {
-            setAdd({ edit: holdings.find((p) => p.assetId === detail.assetId) });
+            setAdd({ edit: holdings.find((position) => position.assetId === detail.assetId) });
             setDetailId(undefined);
           }}
           onAdd={() => {

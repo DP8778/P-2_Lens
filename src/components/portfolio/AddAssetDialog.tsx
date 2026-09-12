@@ -8,6 +8,7 @@ import {
   positionSchema,
   toUsd,
   type Holding,
+  type HoldingDraft,
   type PositionCurrency,
 } from "@/lib/finance/portfolio-engine";
 import { money, allocation } from "@/components/charts/chart-formatters";
@@ -34,7 +35,7 @@ export function AddAssetDialog({
   const [fees, setFees] = useState(edit ? String(edit.fees) : "0");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
-  const [draft, setDraft] = useState<Holding>();
+  const [draft, setDraft] = useState<HoldingDraft>();
   const existing = holdings.some((p) => p.assetId === asset?.id);
   const number = (value: string) => Number(value.replace(",", "."));
   const preview = draft ? positionPreview(draft, holdings, !!edit) : undefined;

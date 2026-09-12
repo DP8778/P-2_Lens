@@ -6,21 +6,42 @@ test("opens the portfolio, switches modes, compares and selects a chart point", 
   await page.setViewportSize({ width: 1440, height: 1100 });
   await page.goto("/cs-CZ/dashboard");
   await expect(page.getByTestId("portfolio-value")).toBeVisible();
-  await expect(page.locator(".insight-copy")).toHaveAttribute("aria-busy", "false");
+  await expect(page.locator(".insight-copy h3")).toBeVisible();
   await page.screenshot({ path: "test-results/lens-desktop.png", fullPage: true });
   const before = await page.locator(".summary-return").innerText();
   await page.getByRole("button", { name: "1Y", exact: true }).click();
   await expect(page.locator(".summary-return")).not.toHaveText(before);
   await page.getByRole("button", { name: "Příspěvky", exact: true }).click();
   await expect(page.getByRole("img", { name: "Příspěvky aktiv k výnosu" })).toBeVisible();
+  await expect(page.locator(".contribution-summary")).toContainText("Výnos portfolia");
+  await page.getByRole("button", { name: /BTC, příspěvek/ }).click();
+  await expect(page.getByRole("button", { name: /BTC, příspěvek/ })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await page.getByRole("button", { name: "Vývoj", exact: true }).click();
+  await expect(page.locator(".chart-legend")).toContainText("BTC");
+  await expect(page.locator(".insight-copy h3")).toContainText("BTC");
+  const btcEvidence = page.getByRole("button", { name: /BTC · příspěvek.*Zobrazit v grafu/ });
+  await expect(btcEvidence).toBeVisible();
+  await btcEvidence.click();
+  await expect(page.locator(".chart-legend")).toContainText("BTC");
+  await page.getByRole("button", { name: "Odebrat porovnání BTC" }).click();
   await page.getByRole("button", { name: "Poklesy", exact: true }).click();
   await expect(page.locator(".insight-copy")).toContainText("pokles");
+  await expect(page.locator(".drawdown-summary")).toContainText("Max. pokles");
+  const troughButton = page.getByRole("button", { name: "Vybrat dno maximálního poklesu" });
+  if (await troughButton.count()) {
+    await troughButton.click();
+    await expect(page.locator(".hero-tooltip")).toContainText("Pokles od maxima");
+    await expect(page.locator(".insight-copy h3")).toContainText("Dno");
+  }
   await page.getByRole("button", { name: "Vývoj", exact: true }).click();
   await page.getByLabel("Nastavení grafu", { exact: true }).click();
   await page.getByLabel("Benchmark", { exact: true }).selectOption("qqq");
   await page.getByLabel("Porovnat aktivum", { exact: true }).selectOption("btc");
-  await expect(page.locator(".chart-legend")).toContainText("začátek období = 100");
-  await expect(page.locator(".insight-copy h3")).toHaveText("BTC a portfolio");
+  await expect(page.locator(".chart-legend")).toContainText("Index 100");
+  await expect(page.locator(".insight-copy h3")).toContainText("BTC");
   await page.getByLabel("Nastavení grafu", { exact: true }).click();
   const chart = page.locator('.chart-plot svg[role="graphics-document"]');
   await chart.focus();
@@ -111,24 +132,39 @@ test("validates input, traps focus, reports storage failure and closes with Esca
   await expect(add).toBeFocused();
 });
 
-test("navigator rebases the range and annotations select the trough", async ({ page }) => {
+test("navigator mění pouze viewport a vlastní rozsah řídí analýzu", async ({ page }) => {
   await page.goto("/cs-CZ/dashboard");
+  const analyticalPeriod = await page.locator(".analytics-heading > span").innerText();
   const start = page.getByRole("slider", { name: "Začátek období" });
   await start.focus();
   await page.keyboard.press("ArrowLeft");
-  await expect(page.locator(".summary-return")).toContainText("vlastní období");
+  await expect(page.locator(".analytics-heading > span")).toHaveText(analyticalPeriod);
   await page.getByLabel("Nastavení grafu", { exact: true }).click();
   await page.getByLabel("Události", { exact: true }).check();
   await page.getByLabel("Nastavení grafu", { exact: true }).click();
-  await page.locator(".chart-annotations > button").click();
+  await page.locator(".annotation-buttons > button").first().click();
   await expect(page.locator(".hero-tooltip")).toContainText("Vybraný bod");
+  const beforeRange = await page.locator(".analytics-heading > span").innerText();
+  await page.getByRole("button", { name: "Vybrat období", exact: true }).click();
+  const chart = page.locator('.chart-plot svg[role="graphics-document"]');
+  const box = await chart.boundingBox();
+  if (!box) throw new Error("Chart nemá rozměry");
+  await chart.click({ position: { x: box.width * 0.28, y: box.height * 0.5 } });
+  await expect(page.getByText("Zvolte konec období")).toBeVisible();
+  await chart.click({ position: { x: box.width * 0.72, y: box.height * 0.5 } });
+  await expect(page.locator(".analytics-heading > span")).not.toHaveText(beforeRange);
+  await expect(page.locator(".analysis-range-chip")).toContainText("Analyzováno");
+  await expect(page.locator(".insight-scope")).toContainText(/2026/);
+  await page.getByRole("button", { name: "Zrušit rozsah ×" }).click();
+  await expect(page.locator(".analysis-range-chip")).toHaveCount(0);
 });
 
 test("touch layout stays within the viewport and keeps data usable offline", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.route("**/api/portfolio/context", (route) => route.abort());
   await page.goto("/cs-CZ/dashboard");
-  await expect(page.locator(".lens-insight footer")).toContainText("dočasně nedostupné");
+  await expect(page.locator(".lens-insight footer")).toContainText("ověřený výklad zůstává aktivní");
+  await expect(page.locator(".insight-evidence")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );

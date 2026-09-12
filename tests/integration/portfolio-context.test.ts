@@ -1,15 +1,16 @@
 /** @jest-environment node */
 import { POST } from "@/app/api/portfolio/context/route";
-import { initialHoldings } from "@/lib/finance/portfolio-engine";
+import { initialTransactions, timeline } from "@/lib/finance/portfolio-engine";
+
 const context = {
-  holdings: initialHoldings,
-  range: [700, 730],
+  transactions: initialTransactions,
+  selectedRange: [timeline[700], timeline[730]],
   timeframe: "1M",
-  benchmark: "spy",
-  compare: "",
+  benchmarkId: "spy",
+  compareAssetId: "",
   mode: "performance",
   showBenchmark: true,
-  selected: null,
+  selectedPoint: null,
 };
 const request = (body: unknown) =>
   POST(
@@ -18,24 +19,33 @@ const request = (body: unknown) =>
       body: JSON.stringify(body),
     }),
   );
-test("derives explanations from validated context and reacts to point, asset and mode", async () => {
+
+test("odvozuje vysvětlení z validovaného analytického kontextu", async () => {
   const basic = await (await request(context)).json();
   expect(basic.mode).toBe("deterministic");
-  const compared = await (await request({ ...context, compare: "btc" })).json();
-  expect(compared.headline).toBe("BTC a portfolio");
-  expect(compared.summary).toContain("indexu 100");
-  const selected = await (await request({ ...context, selected: 0 })).json();
-  expect(selected.context).toBe("Vybraný bod");
-  expect(selected.summary).toContain("0,0 %");
+  expect(basic.scopeLabel).toContain("2026");
+  expect(basic.evidence.length).toBeGreaterThan(0);
+  const compared = await (await request({ ...context, compareAssetId: "btc" })).json();
+  expect(compared.headline).toContain("BTC");
+  const selected = await (await request({ ...context, selectedPoint: timeline[700] })).json();
+  expect(selected.evidence.some((item: { id: string }) => item.id === "selected-point-value")).toBe(
+    true,
+  );
   const downside = await (await request({ ...context, mode: "drawdown" })).json();
   expect(downside.summary).toContain("pokles");
+  const custom = await (
+    await request({ ...context, selectedRange: [timeline[710], timeline[720]] })
+  ).json();
+  expect(custom.scopeLabel).toContain("2026");
+  expect(custom.scopeLabel).not.toBe(basic.scopeLabel);
 });
-test("rejects PII, unknown assets, out-of-range selections and inverted ranges", async () => {
+
+test("odmítá PII, neznámá aktiva a body mimo období", async () => {
   for (const change of [
     { email: "person@example.test" },
-    { compare: "made-up" },
-    { selected: 31 },
-    { range: [720, 710] },
+    { compareAssetId: "made-up" },
+    { selectedPoint: timeline[699] },
+    { selectedRange: [timeline[720], timeline[710]] },
   ])
     expect((await request({ ...context, ...change })).status).toBe(400);
 });
