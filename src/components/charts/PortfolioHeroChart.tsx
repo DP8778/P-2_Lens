@@ -43,6 +43,11 @@ export function PortfolioHeroChart({
   const [selectedEventId, setSelectedEventId] = useState<string>();
   const svgRef = useRef<SVGSVGElement>(null);
   const gradient = useId().replaceAll(":", "");
+  const plotGradient = `${gradient}-plot`;
+  const plotAura = `${gradient}-aura`;
+  const plotTexture = `${gradient}-texture`;
+  const lineGradient = `${gradient}-line`;
+  const lineGlow = `${gradient}-glow`;
   const data = state.mode === "performance" ? visibleAnalysis.points : analysis.points;
   const settings: ChartSettings = {
     mode: state.mode,
@@ -231,8 +236,35 @@ export function PortfolioHeroChart({
           >
             <title>{isDrawdown ? "Pokles od maxima" : "Vývoj portfolia"}</title>
             <desc>{summary}</desc>
-            <rect width={o.width} height={o.height} fill="#0d0e11" />
             <defs>
+              <linearGradient id={plotGradient} x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#14161b" />
+                <stop offset="48%" stopColor="#0d0f13" />
+                <stop offset="100%" stopColor="#090a0d" />
+              </linearGradient>
+              <radialGradient id={plotAura} cx="62%" cy="20%" r="78%">
+                <stop offset="0%" stopColor="#c7c3ee" stopOpacity=".085" />
+                <stop offset="42%" stopColor="#8e91a7" stopOpacity=".025" />
+                <stop offset="100%" stopColor="#050608" stopOpacity="0" />
+              </radialGradient>
+              <filter id={plotTexture} x="0" y="0" width="100%" height="100%">
+                <feTurbulence
+                  type="fractalNoise"
+                  baseFrequency=".72"
+                  numOctaves="3"
+                  seed="17"
+                  stitchTiles="stitch"
+                />
+                <feColorMatrix type="saturate" values="0" />
+              </filter>
+              <linearGradient id={lineGradient} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor={isDrawdown ? "#c9a5aa" : "#c7cbd3"} />
+                <stop offset="54%" stopColor={isDrawdown ? "#ddb8bd" : "#f3f1eb"} />
+                <stop offset="100%" stopColor={isDrawdown ? "#c9a5aa" : "#d8d5f2"} />
+              </linearGradient>
+              <filter id={lineGlow} x="-10%" y="-25%" width="120%" height="150%">
+                <feGaussianBlur stdDeviation="4.5" />
+              </filter>
               <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="0%"
@@ -242,6 +274,16 @@ export function PortfolioHeroChart({
                 <stop offset="100%" stopColor="#dce0e8" stopOpacity="0" />
               </linearGradient>
             </defs>
+            <rect width={o.width} height={o.height} fill={`url(#${plotGradient})`} />
+            <rect width={o.width} height={o.height} fill={`url(#${plotAura})`} />
+            <rect
+              width={o.width}
+              height={o.height}
+              fill="#d9dce5"
+              opacity=".035"
+              filter={`url(#${plotTexture})`}
+              pointerEvents="none"
+            />
             {rangeMode && rangeStart !== null && rangeHover !== null && (
               <rect
                 className="range-selection-overlay"
@@ -318,8 +360,21 @@ export function PortfolioHeroChart({
             <path
               d={g.line(g.key)}
               fill="none"
-              stroke={isDrawdown ? "#c9a5aa" : o.line}
-              strokeWidth="2"
+              stroke={isDrawdown ? "#c9a5aa" : "#d8d5f2"}
+              strokeWidth="7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity=".22"
+              filter={`url(#${lineGlow})`}
+              vectorEffect="non-scaling-stroke"
+              pointerEvents="none"
+            />
+            <path
+              d={g.line(g.key)}
+              fill="none"
+              stroke={`url(#${lineGradient})`}
+              strokeWidth="2.15"
+              strokeLinecap="round"
               strokeLinejoin="round"
               vectorEffect="non-scaling-stroke"
             />
