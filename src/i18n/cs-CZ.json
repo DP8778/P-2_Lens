@@ -1,0 +1,38 @@
+{
+  "nav": {
+    "dashboard": "Přehled",
+    "portfolio": "Portfolio",
+    "insights": "Insights",
+    "settings": "Nastavení"
+  },
+  "common": {
+    "mock": "MOCK DATA",
+    "demo": "DEMO",
+    "search": "Hledat",
+    "back": "Zpět",
+    "open": "Otevřít"
+  },
+  "dashboard": {
+    "title": "Co se změnilo — a proč?",
+    "subtitle": "Jeden klidný pohled na výkon, hlavní vlivy a rizika vašeho demo portfolia.",
+    "portfolioValue": "Hodnota portfolia",
+    "periodReturn": "Výnos v období",
+    "absolutePnl": "Absolutní P/L",
+    "benchmarkDelta": "Rozdíl proti benchmarku",
+    "btcExposure": "Expozice vůči BTC",
+    "performance": "Vývoj portfolia",
+    "allocation": "Složení portfolia",
+    "drivers": "Co hýbalo výsledkem",
+    "risk": "Rizikový snímek"
+  },
+  "ai": {
+    "title": "Lens Insight",
+    "action": "Vysvětlit toto období",
+    "generating": "Propojuji výsledek s jeho hlavními vlivy…",
+    "generated": "AI-generated explanation",
+    "demo": "Demo insight",
+    "useful": "Užitečné",
+    "notUseful": "Není užitečné",
+    "disclaimer": "Není investičním doporučením."
+  }
+}

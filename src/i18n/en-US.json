@@ -1,0 +1,38 @@
+{
+  "nav": {
+    "dashboard": "Overview",
+    "portfolio": "Portfolio",
+    "insights": "Insights",
+    "settings": "Settings"
+  },
+  "common": {
+    "mock": "MOCK DATA",
+    "demo": "DEMO",
+    "search": "Search",
+    "back": "Back",
+    "open": "Open"
+  },
+  "dashboard": {
+    "title": "What changed — and why?",
+    "subtitle": "One calm view of performance, key drivers and risks in your demo portfolio.",
+    "portfolioValue": "Portfolio value",
+    "periodReturn": "Period return",
+    "absolutePnl": "Absolute P/L",
+    "benchmarkDelta": "Benchmark delta",
+    "btcExposure": "BTC exposure",
+    "performance": "Portfolio performance",
+    "allocation": "Portfolio allocation",
+    "drivers": "What moved the result",
+    "risk": "Risk snapshot"
+  },
+  "ai": {
+    "title": "Lens Insight",
+    "action": "Explain this period",
+    "generating": "Connecting the result to its main drivers…",
+    "generated": "AI-generated explanation",
+    "demo": "Demo insight",
+    "useful": "Useful",
+    "notUseful": "Not useful",
+    "disclaimer": "Not investment advice."
+  }
+}
