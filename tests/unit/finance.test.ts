@@ -23,7 +23,7 @@ describe("deterministic finance layer", () => {
     const metrics = buildPortfolioMetrics("1M");
     expect(metrics.endValue - metrics.startValue).toBe(metrics.absolutePnl);
     expect(metrics.returnPct - metrics.benchmarkReturnPct).toBeCloseTo(metrics.benchmarkDeltaPct);
-    expect(metrics.topContributors[0].symbol).toBe("BTC");
+    expect(metrics.topContributors[0].symbol).toBe("NVDA");
   });
   test("keeps the selected timeframe consistent with chart dates", () => {
     const series = getPerformanceSeries("1M");

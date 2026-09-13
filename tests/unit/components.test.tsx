@@ -1,10 +1,16 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { DataQualityBadge } from "@/components/portfolio/DataQualityBadge";
 import { AssetRow } from "@/components/portfolio/AssetRow";
 import { PerformanceChart } from "@/components/charts/PerformanceChart";
 import { enrichedPositions } from "@/data/mock/assets";
 import { getPerformanceSeries } from "@/data/mock/portfolio";
+import { HoldingsTable } from "@/components/portfolio/HoldingsTable";
+import {
+  buildAnalysis,
+  initialTransactions,
+  timeframeRange,
+} from "@/lib/finance/portfolio-engine";
 describe("core components", () => {
   test("MetricCard names its value and non-color trend", () => {
     render(<MetricCard label="Výnos" value="+6,5 %" trend="positive" />);
@@ -33,5 +39,24 @@ describe("core components", () => {
       "/cs-CZ/assets/BTC",
     );
     expect(screen.getByText(/\+2,1/)).toBeInTheDocument();
+  });
+  test("cash balance is not presented as an investment return", () => {
+    const analysis = buildAnalysis(initialTransactions, timeframeRange("1M"));
+    render(
+      <HoldingsTable
+        holdings={analysis.holdings}
+        locale="cs-CZ"
+        onSelect={() => undefined}
+        onAdd={() => undefined}
+        period="1M"
+      />,
+    );
+    const cashRow = screen.getByRole("button", { name: "Detail CZK" }).closest("tr")!;
+    expect(
+      within(cashRow).getByLabelText("Výnos období není pro hotovost relevantní"),
+    ).toHaveTextContent("—");
+    expect(
+      within(cashRow).getByLabelText("Příspěvek není pro hotovost relevantní"),
+    ).toHaveTextContent("—");
   });
 });

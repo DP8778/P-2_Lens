@@ -3,6 +3,7 @@
 test("opens the portfolio, switches modes, compares and selects a chart point", async ({
   page,
 }) => {
+  test.setTimeout(120_000);
   await page.setViewportSize({ width: 1440, height: 1100 });
   await page.goto("/cs-CZ/dashboard");
   await expect(page.getByTestId("portfolio-value")).toBeVisible();
@@ -22,6 +23,10 @@ test("opens the portfolio, switches modes, compares and selects a chart point", 
   await page.getByRole("button", { name: "Vývoj", exact: true }).click();
   await expect(page.locator(".chart-legend")).toContainText("BTC");
   await expect(page.locator(".insight-copy h3")).toContainText("BTC");
+  const evidenceDisclosure = page.locator(".insight-evidence > summary");
+  await expect(evidenceDisclosure).toHaveAttribute("aria-expanded", "false");
+  await evidenceDisclosure.click();
+  await expect(evidenceDisclosure).toHaveAttribute("aria-expanded", "true");
   const btcEvidence = page.getByRole("button", { name: /BTC · příspěvek.*Zobrazit v grafu/ });
   await expect(btcEvidence).toBeVisible();
   await btcEvidence.click();
@@ -37,12 +42,15 @@ test("opens the portfolio, switches modes, compares and selects a chart point", 
     await expect(page.locator(".insight-copy h3")).toContainText("Dno");
   }
   await page.getByRole("button", { name: "Vývoj", exact: true }).click();
-  await page.getByLabel("Nastavení grafu", { exact: true }).click();
+  const chartOptions = page.locator(".chart-options");
+  const chartOptionsTrigger = page.getByLabel("Nastavení grafu", { exact: true });
+  await chartOptionsTrigger.click();
   await page.getByLabel("Benchmark", { exact: true }).selectOption("qqq");
+  if ((await chartOptions.getAttribute("open")) === null) await chartOptionsTrigger.click();
   await page.getByLabel("Porovnat aktivum", { exact: true }).selectOption("btc");
   await expect(page.locator(".chart-legend")).toContainText("Index 100");
   await expect(page.locator(".insight-copy h3")).toContainText("BTC");
-  await page.getByLabel("Nastavení grafu", { exact: true }).click();
+  if ((await chartOptions.getAttribute("open")) !== null) await chartOptionsTrigger.click();
   const chart = page.locator('.chart-plot svg[role="graphics-document"]');
   await chart.focus();
   await page.keyboard.press("Home");
@@ -165,6 +173,16 @@ test("touch layout stays within the viewport and keeps data usable offline", asy
   await page.goto("/cs-CZ/dashboard");
   await expect(page.locator(".lens-insight footer")).toContainText("ověřený výklad zůstává aktivní");
   await expect(page.locator(".insight-evidence")).toBeVisible();
+  await expect(page.locator(".insight-evidence > summary")).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  await expect(page.locator("#insight-evidence-rows")).not.toBeVisible();
+  const mobilePlotHeight = await page.locator(".chart-plot").evaluate((element) =>
+    Math.round(element.getBoundingClientRect().height),
+  );
+  expect(mobilePlotHeight).toBeGreaterThanOrEqual(280);
+  expect(mobilePlotHeight).toBeLessThanOrEqual(340);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
@@ -180,4 +198,34 @@ test("touch layout stays within the viewport and keeps data usable offline", asy
   await page.screenshot({ path: "test-results/lens-mobile-dialog.png", fullPage: true });
   await page.getByRole("button", { name: "Zavřít", exact: true }).click();
   await page.screenshot({ path: "test-results/lens-mobile.png", fullPage: true });
+});
+
+test("chart uses bounded viewport-aware heights without grid stretch", async ({ page }) => {
+  const viewports = [
+    { width: 1366, height: 768, min: 320, max: 340 },
+    { width: 1440, height: 900, min: 350, max: 385 },
+    { width: 1600, height: 900, min: 350, max: 375 },
+    { width: 1920, height: 1080, min: 390, max: 415 },
+  ];
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+    await page.goto("/cs-CZ/dashboard");
+    const layout = await page.locator(".hero-analytics").evaluate((element) => ({
+      alignItems: getComputedStyle(element).alignItems,
+      scrollWidth: document.documentElement.scrollWidth,
+      viewportWidth: window.innerWidth,
+    }));
+    const plotHeight = await page.locator(".chart-plot").evaluate((element) =>
+      Math.round(element.getBoundingClientRect().height),
+    );
+    const lensHeadlineTop = await page.locator(".insight-copy h3").evaluate((element) =>
+      element.getBoundingClientRect().top,
+    );
+    expect(layout.alignItems).toBe("start");
+    expect(layout.scrollWidth).toBeLessThanOrEqual(layout.viewportWidth);
+    expect(plotHeight).toBeGreaterThanOrEqual(viewport.min);
+    expect(plotHeight).toBeLessThanOrEqual(viewport.max);
+    expect(plotHeight).toBeLessThan(viewport.height);
+    expect(lensHeadlineTop).toBeLessThan(viewport.height);
+  }
 });

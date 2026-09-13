@@ -153,7 +153,7 @@ export function DashboardView({
       <footer className="portfolio-footer">
         <span>Lens · portfolio intelligence</span>
         <p>
-          Verze dat lens-demo-2026.09-v1 · CZK, pevné demo ceny a kurzy. Historie respektuje data
+          Verze dat lens-demo-2026.09-v2 · CZK, pevné demo ceny a kurzy. Historie respektuje data
           nákupů, prodejů, vkladů a výběrů.
         </p>
       </footer>

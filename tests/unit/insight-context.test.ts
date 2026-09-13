@@ -53,7 +53,9 @@ describe("contextual Lens Insight", () => {
     expect(context.scope.type).toBe("timeframe");
     expect(context.focus.type).toBe("overview");
     expect(insightResponseSchema.safeParse(response).success).toBe(true);
-    expect(response.summary).toContain("SPY");
+    expect(response.summary).toContain("S&P 500");
+    expect(response.evidence.some((item) => item.metric === "maxDrawdown")).toBe(false);
+    expect(response.evidence.some((item) => item.metric === "residual")).toBe(false);
   });
 
   test("prioritizes selected range as analytical scope", () => {
@@ -81,9 +83,10 @@ describe("contextual Lens Insight", () => {
   });
 
   test("treats a selected point as a dated state, including a verified trough", () => {
-    const baseline = makeContext({ ...baseInput, mode: "drawdown" });
+    const input = { ...baseInput, timeframe: "1Y" as const, mode: "drawdown" as const };
+    const baseline = makeContext(input, timeframeRange("1Y"));
     const trough = baseline.risk.troughDate!;
-    const context = makeContext({ ...baseInput, mode: "drawdown", selectedPoint: trough });
+    const context = makeContext({ ...input, selectedPoint: trough }, timeframeRange("1Y"));
     const response = buildDeterministicInsight(context);
     expect(context.focus.type).toBe("point");
     expect(context.selection.point?.isTrough).toBe(true);
@@ -130,7 +133,13 @@ describe("contextual Lens Insight", () => {
     const response = buildDeterministicInsight(context);
     expect(context.performance.benchmark).toBeUndefined();
     expect(response.evidence.some((item) => item.metric === "benchmarkDelta")).toBe(false);
-    expect(response.summary).not.toContain("SPY");
+    expect(response.summary).not.toContain("S&P 500");
+  });
+
+  test("uses user-facing benchmark names for every benchmark", () => {
+    const context = makeContext({ ...baseInput, benchmarkId: "qqq" });
+    expect(context.performance.benchmark?.symbol).toBe("Nasdaq 100");
+    expect(buildDeterministicInsight(context).summary).toContain("Nasdaq 100");
   });
 
   test("rejects stale response identity", () => {

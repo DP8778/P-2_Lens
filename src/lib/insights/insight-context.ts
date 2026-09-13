@@ -39,6 +39,56 @@ const evidence = (
   ...options,
 });
 
+const MATERIAL = {
+  contributionPctPoints: 0.05,
+  residualPctPoints: 0.25,
+  benchmarkDeltaPctPoints: 0.1,
+  drawdownPct: 0.5,
+  concentrationPct: 35,
+} as const;
+
+/**
+ * Deterministic salience layer. Explicit chart selections always win; zero-like,
+ * redundant and immaterial facts stay available in PortfolioAnalysis but do not
+ * compete for the compact Lens surface.
+ */
+export function rankInsightFacts(
+  items: InsightEvidence[],
+  focus: InsightContext["focus"],
+  mode: InsightContext["mode"],
+) {
+  const isSelected = (item: InsightEvidence) => item.id.startsWith("selected-");
+  const material = (item: InsightEvidence) => {
+    if (isSelected(item)) return true;
+    if (item.metric === "assetContribution")
+      return Math.abs(item.value) >= MATERIAL.contributionPctPoints;
+    if (item.metric === "residual") return Math.abs(item.value) >= MATERIAL.residualPctPoints;
+    if (item.metric === "benchmarkDelta")
+      return Math.abs(item.value) >= MATERIAL.benchmarkDeltaPctPoints;
+    if (item.metric === "maxDrawdown" || item.metric === "currentDrawdown")
+      return mode === "drawdown" || Math.abs(item.value) >= MATERIAL.drawdownPct;
+    if (item.metric === "largestPosition") return item.value >= MATERIAL.concentrationPct;
+    return true;
+  };
+  const score = (item: InsightEvidence) => {
+    if (isSelected(item)) return focus.type === "point" ? 120 : 115;
+    if (item.id === "top-contributor") return 100;
+    if (item.id === "top-detractor") return 90;
+    if (item.metric === "maxDrawdown") return 85;
+    if (item.metric === "benchmarkDelta") return 80;
+    if (item.metric === "largestPosition") return 70;
+    if (item.metric === "residual") return 65;
+    if (item.metric === "portfolioReturn") return 60;
+    if (item.metric === "benchmarkReturn") return 50;
+    return 40;
+  };
+  return items
+    .filter(material)
+    .map((item, index) => ({ item, index, score: score(item) }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map(({ item }) => item);
+}
+
 /** Selects verified facts for the current persistent analysis context. */
 export function buildInsightContext(
   analysis: PortfolioAnalysis,
@@ -192,7 +242,7 @@ export function buildInsightContext(
   // The analysis parameter deliberately stays at the trust boundary; only LensFacts supply values.
   void analysis;
   return insightContextSchema.parse({
-    datasetVersion: "lens-demo-2026.09-v1",
+    datasetVersion: "lens-demo-2026.09-v2",
     scope,
     focus,
     mode: analysisContext.mode,
@@ -229,7 +279,7 @@ export function buildInsightContext(
       cashPct: facts.exposure.cashPct,
     },
     selection: facts.selection,
-    evidence: items.slice(0, 12),
+    evidence: rankInsightFacts(items, focus, analysisContext.mode).slice(0, 12),
     limitations,
   });
 }
@@ -294,15 +344,15 @@ export function buildDeterministicInsight(context: InsightContext): InsightRespo
   }
 
   if (!point && !asset) {
-    if (lead)
+    if (lead && Math.abs(lead.contributionPctPoints) >= MATERIAL.contributionPctPoints)
       drivers.push(
         claim(`${lead.symbol} byl největší kladný přispěvatel: ${pp(lead.contributionPctPoints)}.`, "top-contributor"),
       );
-    if (drag)
-      drivers.push(
+    if (drag && Math.abs(drag.contributionPctPoints) >= MATERIAL.contributionPctPoints)
+      riskNotes.push(
         claim(`${drag.symbol} měl největší záporný příspěvek: ${pp(drag.contributionPctPoints)}.`, "top-detractor"),
       );
-    if (Math.abs(context.drivers.residualPctPoints) >= 0.1)
+    if (Math.abs(context.drivers.residualPctPoints) >= MATERIAL.residualPctPoints)
       drivers.push(
         claim(
           `Ostatní efekt ${pp(context.drivers.residualPctPoints)} zachycuje timing, poplatky, cash-flow a skládání výnosů.`,
@@ -311,10 +361,17 @@ export function buildDeterministicInsight(context: InsightContext): InsightRespo
       );
   }
   if (!point) {
-    riskNotes.push(
-      claim(`Maximální pokles ve zvoleném rozsahu byl ${formatPercent(context.risk.maxDrawdownPct)}.`, "max-drawdown"),
-    );
-    if (context.risk.largestPosition)
+    if (
+      context.mode === "drawdown" ||
+      Math.abs(context.risk.maxDrawdownPct) >= MATERIAL.drawdownPct
+    )
+      riskNotes.push(
+        claim(`Maximální pokles ve zvoleném rozsahu byl ${formatPercent(context.risk.maxDrawdownPct)}.`, "max-drawdown"),
+      );
+    if (
+      context.risk.largestPosition &&
+      context.risk.largestPosition.allocationPct >= MATERIAL.concentrationPct
+    )
       riskNotes.push(
         claim(
           `${context.risk.largestPosition.symbol} tvoří ${share(context.risk.largestPosition.allocationPct)} současné hodnoty portfolia.`,
@@ -341,8 +398,12 @@ export function buildDeterministicInsight(context: InsightContext): InsightRespo
     headline,
     summary,
     drivers,
-    riskNotes,
-    evidence: context.evidence.filter((item) => relevantIds.has(item.id)).slice(0, 8),
+    riskNotes: riskNotes.slice(0, 2),
+    evidence: rankInsightFacts(
+      context.evidence.filter((item) => relevantIds.has(item.id)),
+      context.focus,
+      context.mode,
+    ).slice(0, 8),
     limitations: context.limitations.slice(0, 3),
     mode: "deterministic",
   });

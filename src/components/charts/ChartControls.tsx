@@ -56,8 +56,8 @@ export function ChartControls({
                   value={s.benchmark}
                   onChange={(e) => onChange({ ...s, benchmark: e.target.value as "spy" | "qqq" })}
                 >
-                  <option value="spy">SPY · S&P 500</option>
-                  <option value="qqq">QQQ · Nasdaq 100</option>
+                  <option value="spy">S&P 500 benchmark</option>
+                  <option value="qqq">Nasdaq 100 benchmark</option>
                 </select>
               </label>
               <label>

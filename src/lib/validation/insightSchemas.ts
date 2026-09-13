@@ -144,7 +144,7 @@ const insightClaimSchema = z
 
 export const insightContextSchema = z
   .object({
-    datasetVersion: z.literal("lens-demo-2026.09-v1"),
+    datasetVersion: z.literal("lens-demo-2026.09-v2"),
     scope: z
       .object({
         type: z.enum(["range", "timeframe", "overview"]),

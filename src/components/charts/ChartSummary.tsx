@@ -15,10 +15,6 @@ export function ChartSummary({
   const metrics = analysis.metrics;
   return (
     <header className="chart-summary" aria-label="Souhrn vybraného období">
-      <div>
-        <span>Hodnota portfolia</span>
-        <strong>{money(metrics.endValue, locale)}</strong>
-      </div>
       <div className="chart-summary-change">
         <b className={metrics.returnPct >= 0 ? "positive" : "negative"}>
           {metrics.absolutePnl > 0 ? "+" : ""}

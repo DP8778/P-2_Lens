@@ -40,6 +40,7 @@ export function LensInsight({
   const activeKey = useRef("");
   const [remote, setRemote] = useState<{ key: string; data: ContextInsight }>();
   const [failedKey, setFailedKey] = useState<string>();
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
   const timeframe: TimeRange = context.timeframe === "CUSTOM" ? "ALL" : context.timeframe;
   const facts = useMemo(
     () =>
@@ -150,7 +151,7 @@ export function LensInsight({
 
       {!!insight.drivers.length && (
         <section className="insight-claims" aria-labelledby="insight-drivers-title">
-          <h3 id="insight-drivers-title">Co výsledek ovlivnilo</h3>
+          <h3 id="insight-drivers-title">Klíčový faktor</h3>
           <ul>
             {insight.drivers.map((driver) => (
               <li key={`${driver.text}-${driver.evidenceIds.join("-")}`}>{driver.text}</li>
@@ -161,7 +162,7 @@ export function LensInsight({
 
       {!!insight.riskNotes.length && (
         <section className="insight-claims" aria-labelledby="insight-risk-title">
-          <h3 id="insight-risk-title">Co sledovat v datech</h3>
+          <h3 id="insight-risk-title">Ke sledování</h3>
           <ul>
             {insight.riskNotes.map((note) => (
               <li key={`${note.text}-${note.evidenceIds.join("-")}`}>{note.text}</li>
@@ -170,9 +171,19 @@ export function LensInsight({
         </section>
       )}
 
-      <section className="insight-evidence" aria-labelledby="insight-evidence-title">
-        <h3 id="insight-evidence-title">Evidence</h3>
-        <div>
+      <details
+        className="insight-evidence"
+        open={evidenceOpen}
+        onToggle={(event) => setEvidenceOpen(event.currentTarget.open)}
+      >
+        <summary
+          id="insight-evidence-title"
+          aria-expanded={evidenceOpen}
+          aria-controls="insight-evidence-rows"
+        >
+          <span>Evidence ({insight.evidence.length})</span>
+        </summary>
+        <div id="insight-evidence-rows">
           {insight.evidence.map((item) => {
             const content = (
               <>
@@ -189,7 +200,7 @@ export function LensInsight({
             );
           })}
         </div>
-      </section>
+      </details>
 
       <details className="insight-why">
         <summary>Proč právě tento insight?</summary>

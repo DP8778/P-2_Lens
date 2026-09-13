@@ -252,7 +252,11 @@ summary {
   font-size: 9px;
 }
 .portfolio-summary {
-  padding: 36px 0 34px;
+  display: grid;
+  grid-template-columns: minmax(300px, 0.72fr) minmax(0, 1.28fr);
+  align-items: end;
+  gap: 36px;
+  padding: 22px 0 20px;
 }
 .summary-primary > p {
   display: flex;
@@ -299,7 +303,7 @@ summary {
 .summary-context {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin-top: 32px;
+  margin-top: 0;
   max-width: 980px;
 }
 .summary-context > div {
@@ -335,7 +339,7 @@ summary {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 10px 0 16px;
+  margin: 4px 0 12px;
   gap: 12px;
 }
 .analytics-heading h2 {
@@ -351,7 +355,7 @@ summary {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 310px;
   gap: 18px;
-  align-items: stretch;
+  align-items: start;
   scroll-margin-top: 20px;
 }
 .hero-chart {
@@ -368,7 +372,7 @@ summary {
   display: flex;
   align-items: flex-end;
   gap: 20px;
-  padding: 22px 22px 4px;
+  padding: 14px 20px 2px;
 }
 .chart-summary > div:first-child {
   margin-right: auto;
@@ -412,14 +416,14 @@ summary {
   font-weight: 500;
 }
 .chart-controls {
-  padding: 16px 20px 0;
+  padding: 10px 20px 0;
 }
 .control-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 14px;
-  margin-bottom: 15px;
+  margin-bottom: 9px;
 }
 .segmented {
   display: inline-flex;
@@ -594,7 +598,7 @@ summary::-webkit-details-marker {
 }
 .chart-plot {
   position: relative;
-  height: 430px;
+  height: clamp(320px, 42vh, 400px);
   margin: 2px 12px 0;
 }
 .chart-plot > svg {
@@ -1793,7 +1797,7 @@ button.contribution-row[aria-pressed="true"] {
     grid-template-columns: minmax(0, 1fr) 350px;
   }
   .chart-plot {
-    height: 460px;
+    height: clamp(360px, 40vh, 410px);
   }
 }
 @media (max-width: 1150px) {
@@ -1832,11 +1836,17 @@ button.contribution-row[aria-pressed="true"] {
   }
 }
 @media (max-width: 960px) {
+  .portfolio-summary {
+    display: block;
+  }
+  .summary-context {
+    margin-top: 22px;
+  }
   .hero-analytics {
     grid-template-columns: 1fr;
   }
   .chart-plot {
-    height: 400px;
+    height: clamp(310px, 40vh, 360px);
   }
   .lens-insight {
     display: grid;
@@ -1933,8 +1943,8 @@ button.contribution-row[aria-pressed="true"] {
     display: none;
   }
   .portfolio-summary {
-    padding-top: 28px;
-    padding-bottom: 25px;
+    padding-top: 20px;
+    padding-bottom: 20px;
   }
   .summary-primary h1 {
     font-size: clamp(35px, 8.5vw, 50px);
@@ -2058,7 +2068,7 @@ button.contribution-row[aria-pressed="true"] {
     font-size: 8px;
   }
   .chart-plot {
-    height: 340px;
+    height: clamp(280px, 38vh, 340px);
     margin: 5px 5px 0;
   }
   .chart-plot text {
@@ -2296,7 +2306,7 @@ button.contribution-row[aria-pressed="true"] {
   border-bottom: 1px solid var(--color-border-default);
 }
 .insight-claims h3,
-.insight-evidence h3 {
+.insight-evidence summary {
   margin-bottom: 9px;
   color: var(--color-text-muted);
   font-size: 9px;
@@ -2321,7 +2331,28 @@ button.contribution-row[aria-pressed="true"] {
   background: #aeb0b8;
 }
 .insight-evidence {
-  padding: 16px 0 12px;
+  border-bottom: 1px solid var(--color-border-default);
+}
+.insight-evidence summary {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  margin: 0;
+  cursor: pointer;
+  list-style: none;
+}
+.insight-evidence summary::after {
+  content: "›";
+  margin-left: auto;
+  color: var(--color-text-muted);
+  font-size: 15px;
+  transition: transform 160ms ease;
+}
+.insight-evidence[open] summary::after {
+  transform: rotate(90deg);
+}
+.insight-evidence > div {
+  padding-bottom: 10px;
 }
 .insight-evidence > div > div,
 .insight-evidence > div > button {

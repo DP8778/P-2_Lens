@@ -120,13 +120,22 @@ export function HoldingsTable({
                   {money(p.pnl, locale)}
                   <small>{percent(p.pnlPct, locale)}</small>
                 </td>
-                <td
-                  data-label="Výnos období"
-                  className={p.returnPct >= 0 ? "positive" : "negative"}
-                >
-                  {percent(p.returnPct, locale)}
-                </td>
-                <td data-label="Příspěvek">{points(p.contributionPctPoints, locale)}</td>
+                {p.asset.type === "cash" ? (
+                  <>
+                    <td data-label="Výnos období" aria-label="Výnos období není pro hotovost relevantní">—</td>
+                    <td data-label="Příspěvek" aria-label="Příspěvek není pro hotovost relevantní">—</td>
+                  </>
+                ) : (
+                  <>
+                    <td
+                      data-label="Výnos období"
+                      className={p.returnPct >= 0 ? "positive" : "negative"}
+                    >
+                      {percent(p.returnPct, locale)}
+                    </td>
+                    <td data-label="Příspěvek">{points(p.contributionPctPoints, locale)}</td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>

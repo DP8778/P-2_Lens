@@ -697,7 +697,9 @@ export function buildAnalysis(
     missingPriceAssetIds: endSnapshot.missingPriceAssetIds,
     trough,
     recovery,
-    benchmark: benchmarkAsset.symbol,
+    benchmark:
+      portfolioDataset.benchmarks.find((item) => item.assetId === benchmarkAsset.id)?.name ??
+      benchmarkAsset.name,
     compare: compareAsset?.symbol,
     contribution,
     drawdown,
