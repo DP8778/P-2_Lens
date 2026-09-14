@@ -8,6 +8,17 @@ const assets: MarketAsset[] = [
   ["SPY", "SPDR S&P 500 ETF Trust", "ETF", "NYSE Arca", "ARCX", "USD"],
   ["VWCE", "Vanguard FTSE All-World UCITS ETF", "ETF", "Xetra", "XETR", "EUR"],
   ["VUSA", "Vanguard S&P 500 UCITS ETF", "ETF", "London Stock Exchange", "XLON", "GBP"],
+  ["APC", "Apple Inc. European Listing", "Common Stock", "Xetra", "XETR", "EUR"],
+  ["CSPX", "iShares Core S&P 500 UCITS ETF", "ETF", "London Stock Exchange", "XLON", "USD"],
+  ["SXR8", "iShares Core S&P 500 UCITS ETF", "ETF", "Xetra", "XETR", "EUR"],
+  ["NOQUOTE", "Fixture Unavailable Quote Corp.", "Common Stock", "NASDAQ", "XNAS", "USD"],
+  ["NOHIST", "Fixture No History ETF", "ETF", "Xetra", "XETR", "EUR"],
+  ["STALE", "Fixture Stale Market Data Plc", "Common Stock", "London Stock Exchange", "XLON", "GBP"],
+  ...Array.from({ length: 34 }, (_, index) => {
+    const etf = index % 3 === 0;
+    const europe = index % 2 === 0;
+    return [`UX${String(index + 1).padStart(2, "0")}`, `${etf ? "Global Diversified UCITS ETF" : "International Test Corporation"} ${index + 1}`, etf ? "ETF" : "Common Stock", europe ? "Xetra" : "NASDAQ", europe ? "XETR" : "XNAS", europe ? "EUR" : "USD"];
+  }),
 ].map(([symbol, name, providerType, exchange, micCode, currency]) => ({
   id: marketAssetIdentity("mock", symbol, micCode, exchange),
   provider: "mock",
@@ -41,6 +52,7 @@ export class MockMarketDataProvider implements MarketDataProvider {
   }
   async getQuote(asset: MarketAsset) {
     if (this.failWith) throw this.failWith;
+    if (asset.symbol === "NOQUOTE") throw new MarketDataError("UNAVAILABLE", "Quote fixture unavailable.", true);
     const base = asset.currency === "EUR" ? 110 : asset.symbol === "AAPL" ? 200 : 100;
     return {
       assetId: asset.id,
@@ -48,7 +60,7 @@ export class MockMarketDataProvider implements MarketDataProvider {
       currency: asset.currency,
       timestamp: "2026-09-14T16:00:00.000Z",
       marketState: "closed" as const,
-      freshness: "lastClose" as const,
+      freshness: asset.symbol === "STALE" ? "stale" as const : "lastClose" as const,
       source: "network" as const,
     };
   }
@@ -56,6 +68,7 @@ export class MockMarketDataProvider implements MarketDataProvider {
     return Promise.all(input.map((asset) => this.getQuote(asset)));
   }
   async getHistory(asset: MarketAsset, range: DateRange) {
+    if (asset.symbol === "NOHIST") throw new MarketDataError("NO_HISTORY", "History fixture unavailable.", false, 404);
     const points = dates(range).map((date, index) => ({
       assetId: asset.id,
       date,
@@ -82,4 +95,3 @@ export class MockMarketDataProvider implements MarketDataProvider {
 }
 
 export const mockMarketAssets = assets;
-

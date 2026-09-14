@@ -4,6 +4,8 @@ import type { AssetType } from "@/lib/finance/domain";
 export function AssetSearchResult({
   asset,
   existing,
+  id,
+  active,
   onSelect,
 }: {
   asset: {
@@ -15,10 +17,12 @@ export function AssetSearchResult({
     exchange?: string;
   };
   existing: boolean;
+  id?: string;
+  active?: boolean;
   onSelect: () => void;
 }) {
   return (
-    <button className="asset-search-result" onClick={onSelect}>
+    <button id={id} role="option" aria-selected={active} className={`asset-search-result ${active ? "active" : ""}`} onClick={onSelect}>
       <span className={`asset-monogram ${asset.type}`}>{asset.symbol.slice(0, 2)}</span>
       <span>
         <strong>
@@ -27,6 +31,7 @@ export function AssetSearchResult({
         <small>
           {asset.exchange ? `${asset.exchange} · ` : ""}
           {assetTypeLabels[asset.type]} · {asset.currency}
+          {"country" in asset && asset.country ? ` · ${asset.country}` : ""}
           {existing ? " · Již v portfoliu" : ""}
         </small>
       </span>

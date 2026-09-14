@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { ArrowUpRight, Plus, Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, ArrowUpRight, Plus, Search } from "lucide-react";
 import type { HoldingMetric } from "@/lib/finance/portfolio-engine";
+import type { MarketQuote } from "@/lib/market-data/types";
 import { assetTypeLabels } from "@/data/mock/catalog";
 import { money, percent, points, allocation } from "@/components/charts/chart-formatters";
 export function HoldingsTable({
@@ -9,29 +10,34 @@ export function HoldingsTable({
   onSelect,
   onAdd,
   period,
+  quotes = [],
+  editable = true,
 }: {
   holdings: HoldingMetric[];
   locale: string;
   onSelect: (holding: HoldingMetric) => void;
   onAdd: () => void;
   period: string;
+  quotes?: MarketQuote[];
+  editable?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [type, setType] = useState("all");
-  const [sort, setSort] = useState("value");
-  const filtered = holdings
+  const [currency, setCurrency] = useState("all");
+  const [sort, setSort] = useState<"value" | "allocation" | "pnl" | "return" | "contribution">("value");
+  const [descending, setDescending] = useState(true);
+  const currencies = [...new Set(holdings.map((holding) => holding.asset.currency))].sort();
+  const filtered = useMemo(() => holdings
     .filter(
       (p) =>
         `${p.asset.name} ${p.asset.symbol}`.toLowerCase().includes(query.toLowerCase()) &&
-        (type === "all" || p.asset.type === type),
+        (type === "all" || p.asset.type === type) &&
+        (currency === "all" || p.asset.currency === currency),
     )
-    .sort((a, b) =>
-      sort === "name"
-        ? a.asset.name.localeCompare(b.asset.name)
-        : sort === "contribution"
-          ? b.contributionPctPoints - a.contributionPctPoints
-          : b.marketValue - a.marketValue,
-    );
+    .sort((a, b) => {
+      const metric = (holding: HoldingMetric) => sort === "allocation" ? holding.allocationPct : sort === "pnl" ? holding.pnl : sort === "return" ? holding.returnPct : sort === "contribution" ? holding.contributionPctPoints : holding.marketValue;
+      return (metric(b) - metric(a)) * (descending ? 1 : -1);
+    }), [currency, descending, holdings, query, sort, type]);
   return (
     <section className="holdings-section" id="holdings" aria-labelledby="holdings-title">
       <header className="section-heading">
@@ -41,10 +47,10 @@ export function HoldingsTable({
           </h2>
           <p>Vaše aktiva a jejich podíl na výsledku · {period}</p>
         </div>
-        <button className="quiet-button" onClick={onAdd}>
+        {editable && <button className="quiet-button" onClick={onAdd}>
           <Plus size={16} />
-          Přidat aktivum
-        </button>
+          Přidat investici
+        </button>}
       </header>
       <div className="holdings-filters">
         <label className="search-field">
@@ -64,11 +70,18 @@ export function HoldingsTable({
             </option>
           ))}
         </select>
-        <select aria-label="Řazení pozic" value={sort} onChange={(e) => setSort(e.target.value)}>
-          <option value="value">Hodnota ↓</option>
-          <option value="contribution">Příspěvek ↓</option>
-          <option value="name">Název A–Z</option>
+        <select aria-label="Měna instrumentu" value={currency} onChange={(e) => setCurrency(e.target.value)}>
+          <option value="all">Všechny měny</option>
+          {currencies.map((value) => <option key={value} value={value}>{value}</option>)}
         </select>
+        <select aria-label="Řazení pozic" value={sort} onChange={(e) => setSort(e.target.value as typeof sort)}>
+          <option value="value">Hodnota ↓</option>
+          <option value="allocation">Alokace</option>
+          <option value="pnl">P/L</option>
+          <option value="return">Výnos období</option>
+          <option value="contribution">Příspěvek ↓</option>
+        </select>
+        <button className="sort-direction" aria-label={descending ? "Řadit vzestupně" : "Řadit sestupně"} onClick={() => setDescending((value) => !value)}>{descending ? <ArrowDown size={15} /> : <ArrowUp size={15} />}</button>
       </div>
       <div className="holdings-table-wrap surface">
         <table className="holdings-table">
@@ -107,7 +120,7 @@ export function HoldingsTable({
                     </span>
                   </button>
                 </td>
-                <td data-label="Hodnota">{money(p.marketValue, locale)}</td>
+                <td data-label="Hodnota">{money(p.marketValue, locale)}{quotes.find((quote) => quote.assetId === p.assetId) && <small className="holding-current-price">{quotes.find((quote) => quote.assetId === p.assetId)!.price.toLocaleString(locale)} {p.asset.currency}</small>}</td>
                 <td data-label="Alokace">
                   <span>{allocation(p.allocationPct, locale)}</span>
                   <div className="allocation-meter">
@@ -152,9 +165,9 @@ export function HoldingsTable({
                 ? "Upravte hledání nebo filtr."
                 : "Vyberte akcii, ETF, kryptoměnu nebo hotovost."}
             </p>
-            {!holdings.length && (
+            {!holdings.length && editable && (
               <button className="primary-button" onClick={onAdd}>
-                Přidat aktivum
+                Přidat investici
               </button>
             )}
           </div>

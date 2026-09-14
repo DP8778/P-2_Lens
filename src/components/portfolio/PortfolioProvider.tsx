@@ -12,9 +12,7 @@ import {
 import { z } from "zod";
 import {
   buildHoldings,
-  draftToTransaction,
   initialTransactions,
-  transactionsSchema,
   type AnalysisDataset,
   type Holding,
   type HoldingDraft,
@@ -29,7 +27,6 @@ import type { MarketAsset, MarketQuote } from "@/lib/market-data/types";
 
 export type PortfolioMode = "demo" | "personal";
 export type MarketLoadState = "idle" | "loading" | "ready" | "stale" | "unavailable";
-const demoKey = "lens-portfolio-transactions-v3";
 const personalKey = "lens-personal-portfolio-v1";
 const modeKey = "lens-portfolio-mode-v1";
 
@@ -53,7 +50,6 @@ const personalSchema = z.object({
 type PersonalPortfolio = z.infer<typeof personalSchema>;
 const emptyPersonal: PersonalPortfolio = { version: 1, assets: [], transactions: [] };
 
-let demoSnapshot = initialTransactions;
 let personalSnapshot: PersonalPortfolio = emptyPersonal;
 let modeSnapshot: PortfolioMode = "demo";
 let loaded = false;
@@ -64,8 +60,6 @@ function hydrateStorage() {
   if (loaded || typeof window === "undefined") return;
   loaded = true;
   try {
-    const rawDemo = localStorage.getItem(demoKey);
-    if (rawDemo) demoSnapshot = transactionsSchema.parse(JSON.parse(rawDemo));
     const rawPersonal = localStorage.getItem(personalKey);
     if (rawPersonal) personalSnapshot = personalSchema.parse(JSON.parse(rawPersonal));
     const rawMode = localStorage.getItem(modeKey);
@@ -79,16 +73,9 @@ function subscribe(listener: () => void) {
   listeners.add(listener);
   return () => listeners.delete(listener);
 }
-const readDemo = () => (hydrateStorage(), demoSnapshot);
+const readDemo = () => (hydrateStorage(), initialTransactions);
 const readPersonal = () => (hydrateStorage(), personalSnapshot);
 const readMode = () => (hydrateStorage(), modeSnapshot);
-function persistDemo(rows: Transaction[]) {
-  const parsed = transactionsSchema.parse(rows);
-  localStorage.setItem(demoKey, JSON.stringify(parsed));
-  demoSnapshot = parsed;
-  storageWarning = "";
-  notify();
-}
 function persistPersonal(value: PersonalPortfolio) {
   const parsed = personalSchema.parse(value);
   localStorage.setItem(personalKey, JSON.stringify(parsed));
@@ -130,6 +117,7 @@ export interface MarketRuntime {
   fxRates: FxRate[];
   quotes: MarketQuote[];
   benchmark?: MarketAsset;
+  comparisonAssets?: MarketAsset[];
   lastRefresh?: string;
   error?: string;
   source?: "network" | "cache";
@@ -150,6 +138,9 @@ const Context = createContext<{
   savePersonal: (asset: MarketAsset, row: SavePersonalDraft, edit?: boolean) => Promise<void>;
   remove: (id: string) => void;
   refreshQuotes: () => Promise<void>;
+  prepareComparison: (asset: MarketAsset) => Promise<void>;
+  saveTrade: (assetId: string, type: "buy" | "sell", input: { quantity: number; unitPrice: number; date: string; fee: number }, editId?: string) => Promise<void>;
+  removeTransaction: (id: string) => void;
 } | null>(null);
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
@@ -249,10 +240,11 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     const firstTransaction = personalTransactions.filter((row) => "assetId" in row).map((row) => row.occurredAt).sort()[0];
     if (!firstTransaction) return undefined;
     const benchmarkAsset = market.benchmark;
-    const assets: Asset[] = [...personal.assets.map(domainAsset), ...(benchmarkAsset && !personal.assets.some((asset) => asset.id === benchmarkAsset.id) ? [domainAsset(benchmarkAsset)] : [])];
+    const assets: Asset[] = [...personal.assets, ...(market.comparisonAssets ?? [])].filter((asset, index, rows) => rows.findIndex((candidate) => candidate.id === asset.id) === index).map(domainAsset);
+    if (benchmarkAsset && !assets.some((asset) => asset.id === benchmarkAsset.id)) assets.push(domainAsset(benchmarkAsset));
     const benchmarks: Benchmark[] = benchmarkAsset ? [{ id: "spy", name: "S&P 500", symbol: "SPY", assetId: benchmarkAsset.id, currency: benchmarkAsset.currency }] : [];
     return { asOf: today(), timeline: calendar(firstTransaction, today()), assets, prices: market.prices, fxRates: market.fxRates, benchmarks };
-  }, [market.benchmark, market.fxRates, market.prices, mode, personal.assets, personalTransactions]);
+  }, [market.benchmark, market.comparisonAssets, market.fxRates, market.prices, mode, personal.assets, personalTransactions]);
 
   const savePersonal = useCallback(async (asset: MarketAsset, row: SavePersonalDraft, edit = false) => {
     const range = { from: row.date, to: today(), interval: "1day" as const };
@@ -271,6 +263,44 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const prepareComparison = useCallback(async (asset: MarketAsset) => {
+    const from = personalTransactions.filter((row) => "assetId" in row).map((row) => row.occurredAt).sort()[0] ?? today();
+    const range = { from, to: today(), interval: "1day" as const };
+    const [history, fx] = await Promise.all([
+      loadHistory(asset, range),
+      asset.currency === "CZK" ? Promise.resolve(undefined) : loadFxHistory(asset.currency, "CZK", range),
+    ]);
+    setMarket((current) => {
+      const priceMap = new Map([...current.prices, ...history.points.map((point) => ({ assetId: point.assetId, date: point.date, close: point.close, currency: point.currency }))].map((point) => [`${point.assetId}:${point.date}`, point]));
+      const fxMap = new Map([...current.fxRates, ...(fx?.points.map((point) => ({ date: point.date, currency: point.base, czkPerUnit: point.rate })) ?? [])].map((point) => [`${point.currency}:${point.date}`, point]));
+      return { ...current, prices: [...priceMap.values()], fxRates: [...fxMap.values()], comparisonAssets: [asset, ...(current.comparisonAssets ?? []).filter((candidate) => candidate.id !== asset.id)] };
+    });
+  }, [personalTransactions]);
+
+  const saveTrade = useCallback(async (assetId: string, type: "buy" | "sell", input: { quantity: number; unitPrice: number; date: string; fee: number }, editId?: string) => {
+    const current = readPersonal();
+    const asset = current.assets.find((candidate) => candidate.id === assetId);
+    if (!asset) throw new Error("Instrument není v portfoliu.");
+    const available = buildHoldings(current.transactions as Transaction[], today(), market.fxRates).find((holding) => holding.assetId === assetId)?.quantity ?? 0;
+    const edited = editId ? current.transactions.find((transaction) => transaction.id === editId && "quantity" in transaction) : undefined;
+    if (type === "sell" && input.quantity > available + (edited?.type === "sell" ? edited.quantity : 0)) throw new Error("Nelze prodat více, než aktuálně držíte.");
+    await Promise.all([loadHistory(asset, { from: input.date, to: today(), interval: "1day" }), asset.currency === "CZK" ? Promise.resolve() : loadFxHistory(asset.currency, "CZK", { from: input.date, to: today(), interval: "1day" })]);
+    const suffix = editId?.split(`personal-${edited?.type}-${assetId}-`)[1];
+    const withoutEdited = editId ? current.transactions.filter((transaction) => transaction.id !== editId && transaction.id !== `personal-funding-${assetId}-${suffix}`) : current.transactions;
+    const timestamp = `${Date.now()}-${sequence++}`;
+    const trade: Transaction = { id: `personal-${type}-${assetId}-${timestamp}`, type, occurredAt: input.date, assetId, quantity: input.quantity, unitPrice: input.unitPrice, currency: asset.currency, fee: input.fee };
+    const funding: Transaction[] = type === "buy" ? [{ id: `personal-funding-${assetId}-${timestamp}`, type: "deposit", occurredAt: input.date, amount: input.quantity * input.unitPrice + input.fee, currency: asset.currency, fee: 0 }] : [];
+    persistPersonal({ ...current, transactions: [...withoutEdited, ...funding, trade] });
+  }, [market.fxRates]);
+
+  const removeTransaction = useCallback((id: string) => {
+    const current = readPersonal();
+    const transaction = current.transactions.find((row) => row.id === id);
+    if (!transaction) return;
+    const suffix = "assetId" in transaction ? id.split(`personal-${transaction.type}-${transaction.assetId}-`)[1] : undefined;
+    persistPersonal({ ...current, transactions: current.transactions.filter((row) => row.id !== id && (!("assetId" in transaction) || row.id !== `personal-funding-${transaction.assetId}-${suffix}`)) });
+  }, []);
+
   return (
     <Context value={{
       mode,
@@ -282,16 +312,19 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       market,
       analysisDataset,
       save: (row, edit) => {
-        const remaining = edit ? readDemo().filter((transaction) => !("assetId" in transaction) || transaction.assetId !== row.assetId) : readDemo();
-        persistDemo([...remaining, draftToTransaction(row, `local-${Date.now()}-${sequence++}`)]);
+        void row; void edit;
+        throw new Error("Demo portfolio je read-only.");
       },
       savePersonal,
       remove: (id) => {
-        if (mode === "demo") { persistDemo(readDemo().filter((transaction) => !("assetId" in transaction) || transaction.assetId !== id)); return; }
+        if (mode === "demo") throw new Error("Demo portfolio je read-only.");
         const current = readPersonal();
         persistPersonal({ ...current, assets: current.assets.filter((asset) => asset.id !== id), transactions: current.transactions.filter((transaction) => !("assetId" in transaction && transaction.assetId === id) && !transaction.id.startsWith(`personal-funding-${id}-`)) });
       },
       refreshQuotes: refreshQuotesOnly,
+      prepareComparison,
+      saveTrade,
+      removeTransaction,
     }}>
       {children}
     </Context>

@@ -4,6 +4,7 @@ import type { Timeframe } from "@/types/finance";
 import type { ChartDisplay, ChartMode } from "@/lib/finance/portfolio-engine";
 import { chartModes } from "./chart-options";
 import type { Asset } from "@/lib/finance/domain";
+import { ComparePicker } from "./ComparePicker";
 export interface ChartSettings {
   mode: ChartMode;
   display: ChartDisplay;
@@ -65,23 +66,6 @@ export function ChartControls({
                   {allowNasdaqBenchmark && <option value="qqq">Nasdaq 100 benchmark</option>}
                 </select>
               </label>
-              <label>
-                Porovnat aktivum
-                <select
-                  aria-label="Porovnat aktivum"
-                  value={s.compare}
-                  onChange={(e) => onChange({ ...s, compare: e.target.value })}
-                >
-                  <option value="">Bez porovnání</option>
-                  {compareAssets
-                    .filter((a) => a.type !== "cash")
-                    .map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.symbol} · {a.name}
-                      </option>
-                    ))}
-                </select>
-              </label>
               <label className="check-control">
                 <input
                   type="checkbox"
@@ -112,23 +96,7 @@ export function ChartControls({
           {timeframe === "CUSTOM" && <span className="tertiary">Vlastní</span>}
         </div>
         <div className="chart-view-controls">
-          <label className="quick-compare">
-            <span>Porovnat</span>
-            <select
-              aria-label="Rychlé porovnání aktiva"
-              value={s.compare}
-              onChange={(event) => onChange({ ...s, compare: event.target.value })}
-            >
-              <option value="">Žádné aktivum</option>
-              {compareAssets
-                .filter((asset) => asset.type !== "cash")
-                .map((asset) => (
-                  <option key={asset.id} value={asset.id}>
-                    {asset.symbol}
-                  </option>
-                ))}
-            </select>
-          </label>
+          <ComparePicker assets={compareAssets} selected={s.compare} onSelect={(compare) => onChange({ ...s, compare })} />
           {s.compare || s.showBenchmark ? (
             <span className="comparison-scale" title="Srovnávací řady začínají na hodnotě 100">
               Index 100

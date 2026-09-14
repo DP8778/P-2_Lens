@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Check, ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Dialog } from "@/components/ui/Dialog";
 import { assetCatalog, MOCK_AS_OF } from "@/data/mock/catalog";
 import {
@@ -26,10 +26,12 @@ export function AddAssetDialog({
   onClose,
   initialAssetId,
   edit,
+  onSaved,
 }: {
   onClose: () => void;
   initialAssetId?: string;
   edit?: Holding;
+  onSaved?: (symbol: string) => void;
 }) {
   const { mode, holdings, assets, market, save, savePersonal } = usePortfolio();
   const initial =
@@ -51,7 +53,8 @@ export function AddAssetDialog({
   const [quote, setQuote] = useState<MarketQuote>();
   const [currentFx, setCurrentFx] = useState(1);
   const [draft, setDraft] = useState<HoldingDraft>();
-  const existing = holdings.some((position) => position.assetId === asset?.id);
+  const existingHolding = holdings.find((position) => position.assetId === asset?.id);
+  const existing = Boolean(existingHolding);
   const number = (value: string) => Number(value.replace(",", "."));
 
   useEffect(() => {
@@ -157,7 +160,8 @@ export function AddAssetDialog({
       } else {
         save(draft, !!edit);
       }
-      setStep(4);
+      onSaved?.(asset.symbol);
+      onClose();
     } catch (reason) {
       setError(
         mode === "demo"
@@ -172,11 +176,11 @@ export function AddAssetDialog({
   };
 
   return (
-    <Dialog open title={step === 4 ? "Pozice uložena" : edit ? "Upravit pozici" : "Přidat aktivum"} onClose={pending ? () => {} : onClose}>
+    <Dialog open wide title={edit ? "Upravit investici" : "Přidat investici"} onClose={pending ? () => {} : onClose}>
       <div className="add-asset-flow">
         {step < 4 && (
           <ol className="flow-steps" aria-label="Postup přidání">
-            {["Aktivum", "Pozice", "Kontrola"].map((label, index) => (
+            {["Instrument", "Transakce", "Kontrola"].map((label, index) => (
               <li key={label} aria-current={step === index + 1 ? "step" : undefined}><span>{index + 1}</span>{label}</li>
             ))}
           </ol>
@@ -206,20 +210,22 @@ export function AddAssetDialog({
               <dl className="live-quote-preview" aria-live="polite">
                 <div><dt>Aktuální cena</dt><dd>{quoteLoading ? "Načítám…" : quote ? `${quote.price.toLocaleString("cs-CZ")} ${quote.currency}` : "Nedostupná"}</dd></div>
                 <div><dt>Aktualizováno</dt><dd>{quote ? new Date(quote.timestamp).toLocaleString("cs-CZ") : "—"}</dd></div>
+                <div><dt>Stav trhu</dt><dd>{quote?.marketState === "open" ? "Trh otevřen" : quote?.marketState === "closed" ? "Trh zavřen" : "Neznámý"}</dd></div>
               </dl>
             )}
-            {existing && !edit && <p className="inline-notice">Aktivum již držíte. Nákup přidáme jako další transakci ke stejné pozici.</p>}
+            {existing && !edit && <p className="inline-notice"><strong>{asset.symbol} už je ve vašem portfoliu.</strong> Současná pozice: {existingHolding?.quantity.toLocaleString("cs-CZ", { maximumFractionDigits: 8 })} ks. Přidáte další nákup ke stejné pozici.</p>}
             <div className="position-fields">
               <label>Množství<input inputMode="decimal" value={quantity} onChange={(event) => setQuantity(event.target.value)} placeholder="0,00" autoFocus aria-invalid={!!error} aria-describedby={error ? "position-error" : undefined} /></label>
-              <label>{mode === "demo" ? "Průměrná nákupní cena" : "Nákupní cena"}<input inputMode="decimal" value={cost} onChange={(event) => setCost(event.target.value)} placeholder="Cena za jednotku" /></label>
+              <label>{mode === "demo" ? "Průměrná nákupní cena" : "Nákupní cena"}<input inputMode="decimal" value={cost} onChange={(event) => setCost(event.target.value)} placeholder="Cena za jednotku" aria-invalid={!!error} aria-describedby={error ? "position-error" : undefined} /></label>
               <label>Měna nákupu<select value={currency} disabled={mode === "personal"} onChange={(event) => setCurrency(event.target.value as PositionCurrency)}><option>USD</option><option>CZK</option><option>EUR</option>{mode === "personal" && !["USD", "CZK", "EUR"].includes(currency) && <option>{currency}</option>}</select></label>
-              <label>Datum pozice<input type="date" min="1900-01-01" max={mode === "personal" ? currentDate() : MOCK_AS_OF} value={date} onChange={(event) => setDate(event.target.value)} /></label>
-              <label className="full-field">Poplatky · {currency}<input inputMode="decimal" value={fees} onChange={(event) => setFees(event.target.value)} /></label>
+              <label>Datum nákupu<input type="date" min="1900-01-01" max={mode === "personal" ? currentDate() : MOCK_AS_OF} value={date} onChange={(event) => setDate(event.target.value)} aria-invalid={!!error} aria-describedby={error ? "position-error" : undefined} /></label>
+              <label className="full-field">Poplatky · {currency}<input inputMode="decimal" value={fees} onChange={(event) => setFees(event.target.value)} aria-invalid={!!error} aria-describedby={error ? "position-error" : undefined} /></label>
             </div>
+            {mode === "personal" && quote && date === currentDate() && <button type="button" className="use-current-price" onClick={() => setCost(String(quote.price))}>Použít aktuální cenu</button>}
             {error && <p id="position-error" role="alert" className="form-error">{error}</p>}
             <div className="dialog-actions">
               <button type="button" className="quiet-button" onClick={() => { setStep(1); setError(""); }} disabled={!!edit}><ArrowLeft size={16} />Zpět</button>
-              <button type="submit" className="primary-button" disabled={quoteLoading}>Zkontrolovat pozici<ArrowRight size={16} /></button>
+              <button type="submit" className="primary-button" disabled={quoteLoading}>Zkontrolovat investici<ArrowRight size={16} /></button>
             </div>
           </form>
         )}
@@ -230,19 +236,16 @@ export function AddAssetDialog({
               <div><dt>{mode === "demo" ? `Odhadovaná hodnota ${edit ? "pozice" : "přidání"}` : "Odhadovaná současná hodnota"}</dt><dd>{money(preview.value)}</dd></div>
               <div><dt>{mode === "demo" ? "Alokace aktiva po uložení" : "Projektovaná alokace"}</dt><dd>{allocation(preview.allocation)}</dd></div>
               <div><dt>Nákupní cena</dt><dd>{number(cost).toLocaleString("cs-CZ")} {currency}</dd></div>
-              <div><dt>Datum pozice</dt><dd>{date}</dd></div>
+              <div><dt>Datum nákupu</dt><dd>{date}</dd></div>
               <div><dt>Poplatek</dt><dd>{number(fees).toLocaleString("cs-CZ")} {currency}</dd></div>
             </dl>
             <p className="tertiary">{mode === "personal" ? "Před uložením načteme denní historii aktiva a odpovídající historický kurz do CZK." : "Ocenění používá deterministické demo ceny a kurzy."}</p>
             {error && <p role="alert" className="form-error">{error}</p>}
             <div className="dialog-actions">
               <button className="quiet-button" disabled={pending} onClick={() => setStep(2)}><ArrowLeft size={16} />Upravit</button>
-              <button className="primary-button" disabled={pending} onClick={submit}>{pending ? "Načítám historii aktiva…" : edit ? "Uložit změny" : existing ? "Přidat ke stávající pozici" : "Přidat do portfolia"}</button>
+              <button className="primary-button" disabled={pending} onClick={submit}>{pending ? `Přidávám ${asset.symbol} · načítám historická data…` : edit ? "Uložit změny" : existing ? "Přidat další nákup" : "Přidat do portfolia"}</button>
             </div>
           </div>
-        )}
-        {step === 4 && (
-          <div className="save-success" role="status"><span><Check size={28} /></span><h3>{asset?.symbol} je v portfoliu</h3><p>Hodnota portfolia, graf i Lens Insight jsou aktualizované ze stejného zdroje dat.</p><button className="primary-button" onClick={onClose}>Zpět do portfolia</button></div>
         )}
         {step < 3 && <p className="dialog-footnote">{mode === "personal" ? "Twelve Data · osobní transakce zůstávají pouze v tomto prohlížeči." : "Demo katalog · pozice se ukládají pouze v tomto prohlížeči."}</p>}
       </div>

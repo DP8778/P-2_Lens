@@ -24,6 +24,12 @@ import { MarketDataInspector } from "@/components/portfolio/MarketDataInspector"
 import { dateLabel } from "@/components/charts/chart-formatters";
 
 const daysFor: Record<TimeRange, number> = { "1W": 7, "1M": 30, "3M": 90, YTD: 366, "1Y": 365, ALL: 100_000 };
+const freshnessLabel = (timestamp: string) => {
+  const seconds = Math.max(0, Math.round((Date.now() - Date.parse(timestamp)) / 1000));
+  if (seconds < 60) return `Aktualizováno před ${seconds} s`;
+  const minutes = Math.round(seconds / 60);
+  return minutes < 60 ? `Aktualizováno před ${minutes} min` : `Aktualizováno ${new Date(timestamp).toLocaleString("cs-CZ")}`;
+};
 function liveRange(timeline: string[], timeframe: TimeRange | "CUSTOM", selected: [string, string] | null) {
   if (selected) {
     const start = timeline.findIndex((date) => date >= selected[0]);
@@ -43,6 +49,7 @@ export function DashboardView({ locale, initialAssetId }: { locale: Locale; dict
   const { state, dispatch } = useAnalysisContext();
   const [detailId, setDetailId] = useState<string | undefined>(initialAssetId);
   const [add, setAdd] = useState<{ assetId?: string; edit?: Holding }>();
+  const [confirmation, setConfirmation] = useState("");
   useEffect(() => {
     if (initialAssetId) dispatch({ type: "settings", value: { compareAssetId: initialAssetId } });
   }, [dispatch, initialAssetId]);
@@ -101,13 +108,14 @@ export function DashboardView({ locale, initialAssetId }: { locale: Locale; dict
           </details>
           <span className="demo-label">{mode === "demo" ? "Demo data" : "Osobní · CZK"}</span>
         </div>
-        <button className="primary-button" onClick={() => setAdd({})}><Plus size={17} />Přidat aktivum</button>
+        {mode === "personal" ? <button className="primary-button" onClick={() => setAdd({})}><Plus size={17} />Přidat investici</button> : <button className="quiet-button" onClick={() => switchMode("personal")}>Použít vlastní portfolio</button>}
       </header>
+      {confirmation && <div className="portfolio-toast" role="status">{confirmation}</div>}
       {warning && <p role="status" className="inline-notice">{warning}</p>}
       {mode === "personal" && (
         <div className={`market-data-strip ${market.state}`} role="status">
-          <span>{market.state === "loading" ? "Načítám market data…" : market.state === "stale" ? "Data nejsou aktuální" : market.state === "unavailable" ? market.error : market.lastRefresh ? `Aktualizováno ${new Date(market.lastRefresh).toLocaleString(locale)}` : "Twelve Data"}</span>
-          {market.lastRefresh && <small>{market.source === "cache" ? "cache" : "network"} · {market.quotes.some((quote) => quote.marketState === "open") ? "trh otevřený" : "poslední dostupná cena"}</small>}
+          <span>{market.state === "loading" ? "Načítám market data…" : market.state === "stale" ? `Data nejsou aktuální · ${market.lastRefresh ? freshnessLabel(market.lastRefresh).toLowerCase() : "poslední uložené ceny"}` : market.state === "unavailable" ? market.error : market.lastRefresh ? freshnessLabel(market.lastRefresh) : "Twelve Data"}</span>
+          {market.lastRefresh && <small>{market.quotes.some((quote) => quote.marketState === "open") ? "● Trh otevřen" : `Poslední dostupné ceny · ${market.quotes[0] ? new Date(market.quotes[0].timestamp).toLocaleString(locale) : "trh zavřen"}`}</small>}
           {holdings.length > 0 && <button className="icon-control" onClick={() => void refreshQuotes()} aria-label="Aktualizovat ceny"><RefreshCw size={14} /></button>}
         </div>
       )}
@@ -119,9 +127,10 @@ export function DashboardView({ locale, initialAssetId }: { locale: Locale; dict
             ? market.state === "loading"
               ? "Načítám historii a kurzy pro vaše portfolio…"
               : "Portfolio je uložené, ale market data teď nejsou dostupná."
-            : "Zatím zde nemáte žádná aktiva."}</p>
+            : "Sledujte výkon a strukturu vlastního portfolia."}</p>
           {market.configured === false && <small>Live market data nejsou nakonfigurována. Přidejte TWELVE_DATA_API_KEY do .env.local.</small>}
-          <button className="primary-button" onClick={() => setAdd({})}><Plus size={17} />Přidat první aktivum</button>
+          <button className="primary-button" onClick={() => setAdd({})}><Plus size={17} />Přidat první investici</button>
+          <button className="quiet-button" onClick={() => switchMode("demo")}>Zobrazit demo portfolio</button>
         </section>
       ) : analysis && overview && visibleAnalysis ? (
         <>
@@ -132,16 +141,16 @@ export function DashboardView({ locale, initialAssetId }: { locale: Locale; dict
             <LensInsight analysis={analysis} locale={locale} dataSource={mode === "personal" ? "live" : "mock"} context={{ transactions, selectedRange: state.selectedRange, timeframe: state.timeframe, mode: state.mode, benchmarkId: state.benchmarkId, compareAssetId: state.compareAssetId, showBenchmark: state.showBenchmark, selectedPoint: state.selectedPoint }} />
           </div>
           <PortfolioDrivers analysis={analysis} locale={locale} />
-          <HoldingsTable holdings={analysis.holdings} locale={locale} onSelect={(position) => setDetailId(position.assetId)} onAdd={() => setAdd({})} period={period} />
+          <HoldingsTable holdings={analysis.holdings} locale={locale} onSelect={(position) => setDetailId(position.assetId)} onAdd={() => setAdd({})} period={period} quotes={market.quotes} editable={mode === "personal"} />
           <footer className="portfolio-footer"><span>Lens · portfolio intelligence</span><p>{mode === "demo" ? "Verze dat lens-demo-2026.09-v2 · CZK, deterministické demo ceny a kurzy." : `Twelve Data · price-based return · ${market.lastRefresh ? `aktualizováno ${new Date(market.lastRefresh).toLocaleString(locale)}` : "market data"}.`}</p></footer>
           <AnalysisInspector state={state} analysis={analysis} />
           <MarketDataInspector mode={mode} assets={analysisDataset?.assets ?? []} market={market} />
         </>
       ) : null}
       {detail && (
-        <HoldingDetail holding={detail} locale={locale} onClose={() => setDetailId(undefined)} onCompare={() => { dispatch({ type: "settings", value: { compareAssetId: detail.assetId, mode: "performance" } }); setDetailId(undefined); document.querySelector(".hero-analytics")?.scrollIntoView({ behavior: "instant", block: "start" }); }} onEdit={() => { setAdd({ edit: holdings.find((position) => position.assetId === detail.assetId) }); setDetailId(undefined); }} onAdd={() => { setAdd({ assetId: detail.assetId }); setDetailId(undefined); }} />
+        <HoldingDetail holding={detail} locale={locale} onClose={() => setDetailId(undefined)} onCompare={() => { dispatch({ type: "settings", value: { compareAssetId: detail.assetId, mode: "performance" } }); setDetailId(undefined); document.querySelector(".hero-analytics")?.scrollIntoView({ behavior: "instant", block: "start" }); }} onAdd={() => { setAdd({ assetId: detail.assetId }); setDetailId(undefined); }} />
       )}
-      {add && <AddAssetDialog onClose={closeAdd} initialAssetId={add.assetId} edit={add.edit} />}
+      {add && <AddAssetDialog onClose={closeAdd} initialAssetId={add.assetId} edit={add.edit} onSaved={(symbol) => { setConfirmation(`${symbol} bylo přidáno do portfolia.`); window.setTimeout(() => setConfirmation(""), 3200); }} />}
     </div>
   );
 }

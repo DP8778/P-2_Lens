@@ -1,9 +1,12 @@
+import { useState } from "react";
 import type { PortfolioAnalysis } from "@/lib/finance/portfolio-engine";
 import { allocation } from "@/components/charts/chart-formatters";
 
 export function ConcentrationPanel({ analysis, locale }: { analysis: PortfolioAnalysis; locale: string }) {
   const c = analysis.concentration;
-  const positions = analysis.holdings.filter((item) => item.assetId !== "cash").slice(0, 5);
+  const [showAll, setShowAll] = useState(false);
+  const allPositions = analysis.holdings.filter((item) => item.assetId !== "cash");
+  const positions = showAll ? allPositions : allPositions.slice(0, 5);
   return (
     <div className="concentration-panel">
       <h2>Koncentrace portfolia</h2>
@@ -22,6 +25,7 @@ export function ConcentrationPanel({ analysis, locale }: { analysis: PortfolioAn
           </div>
         ))}
       </div>
+      {allPositions.length > 5 && <button className="panel-disclosure" aria-expanded={showAll} onClick={() => setShowAll((value) => !value)}>{showAll ? "Zobrazit Top 5" : `Zobrazit všech ${allPositions.length}`}</button>}
       <p>Top 3 pozice tvoří {allocation(c.top3Share, locale)} hodnoty celého portfolia; hotovost sledujeme samostatně.</p>
     </div>
   );

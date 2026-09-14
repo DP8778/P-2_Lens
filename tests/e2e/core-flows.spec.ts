@@ -46,8 +46,9 @@ test("opens the portfolio, switches modes, compares and selects a chart point", 
   const chartOptionsTrigger = page.getByLabel("Nastavení grafu", { exact: true });
   await chartOptionsTrigger.click();
   await page.getByLabel("Benchmark", { exact: true }).selectOption("qqq");
-  if ((await chartOptions.getAttribute("open")) === null) await chartOptionsTrigger.click();
-  await page.getByLabel("Porovnat aktivum", { exact: true }).selectOption("btc");
+  if ((await chartOptions.getAttribute("open")) !== null) await chartOptionsTrigger.click();
+  await page.locator(".compare-trigger").click();
+  await page.locator(".compare-holdings").getByRole("button", { name: /BTC Bitcoin/ }).click();
   await expect(page.locator(".chart-legend")).toContainText("Index 100");
   await expect(page.locator(".insight-copy h3")).toContainText("BTC");
   if ((await chartOptions.getAttribute("open")) !== null) await chartOptionsTrigger.click();
@@ -66,78 +67,28 @@ test("opens the portfolio, switches modes, compares and selects a chart point", 
   await page.screenshot({ path: "test-results/lens-compare.png", fullPage: true });
 });
 
-test("adds, persists, merges, edits and removes a holding", async ({ page }) => {
+test("demo remains deterministic and read-only", async ({ page }) => {
   await page.goto("/cs-CZ/dashboard");
   const before = await page.getByTestId("portfolio-value").innerText();
-  await page.getByRole("button", { name: "Přidat aktivum", exact: true }).first().click();
-  await page.getByLabel("Hledat ticker nebo aktivum").fill("ETH");
-  await page.getByRole("button", { name: /ETH Ethereum/ }).click();
-  await page.getByLabel("Množství", { exact: true }).fill("2");
-  await page.getByLabel("Průměrná nákupní cena", { exact: true }).fill("3000");
-  await page.getByRole("button", { name: "Zkontrolovat pozici" }).click();
-  await expect(page.getByText("Alokace aktiva po uložení")).toBeVisible();
-  await page.getByRole("button", { name: "Přidat do portfolia", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "ETH je v portfoliu" })).toBeVisible();
-  await page.getByRole("button", { name: "Zpět do portfolia" }).click();
-  await expect(page.getByTestId("portfolio-value")).not.toHaveText(before);
-  const after = await page.getByTestId("portfolio-value").innerText();
+  await expect(page.getByRole("button", { name: "Použít vlastní portfolio" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Přidat investici" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Detail BTC", exact: true }).click();
+  await expect(page.getByText("Demo portfolio je read-only analytický scénář.")).toBeVisible();
+  await page.keyboard.press("Escape");
   await page.reload();
-  await expect(page.getByTestId("portfolio-value")).toHaveText(after);
-  await page.getByRole("button", { name: "Detail ETH", exact: true }).click();
-  await page.getByRole("button", { name: "Přidat k pozici" }).click();
-  await expect(page.getByText(/Aktivum již držíte/)).toBeVisible();
-  await page.getByLabel("Množství", { exact: true }).fill("1");
-  await page.getByLabel("Průměrná nákupní cena", { exact: true }).fill("4500");
-  await page.getByRole("button", { name: "Zkontrolovat pozici" }).click();
-  await page.getByRole("button", { name: "Přidat ke stávající pozici" }).click();
-  await page.getByRole("button", { name: "Zpět do portfolia" }).click();
-  await expect(page.getByRole("button", { name: "Detail ETH", exact: true })).toHaveCount(1);
-  await page.getByRole("button", { name: "Detail ETH", exact: true }).click();
-  await page.getByRole("button", { name: "Upravit pozici" }).click();
-  await expect(page.getByLabel("Množství", { exact: true })).toHaveValue("3");
-  await expect(page.getByLabel("Průměrná nákupní cena", { exact: true })).toHaveValue("3500");
-  await page.getByLabel("Množství", { exact: true }).fill("4");
-  await page.getByRole("button", { name: "Zkontrolovat pozici" }).click();
-  await page.getByRole("button", { name: "Uložit změny" }).click();
-  await page.getByRole("button", { name: "Zpět do portfolia" }).click();
-  await page.getByRole("button", { name: "Detail ETH", exact: true }).click();
-  await page.getByRole("button", { name: "Odebrat z portfolia" }).click();
-  await page.getByRole("button", { name: "Odebrat pozici", exact: true }).click();
   await expect(page.getByTestId("portfolio-value")).toHaveText(before);
 });
 
-test("validates input, traps focus, reports storage failure and closes with Escape", async ({
-  page,
-}) => {
+test("dialogs trap focus, close with Escape and return focus", async ({ page }) => {
   await page.goto("/cs-CZ/dashboard");
-  const add = page.getByRole("button", { name: "Přidat aktivum", exact: true }).first();
-  await add.click();
-  await page.getByLabel("Hledat ticker nebo aktivum").fill("unknown-asset");
-  await expect(page.getByText(/Žádné výsledky/)).toBeVisible();
-  await page.getByLabel("Hledat ticker nebo aktivum").fill("AAPL");
-  await page.getByRole("button", { name: /AAPL Apple/ }).click();
-  await page.getByLabel("Množství", { exact: true }).fill("-2");
-  await page.getByRole("button", { name: "Zkontrolovat pozici" }).click();
-  await expect(page.getByRole("dialog").getByRole("alert")).toContainText("Množství");
-  await page.getByLabel("Množství", { exact: true }).fill("2");
-  await page.getByLabel("Průměrná nákupní cena", { exact: true }).fill("0");
-  await page.getByRole("button", { name: "Zkontrolovat pozici" }).click();
-  await expect(page.getByRole("dialog").getByRole("alert")).toContainText("cena");
-  await page.getByLabel("Průměrná nákupní cena", { exact: true }).fill("200");
-  await page.getByRole("button", { name: "Zkontrolovat pozici" }).click();
-  await page.evaluate(() => {
-    Storage.prototype.setItem = () => {
-      throw new Error("disabled");
-    };
-  });
-  await page.getByRole("button", { name: "Přidat ke stávající pozici" }).click();
-  await expect(page.getByRole("dialog").getByRole("alert")).toContainText("nepodařilo uložit");
+  const detail = page.getByRole("button", { name: "Detail BTC", exact: true });
+  await detail.click();
   await page.getByRole("button", { name: "Zavřít", exact: true }).focus();
   await page.keyboard.press("Shift+Tab");
   expect(await page.evaluate(() => !!document.activeElement?.closest("dialog"))).toBe(true);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(add).toBeFocused();
+  await expect(detail).toBeFocused();
 });
 
 test("navigator mění pouze viewport a vlastní rozsah řídí analýzu", async ({ page }) => {
@@ -190,7 +141,8 @@ test("touch layout stays within the viewport and keeps data usable offline", asy
   await page.getByRole("button", { name: "Detail BTC", exact: true }).click();
   await page.getByRole("button", { name: "Porovnat v grafu" }).click();
   await expect(page.locator(".chart-legend")).toContainText("BTC");
-  await page.getByRole("button", { name: "Přidat aktivum", exact: true }).first().click();
+  await page.getByRole("button", { name: "Použít vlastní portfolio" }).click();
+  await page.getByRole("button", { name: "Přidat první investici" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   expect(await page.getByRole("dialog").evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(
     true,
