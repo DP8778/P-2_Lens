@@ -1,4 +1,5 @@
-export type Currency = "CZK" | "USD" | "EUR";
+/** ISO 4217 kód. Konkrétní podporu měny určuje dostupnost FX série, ne TypeScript union. */
+export type Currency = string;
 export type AssetType = "stock" | "etf" | "crypto" | "cash";
 export type TimeRange = "1W" | "1M" | "3M" | "YTD" | "1Y" | "ALL";
 

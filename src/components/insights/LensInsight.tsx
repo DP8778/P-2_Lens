@@ -30,10 +30,12 @@ export function LensInsight({
   analysis,
   context,
   locale,
+  dataSource = "mock",
 }: {
   analysis: PortfolioAnalysis;
   context: PortfolioContext;
   locale: string;
+  dataSource?: "mock" | "live";
 }) {
   const { dispatch } = useAnalysisContext();
   const requestVersion = useRef(0);
@@ -47,8 +49,9 @@ export function LensInsight({
       toLensFacts(analysis, timeframe, {
         mode: context.mode,
         benchmarkVisible: context.showBenchmark,
+        dataSource,
       }),
-    [analysis, timeframe, context.mode, context.showBenchmark],
+    [analysis, timeframe, context.mode, context.showBenchmark, dataSource],
   );
   const verifiedContext = useMemo(
     () => buildInsightContext(analysis, context, facts),
@@ -77,7 +80,7 @@ export function LensInsight({
 
   useEffect(() => {
     activeKey.current = key;
-    if (cached) {
+    if (cached || dataSource === "live") {
       return;
     }
     const version = ++requestVersion.current;
@@ -109,10 +112,10 @@ export function LensInsight({
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [cached, context, key]);
+  }, [cached, context, dataSource, key]);
 
   const insight = remote?.key === key ? remote.data : (cached ?? deterministic);
-  const loading = remote?.key !== key && !cached && failedKey !== key;
+  const loading = dataSource === "mock" && remote?.key !== key && !cached && failedKey !== key;
   const act = (item: InsightEvidence) => {
     if (!item.action) return;
     if (item.action.type === "selectAsset") {

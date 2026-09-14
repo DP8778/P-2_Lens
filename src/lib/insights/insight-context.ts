@@ -242,7 +242,8 @@ export function buildInsightContext(
   // The analysis parameter deliberately stays at the trust boundary; only LensFacts supply values.
   void analysis;
   return insightContextSchema.parse({
-    datasetVersion: "lens-demo-2026.09-v2",
+    datasetVersion:
+      facts.dataQuality.source === "live" ? "live-market-data-v1" : "lens-demo-2026.09-v2",
     scope,
     focus,
     mode: analysisContext.mode,

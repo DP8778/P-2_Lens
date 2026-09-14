@@ -3,6 +3,7 @@ import { assetCatalog } from "@/data/mock/catalog";
 import type { Timeframe } from "@/types/finance";
 import type { ChartDisplay, ChartMode } from "@/lib/finance/portfolio-engine";
 import { chartModes } from "./chart-options";
+import type { Asset } from "@/lib/finance/domain";
 export interface ChartSettings {
   mode: ChartMode;
   display: ChartDisplay;
@@ -18,12 +19,16 @@ export function ChartControls({
   timeframe,
   onTimeframe,
   onExport,
+  compareAssets = assetCatalog,
+  allowNasdaqBenchmark = true,
 }: {
   settings: ChartSettings;
   onChange: (next: ChartSettings) => void;
   timeframe: Timeframe | "CUSTOM";
   onTimeframe: (value: Timeframe) => void;
   onExport: () => void;
+  compareAssets?: Asset[];
+  allowNasdaqBenchmark?: boolean;
 }) {
   return (
     <div className="chart-controls">
@@ -57,7 +62,7 @@ export function ChartControls({
                   onChange={(e) => onChange({ ...s, benchmark: e.target.value as "spy" | "qqq" })}
                 >
                   <option value="spy">S&P 500 benchmark</option>
-                  <option value="qqq">Nasdaq 100 benchmark</option>
+                  {allowNasdaqBenchmark && <option value="qqq">Nasdaq 100 benchmark</option>}
                 </select>
               </label>
               <label>
@@ -68,7 +73,7 @@ export function ChartControls({
                   onChange={(e) => onChange({ ...s, compare: e.target.value })}
                 >
                   <option value="">Bez porovnání</option>
-                  {assetCatalog
+                  {compareAssets
                     .filter((a) => a.type !== "cash")
                     .map((a) => (
                       <option key={a.id} value={a.id}>
@@ -115,7 +120,7 @@ export function ChartControls({
               onChange={(event) => onChange({ ...s, compare: event.target.value })}
             >
               <option value="">Žádné aktivum</option>
-              {assetCatalog
+              {compareAssets
                 .filter((asset) => asset.type !== "cash")
                 .map((asset) => (
                   <option key={asset.id} value={asset.id}>

@@ -230,6 +230,114 @@ summary {
   width: 280px;
   top: 45px;
 }
+.portfolio-mode-menu {
+  min-width: 280px;
+  padding: 6px;
+}
+.portfolio-mode-menu button {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border-radius: 7px;
+  text-align: left;
+}
+.portfolio-mode-menu button[aria-pressed="true"],
+.portfolio-mode-menu button:hover,
+.portfolio-mode-menu button:focus-visible {
+  background: #ffffff08;
+}
+.portfolio-mode-menu strong,
+.portfolio-mode-menu small {
+  display: block;
+}
+.portfolio-mode-menu small {
+  margin-top: 4px;
+  color: var(--color-text-muted);
+  font-size: 9px;
+}
+.market-data-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  margin: 8px 0 4px;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+}
+.market-data-strip::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-data-positive);
+}
+.market-data-strip.stale::before,
+.market-data-strip.loading::before {
+  background: #d5b77b;
+}
+.market-data-strip.unavailable::before {
+  background: var(--color-data-negative);
+}
+.market-data-strip small {
+  color: var(--color-text-muted);
+}
+.market-data-strip .icon-control {
+  margin-left: auto;
+  min-height: 30px;
+}
+.personal-empty {
+  display: grid;
+  justify-items: center;
+  min-height: 420px;
+  padding: 80px 24px;
+  text-align: center;
+}
+.personal-empty .portfolio-dot {
+  width: 8px;
+  height: 8px;
+  margin-bottom: 18px;
+}
+.personal-empty h1 {
+  font-size: clamp(30px, 4vw, 48px);
+  font-weight: 450;
+  letter-spacing: -0.04em;
+}
+.personal-empty p {
+  margin-top: 12px;
+  color: var(--color-text-secondary);
+}
+.personal-empty small {
+  max-width: 460px;
+  margin-top: 10px;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+.personal-empty .primary-button {
+  margin-top: 28px;
+}
+.live-quote-preview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  margin: 14px 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border-default);
+  border-radius: 8px;
+  background: var(--color-border-default);
+}
+.live-quote-preview > div {
+  padding: 12px;
+  background: #101116;
+}
+.live-quote-preview dt {
+  color: var(--color-text-muted);
+  font-size: 9px;
+}
+.live-quote-preview dd {
+  margin-top: 5px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
 .portfolio-picker > div strong {
   font-size: 13px;
 }

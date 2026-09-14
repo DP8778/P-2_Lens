@@ -1,8 +1,10 @@
 import { z } from "zod";
-import { assetCatalog, type CatalogAsset } from "@/data/mock/catalog";
+import { assetCatalog } from "@/data/mock/catalog";
 import { demoPriceFor, demoTimeline, portfolioDataset } from "@/data/mock/portfolioDataset";
 import type {
   Currency,
+  Asset,
+  Benchmark,
   FxRate,
   Holding as DomainHolding,
   PortfolioSnapshot,
@@ -14,7 +16,7 @@ import type { PortfolioMetrics } from "@/types/finance";
 import { calculateReturn } from "./calculateReturn";
 
 export type { Currency, PricePoint, TimeRange, Transaction } from "./domain";
-export const mockFx = { USD: 22.4, CZK: 1, EUR: 24.8 } as const;
+export const mockFx: Readonly<Record<string, number>> = { USD: 22.4, CZK: 1, EUR: 24.8 };
 export type PositionCurrency = keyof typeof mockFx;
 export const timeline = demoTimeline;
 export const initialTransactions = portfolioDataset.transactions;
@@ -23,7 +25,7 @@ const dated = z.iso.date().refine((date) => date <= portfolioDataset.asOf && dat
 const transactionBase = {
   id: z.string().min(1).max(80),
   occurredAt: dated,
-  currency: z.enum(["CZK", "USD", "EUR"]),
+  currency: z.string().regex(/^[A-Z]{3}$/),
   fee: z.number().finite().nonnegative().max(1e9),
 };
 export const transactionSchema = z.discriminatedUnion("type", [
@@ -88,7 +90,7 @@ const defaultPriceIndex = new Map(
   portfolioDataset.prices.map((point) => [`${point.assetId}:${dateOnly(point.date)}`, point]),
 );
 const fxAt = (currency: Currency, date: string, rates: FxRate[] = portfolioDataset.fxRates) => {
-  if (rates === portfolioDataset.fxRates) return mockFx[currency];
+  if (rates === portfolioDataset.fxRates) return mockFx[currency] ?? (currency === "CZK" ? 1 : 0);
   const match = rates
     .filter((rate) => rate.currency === currency && dateOnly(rate.date) <= dateOnly(date))
     .at(-1);
@@ -214,13 +216,14 @@ export function getPortfolioSeries(
   to: string,
   prices: PricePoint[] = portfolioDataset.prices,
   rates: FxRate[] = portfolioDataset.fxRates,
+  dates: string[] = demoTimeline,
 ): ValuePoint[] {
-  const dates = demoTimeline.filter(
+  const selectedDates = dates.filter(
     (date) => dateOnly(date) >= dateOnly(from) && dateOnly(date) <= dateOnly(to),
   );
   let index = 100;
   let previousValue = 0;
-  return dates.map((date, position) => {
+  return selectedDates.map((date, position) => {
     const value = getPortfolioValue(buildHoldings(transactions, date, rates), date, prices, rates);
     if (position > 0 && previousValue > 0) {
       const externalFlow = transactions.reduce((sum, row) => {
@@ -247,11 +250,16 @@ export const getBenchmarkReturn = (series: { normalized: number }[]) =>
   (series.at(-1)?.normalized ?? 100) - 100;
 export const getBenchmarkDelta = (portfolioReturn: number, benchmarkReturn: number) =>
   portfolioReturn - benchmarkReturn;
-export const getAllocation = (holdings: Holding[], date = portfolioDataset.asOf) => {
-  const total = getPortfolioValue(holdings, date);
+export const getAllocation = (
+  holdings: Holding[],
+  date = portfolioDataset.asOf,
+  prices: PricePoint[] = portfolioDataset.prices,
+  rates: FxRate[] = portfolioDataset.fxRates,
+) => {
+  const total = getPortfolioValue(holdings, date, prices, rates);
   return holdings
     .map((holding) => {
-      const value = getPortfolioValue([holding], date);
+      const value = getPortfolioValue([holding], date, prices, rates);
       return { assetId: holding.assetId, value, percentage: total ? (value / total) * 100 : 0 };
     })
     .sort((a, b) => b.value - a.value);
@@ -333,18 +341,20 @@ export function getContributionAnalysis(
   portfolioReturnPct?: number,
   prices: PricePoint[] = portfolioDataset.prices,
   rates: FxRate[] = portfolioDataset.fxRates,
+  dates: string[] = demoTimeline,
+  assets: Asset[] = assetCatalog,
 ): ContributionAnalysis {
-  const dates = demoTimeline.filter(
+  const selectedDates = dates.filter(
     (date) => dateOnly(date) >= dateOnly(from) && dateOnly(date) <= dateOnly(to),
   );
   const totals = new Map<
     string,
     { contribution: number; weightSum: number; firstUnit?: number; lastUnit?: number }
   >();
-  const intervalCount = Math.max(0, dates.length - 1);
-  for (let index = 1; index < dates.length; index += 1) {
-    const previousDate = dates[index - 1];
-    const date = dates[index];
+  const intervalCount = Math.max(0, selectedDates.length - 1);
+  for (let index = 1; index < selectedDates.length; index += 1) {
+    const previousDate = selectedDates[index - 1];
+    const date = selectedDates[index];
     const holdings = buildHoldings(transactions, previousDate, rates);
     const totalValue = getPortfolioValue(holdings, previousDate, prices, rates);
     for (const holding of holdings) {
@@ -361,11 +371,11 @@ export function getContributionAnalysis(
     }
   }
   const rawItems = [...totals].map(([assetId, aggregate]) => {
-    const asset = assetCatalog.find((candidate) => candidate.id === assetId)!;
+    const asset = assets.find((candidate) => candidate.id === assetId);
     return {
       assetId,
-      symbol: asset.symbol,
-      name: asset.name,
+      symbol: asset?.symbol ?? assetId,
+      name: asset?.name ?? assetId,
       periodReturnPct:
         aggregate.firstUnit && aggregate.lastUnit
           ? calculateReturn(aggregate.firstUnit, aggregate.lastUnit)
@@ -442,10 +452,11 @@ export function getDrawdownAnalysis(series: ValuePoint[]): DrawdownAnalysis {
 
 export function getConcentrationAnalysis(
   allocation: ReturnType<typeof getAllocation>,
+  assets: Asset[] = assetCatalog,
 ): ConcentrationAnalysis {
   const positions = allocation.filter((item) => item.assetId !== "cash" && item.percentage > 0);
   const largest = positions[0];
-  const asset = largest && assetCatalog.find((candidate) => candidate.id === largest.assetId);
+  const asset = largest && assets.find((candidate) => candidate.id === largest.assetId);
   return {
     largestPosition:
       largest && asset
@@ -473,7 +484,7 @@ export interface AnalysisPoint {
   drawdown: number;
 }
 export interface HoldingMetric extends Holding {
-  asset: CatalogAsset;
+  asset: Asset;
   marketValue: number;
   allocationPct: number;
   costValue: number;
@@ -522,11 +533,11 @@ export function timeframeRange(timeframe: TimeRange): [number, number] {
 }
 
 export function toUsd(value: number, currency: PositionCurrency) {
-  return (value * mockFx[currency]) / mockFx.USD;
+  return (value * (mockFx[currency] ?? 0)) / mockFx.USD;
 }
 export function positionPreview(holding: HoldingDraft, existing: Holding[], edit = false) {
   const asset = assetCatalog.find((candidate) => candidate.id === holding.assetId)!;
-  const addedValue = holding.quantity * asset.price * mockFx[asset.currency];
+  const addedValue = holding.quantity * asset.price * (mockFx[asset.currency] ?? 0);
   const currentValue = existing
     .filter((row) => !edit || row.assetId !== holding.assetId)
     .reduce((sum, row) => sum + getPortfolioValue([row]), 0);
@@ -643,7 +654,7 @@ export function buildAnalysis(
         costValue: holding.totalCostCzk,
         pnl: marketValue - holding.totalCostCzk,
         pnlPct: calculateReturn(holding.totalCostCzk, marketValue),
-        averageCostCzk: holding.averageCost * mockFx[asset.currency],
+        averageCostCzk: holding.averageCost * (mockFx[asset.currency] ?? 0),
         returnPct: calculateReturn(positionStart, marketValue),
         contributionPctPoints: attributed?.contributionPctPoints ?? 0,
       };
@@ -703,6 +714,221 @@ export function buildAnalysis(
     compare: compareAsset?.symbol,
     contribution,
     drawdown,
+    concentration,
+  };
+}
+
+/** Provider-neutral input for a personal portfolio. All monetary rates are historical CZK/unit. */
+export interface AnalysisDataset {
+  asOf: string;
+  timeline: string[];
+  assets: Asset[];
+  prices: PricePoint[];
+  fxRates: FxRate[];
+  benchmarks: Benchmark[];
+}
+
+export function buildAnalysisFromDataset(
+  transactions: Transaction[],
+  range: [number, number],
+  dataset: AnalysisDataset,
+  benchmark = "spy",
+  compare?: string,
+  selectedDate?: string | null,
+  timeframe: TimeRange | "CUSTOM" = "CUSTOM",
+): PortfolioAnalysis {
+  const asTimestamp = (date: string) =>
+    dateOnly(date) === date ? `${date}T12:00:00.000Z` : date;
+  const lastIndex = dataset.timeline.length - 1;
+  if (lastIndex < 1) throw new Error("Personal analysis vyžaduje alespoň dva kalendářní dny.");
+  const start = Math.max(0, Math.min(lastIndex - 1, range[0]));
+  const end = Math.max(start + 1, Math.min(lastIndex, range[1]));
+  const from = dataset.timeline[start];
+  const to = dataset.timeline[end];
+  const series = getPortfolioSeries(
+    transactions,
+    from,
+    to,
+    dataset.prices,
+    dataset.fxRates,
+    dataset.timeline,
+  );
+  const benchmarkDefinition =
+    dataset.benchmarks.find((candidate) => candidate.id === benchmark) ?? dataset.benchmarks[0];
+  const benchmarkAsset = dataset.assets.find(
+    (asset) => asset.id === benchmarkDefinition?.assetId || asset.symbol === "SPY",
+  );
+  const compareAsset = dataset.assets.find((asset) => asset.id === compare);
+  const benchmarkRaw = dataset.timeline.slice(start, end + 1).map((date) => ({
+    date,
+    value: benchmarkAsset ? (unitValueCzk(benchmarkAsset.id, date, dataset.prices, dataset.fxRates) ?? 0) : 0,
+  }));
+  const validBenchmark = benchmarkRaw.some((point) => point.value > 0)
+    ? normalizeSeriesToBase100(benchmarkRaw)
+    : series.map((point) => ({ date: point.date, value: point.value, normalized: 100 }));
+  const compareRaw = compareAsset
+    ? normalizeSeriesToBase100(
+        dataset.timeline.slice(start, end + 1).map((date) => ({
+          date,
+          value: unitValueCzk(compareAsset.id, date, dataset.prices, dataset.fxRates) ?? 0,
+        })),
+      )
+    : [];
+  let peak = 100;
+  const points = series.map((valuePoint, index): AnalysisPoint => {
+    const portfolioIndex = 100 + valuePoint.returnPct;
+    peak = Math.max(peak, portfolioIndex);
+    const benchmarkReturnPct = (validBenchmark[index]?.normalized ?? 100) - 100;
+    const assetReturnPct = (compareRaw[index]?.normalized ?? 100) - 100;
+    return {
+      timestamp: asTimestamp(valuePoint.date),
+      portfolioValue: valuePoint.value,
+      portfolioReturnPct: valuePoint.returnPct,
+      absolutePnl: valuePoint.value - (series[0]?.value ?? 0),
+      benchmarkReturnPct,
+      benchmarkDeltaPct: valuePoint.returnPct - benchmarkReturnPct,
+      assetReturnPct,
+      portfolioIndex,
+      benchmarkIndex: validBenchmark[index]?.normalized ?? 100,
+      assetIndex: compareRaw[index]?.normalized ?? 100,
+      drawdown: calculateReturn(peak, portfolioIndex),
+    };
+  });
+  const endSnapshot = buildSnapshot(transactions, to, dataset.prices, dataset.fxRates);
+  const startSnapshot = buildSnapshot(transactions, from, dataset.prices, dataset.fxRates);
+  const allocation = getAllocation(endSnapshot.holdings, to, dataset.prices, dataset.fxRates);
+  const startValue = series[0]?.value ?? 0;
+  const endValue = series.at(-1)?.value ?? 0;
+  const periodReturn = getPeriodReturn(series);
+  const contribution = getContributionAnalysis(
+    transactions,
+    from,
+    to,
+    periodReturn,
+    dataset.prices,
+    dataset.fxRates,
+    dataset.timeline,
+    dataset.assets,
+  );
+  const drawdown = getDrawdownAnalysis(series);
+  const timestampedDrawdown: DrawdownAnalysis = {
+    ...drawdown,
+    peak: drawdown.peak ? { ...drawdown.peak, date: asTimestamp(drawdown.peak.date) } : undefined,
+    trough: drawdown.trough
+      ? { ...drawdown.trough, date: asTimestamp(drawdown.trough.date) }
+      : undefined,
+    recovery: drawdown.recovery
+      ? { ...drawdown.recovery, date: asTimestamp(drawdown.recovery.date) }
+      : undefined,
+  };
+  const concentration = getConcentrationAnalysis(allocation, dataset.assets);
+  const netExternalFlow = transactions.reduce((sum, row) => {
+    if (
+      row.occurredAt <= dateOnly(from) ||
+      row.occurredAt > dateOnly(to) ||
+      (row.type !== "deposit" && row.type !== "withdrawal")
+    )
+      return sum;
+    return (
+      sum +
+      (row.type === "deposit" ? 1 : -1) *
+        row.amount *
+        fxAt(row.currency, row.occurredAt, dataset.fxRates)
+    );
+  }, 0);
+  const holdingMetrics = endSnapshot.holdings
+    .flatMap((holding): HoldingMetric[] => {
+      const asset = dataset.assets.find((candidate) => candidate.id === holding.assetId);
+      if (!asset) return [];
+      const marketValue = getPortfolioValue([holding], to, dataset.prices, dataset.fxRates);
+      const startHolding = startSnapshot.holdings.find(
+        (candidate) => candidate.assetId === holding.assetId,
+      );
+      const positionStart = startHolding
+        ? getPortfolioValue([startHolding], from, dataset.prices, dataset.fxRates)
+        : marketValue;
+      const attributed = contribution.items.find((item) => item.assetId === holding.assetId);
+      const purchaseFx = fxAt(asset.currency, holding.date, dataset.fxRates);
+      return [
+        {
+          ...holding,
+          asset,
+          marketValue,
+          allocationPct: endValue ? (marketValue / endValue) * 100 : 0,
+          costValue: holding.totalCostCzk,
+          pnl: marketValue - holding.totalCostCzk,
+          pnlPct: calculateReturn(holding.totalCostCzk, marketValue),
+          averageCostCzk: holding.averageCost * purchaseFx,
+          returnPct: calculateReturn(positionStart, marketValue),
+          contributionPctPoints: attributed?.contributionPctPoints ?? 0,
+        },
+      ];
+    })
+    .sort((a, b) => b.marketValue - a.marketValue);
+  const contributions = contribution.items.map((item) => ({
+    symbol: item.symbol,
+    name: item.name,
+    returnPct: item.periodReturnPct,
+    contributionPctPoints: item.contributionPctPoints,
+  }));
+  const fallbackPoint: AnalysisPoint = {
+    timestamp: asTimestamp(to),
+    portfolioValue: 0,
+    portfolioReturnPct: 0,
+    absolutePnl: 0,
+    benchmarkReturnPct: 0,
+    benchmarkDeltaPct: 0,
+    assetReturnPct: 0,
+    portfolioIndex: 100,
+    benchmarkIndex: 100,
+    assetIndex: 100,
+    drawdown: 0,
+  };
+  const last = points.at(-1) ?? fallbackPoint;
+  const trough = points.find((point) => dateOnly(point.timestamp) === dateOnly(drawdown.trough?.date ?? "")) ?? points[0] ?? fallbackPoint;
+  const recovery = points.find((point) => dateOnly(point.timestamp) === dateOnly(drawdown.recovery?.date ?? ""));
+  const benchmarkReturn = getBenchmarkReturn(validBenchmark);
+  const metrics: PortfolioMetrics = {
+    startDate: points[0]?.timestamp ?? from,
+    endDate: last.timestamp,
+    startValue,
+    endValue,
+    absolutePnl: getAbsolutePnL(startValue, endValue, netExternalFlow),
+    returnPct: periodReturn,
+    benchmarkReturnPct: benchmarkReturn,
+    benchmarkDeltaPct: getBenchmarkDelta(periodReturn, benchmarkReturn),
+    maxDrawdownPct: drawdown.maxDrawdown,
+    btcExposurePct:
+      holdingMetrics.find((holding) => holding.asset.type === "crypto" || holding.asset.symbol === "BTC")
+        ?.allocationPct ?? 0,
+    largestPositionPct: concentration.largestPosition?.allocationPct ?? 0,
+    topContributors: contributions.filter((item) => item.contributionPctPoints > 0),
+    topDetractors: contributions.filter((item) => item.contributionPctPoints < 0).reverse(),
+  };
+  return {
+    timeframe,
+    points,
+    portfolioSeries: series,
+    benchmarkSeries: validBenchmark,
+    normalizedSeries: normalizeSeriesToBase100(series),
+    holdings: holdingMetrics,
+    metrics,
+    summary: metrics,
+    allocation,
+    contributors: metrics.topContributors,
+    detractors: metrics.topDetractors,
+    maxDrawdown: metrics.maxDrawdownPct,
+    selectedPeriod: { from, to },
+    selectedPoint: selectedDate
+      ? points.find((point) => dateOnly(point.timestamp) === dateOnly(selectedDate))
+      : undefined,
+    missingPriceAssetIds: endSnapshot.missingPriceAssetIds,
+    trough,
+    recovery,
+    benchmark: benchmarkDefinition?.name ?? benchmarkAsset?.name ?? "Benchmark",
+    compare: compareAsset?.symbol,
+    contribution,
+    drawdown: timestampedDrawdown,
     concentration,
   };
 }

@@ -56,9 +56,20 @@ Aplikace poběží na `http://localhost:3000` a přesměruje na české demo př
 ```dotenv
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-5-mini
+TWELVE_DATA_API_KEY=
 ```
 
-Obě proměnné jsou pouze server-side. Nikdy nepoužívejte prefix `NEXT_PUBLIC_` pro API klíč a necommitujte `.env.local`.
+API klíče jsou pouze server-side. Nikdy nepoužívejte prefix `NEXT_PUBLIC_` a necommitujte `.env.local`.
+
+### Live market data
+
+1. Vytvořte `.env.local` z `.env.example`.
+2. Doplňte `TWELVE_DATA_API_KEY` z Twelve Data dashboardu.
+3. Spusťte `npm run dev`, otevřete dashboard a v přepínači portfolia zvolte **Moje portfolio**.
+4. Bez klíče zůstává Demo portfolio plně funkční; osobní režim zobrazí řízený unavailable stav.
+
+Osobní transakce zůstávají v localStorage. Normalizovaná historie cen a FX je odděleně v IndexedDB.
+Detail architektury, freshness, cache a finančních omezení je v `src/lib/market-data/README.md`.
 
 ## Architecture
 
@@ -66,6 +77,7 @@ Obě proměnné jsou pouze server-side. Nikdy nepoužívejte prefix `NEXT_PUBLIC
 - `src/components`: malý design system, layout a doménové komponenty.
 - `src/data/mock`: stabilní portfolio, ceny a časové řady bez `Math.random()`.
 - `src/lib/finance`: čisté deterministické výpočty.
+- `src/lib/market-data`: provider abstraction, server-only Twelve Data, normalizace a browser cache.
 - `src/lib/ai`: bezpečná redukce payloadu, fallback a limiter.
 - `src/lib/repositories`: rozhraní `MarketDataProvider` a mock implementace.
 - `src/i18n`: český a anglický slovník; formátování zůstává oddělené.
@@ -80,15 +92,19 @@ Obě proměnné jsou pouze server-side. Nikdy nepoužívejte prefix `NEXT_PUBLIC
 - `/cs-CZ/settings` — locale, měna, vysvětlení, soukromí a vzhled
 - stejné routy pod `/en-US`
 - `GET /api/market/bitcoin`
+- `GET /api/market/search`, `POST /api/market/quotes`
+- `GET /api/market/history`, `GET /api/market/fx`, `GET /api/market/status`
 - `POST /api/ai/portfolio-insight`
 
 ## Financial calculation layer
 
 `calculateReturn`, `calculateContribution`, `calculateAllocation`, `calculateMaxDrawdown` a `buildPortfolioMetrics` jsou čisté funkce a mají unit testy. API pro insight přijímá pouze jejich výstup zmenšený na Zod-validovaný kontrakt. Model nic nepřepočítává.
 
-## Mock market data
+## Market data
 
-`MockMarketDataProvider` vrací stabilní BTC quote a časovou řadu. Instrumenty používají známé tickery pouze jako demo označení; ceny nejsou aktuální. Pozdější `LiveMarketDataProvider` může implementovat stejné rozhraní bez změny chartů.
+`Demo portfolio` používá výhradně stabilní `lens-demo-2026.09-v2`. `Moje portfolio` používá
+serverový `TwelveDataProvider`; offline testy používají deterministický `MockMarketDataProvider`.
+Obě implementace plní stejný normalizovaný kontrakt a charty ani Lens Insight provider neznají.
 
 ## AI architecture
 
@@ -126,7 +142,8 @@ Jest ověřuje finance, formátování, AI schemas, fallback, základní kompone
 
 ## Production gaps
 
-- Portfolio i historie jsou mock; chybí skutečné broker napojení.
+- Neexistuje broker import; osobní transakce se zadávají ručně a zůstávají lokální.
+- Dividend total return a automatická úprava pre-split quantities nejsou v této fázi implementované.
 - Přihlášení je pouze demo bez identity a session.
 - Ceny nejsou živá tržní data.
 - AI historie se trvale neukládá.

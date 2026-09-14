@@ -28,14 +28,16 @@ export function PortfolioHeroChart({
   visibleAnalysis,
   overview,
   locale,
+  timelineDates = timeline,
 }: {
   analysis: PortfolioAnalysis;
   visibleAnalysis: PortfolioAnalysis;
   overview: PortfolioAnalysis;
   locale: string;
+  timelineDates?: string[];
 }) {
   const { state, dispatch } = useAnalysisContext();
-  const { transactions } = usePortfolio();
+  const { transactions, mode } = usePortfolio();
   const [hover, setHover] = useState<number | null>(null);
   const [rangeMode, setRangeMode] = useState(false);
   const [rangeStart, setRangeStart] = useState<number | null>(null);
@@ -58,7 +60,7 @@ export function PortfolioHeroChart({
     annotations: state.annotations,
     navigator: state.navigator,
   };
-  const range = mapSelectedRangeToIndices(state.viewportRange, timeline);
+  const range = mapSelectedRangeToIndices(state.viewportRange, timelineDates);
   const selected = mapDateToPointIndex(data, state.selectedPoint);
   const onSelect = (index: number | null) =>
     dispatch({ type: "point", value: index === null ? null : (data[index]?.timestamp ?? null) });
@@ -76,7 +78,7 @@ export function PortfolioHeroChart({
       },
     });
   const onRange = (next: [number, number]) =>
-    dispatch({ type: "viewport", value: [timeline[next[0]], timeline[next[1]]] });
+    dispatch({ type: "viewport", value: [timelineDates[next[0]], timelineDates[next[1]]] });
   const g = useMemo(
     () =>
       chartGeometry(
@@ -118,6 +120,8 @@ export function PortfolioHeroChart({
         timeframe={state.timeframe}
         onTimeframe={(value) => dispatch({ type: "timeframe", value })}
         onExport={exportChart}
+        compareAssets={analysis.holdings.map((holding) => holding.asset)}
+        allowNasdaqBenchmark={mode === "demo"}
       />
       <ChartLegend
         analysis={analysis}
@@ -619,7 +623,7 @@ export function PortfolioHeroChart({
             )}
           </p>
         </div>
-        {settings.annotations && <ChartAnnotations events={events} onSelect={onSelect} />}
+        {settings.annotations && <ChartAnnotations events={events} onSelect={onSelect} assets={analysis.holdings.map((holding) => holding.asset)} />}
       </div>
       {state.selectedRange && (
         <div className="analysis-range-chip" role="status">

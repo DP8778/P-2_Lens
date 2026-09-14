@@ -1,11 +1,19 @@
 import { ChevronRight } from "lucide-react";
-import { assetTypeLabels, type CatalogAsset } from "@/data/mock/catalog";
+import { assetTypeLabels } from "@/data/mock/catalog";
+import type { AssetType } from "@/lib/finance/domain";
 export function AssetSearchResult({
   asset,
   existing,
   onSelect,
 }: {
-  asset: CatalogAsset;
+  asset: {
+    id: string;
+    symbol: string;
+    name: string;
+    type: AssetType;
+    currency: string;
+    exchange?: string;
+  };
   existing: boolean;
   onSelect: () => void;
 }) {
@@ -17,8 +25,8 @@ export function AssetSearchResult({
           {asset.symbol} <span>{asset.name}</span>
         </strong>
         <small>
-          {assetTypeLabels[asset.type]}
-          {asset.type === "stock" ? " · USA" : ""}
+          {asset.exchange ? `${asset.exchange} · ` : ""}
+          {assetTypeLabels[asset.type]} · {asset.currency}
           {existing ? " · Již v portfoliu" : ""}
         </small>
       </span>

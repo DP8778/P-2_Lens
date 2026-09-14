@@ -7,7 +7,11 @@ export type LensFacts = InsightInput;
 export function toLensFacts(
   analysis: PortfolioAnalysis,
   timeframe: TimeRange,
-  options?: { mode?: "performance" | "contribution" | "drawdown"; benchmarkVisible?: boolean },
+  options?: {
+    mode?: "performance" | "contribution" | "drawdown";
+    benchmarkVisible?: boolean;
+    dataSource?: "mock" | "live";
+  },
 ): LensFacts {
   const metrics = analysis.metrics;
   const selectedHolding = analysis.holdings.find(
@@ -80,8 +84,8 @@ export function toLensFacts(
         contributionPctPoints,
       })),
     dataQuality: {
-      source: "mock",
-      estimated: true,
+      source: options?.dataSource ?? "mock",
+      estimated: (options?.dataSource ?? "mock") === "mock",
       missingPriceAssetIds: analysis.missingPriceAssetIds,
     },
     selection: {

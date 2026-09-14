@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const contributionSchema = z.object({
-  assetId: z.string().max(80).optional(),
+  assetId: z.string().max(180).optional(),
   symbol: z.string().min(1).max(12),
   contributionPctPoints: z.number().finite(),
 }).strict();
@@ -10,7 +10,7 @@ const lensSelectionSchema = z
   .object({
     asset: z
       .object({
-        assetId: z.string().min(1).max(80),
+        assetId: z.string().min(1).max(180),
         symbol: z.string().min(1).max(12),
         returnPct: z.number().finite(),
         contributionPctPoints: z.number().finite(),
@@ -103,7 +103,7 @@ export const insightInputSchema = z
 export type InsightInput = z.infer<typeof insightInputSchema>;
 
 export const insightEvidenceActionSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("selectAsset"), assetId: z.string().min(1).max(80) }).strict(),
+  z.object({ type: z.literal("selectAsset"), assetId: z.string().min(1).max(180) }).strict(),
   z.object({ type: z.literal("selectDrawdown"), timestamp: z.iso.datetime() }).strict(),
   z.object({ type: z.literal("showBenchmark") }).strict(),
 ]);
@@ -144,7 +144,7 @@ const insightClaimSchema = z
 
 export const insightContextSchema = z
   .object({
-    datasetVersion: z.literal("lens-demo-2026.09-v2"),
+    datasetVersion: z.enum(["lens-demo-2026.09-v2", "live-market-data-v1"]),
     scope: z
       .object({
         type: z.enum(["range", "timeframe", "overview"]),
