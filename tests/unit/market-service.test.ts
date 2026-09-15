@@ -1,5 +1,5 @@
 import { MemoryMarketDataCache } from "@/lib/market-data/cache/market-cache";
-import { loadFxQuote, loadQuotes } from "@/lib/market-data/service";
+import { loadFxQuote, loadQuotePreview, loadQuotes } from "@/lib/market-data/service";
 import type { MarketAsset, MarketQuote } from "@/lib/market-data/types";
 
 const asset: MarketAsset = {
@@ -35,6 +35,14 @@ describe("market service quote cache", () => {
     await cache.putQuote({ key: asset.id, quote: quote(100), updatedAt: new Date().toISOString() });
     global.fetch = jest.fn();
     expect((await loadQuotes([asset], cache))[0].price).toBe(100);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  test("uses the same fresh cache for a single-result search preview", async () => {
+    const cache = new MemoryMarketDataCache();
+    await cache.putQuote({ key: asset.id, quote: quote(101), updatedAt: new Date().toISOString() });
+    global.fetch = jest.fn();
+    expect((await loadQuotePreview(asset, undefined, cache)).price).toBe(101);
     expect(global.fetch).not.toHaveBeenCalled();
   });
 

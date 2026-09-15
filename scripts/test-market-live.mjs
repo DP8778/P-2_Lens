@@ -184,8 +184,11 @@ try {
     });
   });
   const screenshotDir = "test-results/market-live";
+  const addPriceScreenshotDir = "test-results/add-price";
   await mkdir(screenshotDir, { recursive: true });
+  await mkdir(addPriceScreenshotDir, { recursive: true });
   const screenshot = (name) => page.screenshot({ path: `${screenshotDir}/${name}.png`, fullPage: false });
+  const addPriceScreenshot = (name) => page.screenshot({ path: `${addPriceScreenshotDir}/${name}.png`, fullPage: false });
 
   await page.goto(`${baseUrl}/cs-CZ/dashboard`);
   await page.getByRole("heading", { name: "Moje portfolio" }).waitFor();
@@ -196,14 +199,46 @@ try {
   assert(await search.isEnabled(), "Add Investment search je při configured:true zakázaný");
   assert(await page.getByText("Live market data nejsou nakonfigurována.").count() === 0, "Configured UI ukazuje not-configured stav");
   await screenshot("02-add-idle");
+  await addPriceScreenshot("before-search");
 
   await search.fill("LENSNORESULT987654321");
   await page.getByText("Žádné výsledky. Zkuste jiný ticker nebo název.").waitFor({ timeout: 20_000 });
-  await waitForProviderWindow(auditWindowStarted, "UI add flow a portfolio analytics");
+  await waitForProviderWindow(auditWindowStarted, "AAPL a VWCE price preview");
+  const priceWindowStarted = Date.now();
+
+  await search.fill("AAPL");
+  const aaplOption = page.getByRole("option").filter({ hasText: "AAPL" }).first();
+  await aaplOption.waitFor({ timeout: 20_000 });
+  await aaplOption.locator(".asset-search-price").filter({ hasText: "USD" }).waitFor({ timeout: 20_000 });
+  await aaplOption.click();
+  await page.locator(".instrument-quote strong").filter({ hasText: "USD" }).waitFor({ timeout: 20_000 });
+  const aaplUiPrice = await page.locator(".instrument-quote strong").innerText();
+  await page.getByRole("button", { name: "Změnit instrument" }).click();
+
+  await search.fill("VWCE");
+  const vwceOption = page.getByRole("option").filter({ hasText: "VWCE" }).first();
+  await vwceOption.waitFor({ timeout: 20_000 });
+  assert((await vwceOption.innerText()).includes("EUR"), "VWCE search result nezobrazuje native EUR měnu");
+  const vwcePrice = vwceOption.locator(".asset-search-price").filter({ hasText: "EUR" });
+  const vwceUnavailable = vwceOption.getByText("Cena nedostupná");
+  const vwcePreviewAvailable = await Promise.race([
+    vwcePrice.waitFor({ timeout: 20_000 }).then(() => true),
+    vwceUnavailable.waitFor({ timeout: 20_000 }).then(() => false),
+  ]);
+  await vwceOption.click();
+  await page.locator(".instrument-quote strong").filter({
+    hasText: vwcePreviewAvailable ? "EUR" : "Cena nedostupná",
+  }).waitFor({ timeout: 20_000 });
+  const vwceUiPrice = await page.locator(".instrument-quote strong").innerText();
+  await page.getByRole("button", { name: "Změnit instrument" }).click();
+
+  await waitForProviderWindow(priceWindowStarted, "PLTR add flow a portfolio analytics");
   await search.fill("PLTR");
   const pltrOption = page.getByRole("option").filter({ hasText: "PLTR" }).first();
   await pltrOption.waitFor({ timeout: 20_000 });
+  await pltrOption.locator(".asset-search-price").filter({ hasText: "USD" }).waitFor({ timeout: 20_000 });
   await screenshot("03-pltr-results");
+  await addPriceScreenshot("after-search-with-price");
   await pltrOption.click();
   await page.getByLabel("Množství", { exact: true }).waitFor();
   await page.locator(".instrument-quote strong").waitFor({ state: "visible" });
@@ -213,6 +248,8 @@ try {
     { timeout: 20_000 },
   );
   await screenshot("04-pltr-selected");
+  await addPriceScreenshot("selected-stock");
+  const pltrUiPrice = await page.locator(".instrument-quote strong").innerText();
 
   const purchaseDate = new Date();
   purchaseDate.setUTCDate(purchaseDate.getUTCDate() - 60);
@@ -287,6 +324,11 @@ try {
     lensInsight: true,
     externalCompare: true,
     cacheAfterReload: true,
+    livePrices: {
+      PLTR: { display: pltrUiPrice, available: true },
+      AAPL: { display: aaplUiPrice, available: true },
+      VWCE: { display: vwceUiPrice, available: vwcePreviewAvailable, nativeCurrency: "EUR" },
+    },
     requestCounts,
   };
 

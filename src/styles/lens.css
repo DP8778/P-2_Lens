@@ -2390,6 +2390,10 @@ button.contribution-row[aria-pressed="true"] {
 .search-results-heading button { color: var(--color-text-secondary); text-transform: none; letter-spacing: 0; }
 .asset-search-result { padding: 13px 10px; }
 .asset-search-result.active, .asset-search-result:focus-visible { background: #ffffff08; outline: 1px solid #b5b2e455; outline-offset: -1px; }
+.asset-search-price { flex: 0 0 132px; margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; }
+.asset-search-price strong { display: block; color: var(--color-text-primary); font-size: 12px; white-space: nowrap; }
+.asset-search-price small { margin-top: 3px; }
+.asset-search-price.stale strong, .asset-search-price.stale small { color: var(--color-text-muted); }
 .asset-search .asset-type-filters { margin: 8px 0 2px; }
 .asset-search .asset-type-filters button { min-height: 30px; padding: 5px 9px; font-size: 10px; }
 .search-loading, .search-empty { min-height: 44px; padding: 13px 10px; text-align: left; }
@@ -2407,14 +2411,16 @@ button.contribution-row[aria-pressed="true"] {
 .asset-search-dialog .dialog-footnote { margin-top: 20px; }
 .use-current-price { color: var(--color-text-secondary); font-size: 11px; margin: -4px 0 12px auto; display: block; border-bottom: 1px solid var(--color-border-strong); }
 .dialog-back { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; margin-bottom: 14px; color: var(--color-text-secondary); font-size: 11px; }
-.instrument-quote { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 4px 18px; margin: -4px 0 18px 47px; }
+.instrument-quote { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 5px 18px; margin: 2px 0 22px 47px; padding: 14px 0; border-block: 1px solid var(--color-border-default); }
 .instrument-quote span, .instrument-quote small { color: var(--color-text-muted); font-size: 10px; }
-.instrument-quote strong { font-size: 13px; font-weight: 500; }
+.instrument-quote strong { font-size: 24px; font-weight: 450; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .instrument-quote small { grid-column: 1 / -1; }
+.instrument-quote .instrument-quote-fx { color: var(--color-text-secondary); }
 .inline-investment-preview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 18px; overflow: hidden; border: 1px solid var(--color-border-default); border-radius: 8px; background: var(--color-border-default); }
 .inline-investment-preview > div { min-width: 0; padding: 13px; background: #101116; }
 .inline-investment-preview dt { color: var(--color-text-muted); font-size: 10px; line-height: 1.4; }
 .inline-investment-preview dd { margin-top: 6px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.inline-investment-preview dd small { display: block; margin-top: 4px; color: var(--color-text-muted); font-size: 10px; }
 .dialog-actions.single-action { justify-content: flex-end; }
 .portfolio-toast { position: fixed; right: 24px; bottom: 24px; z-index: 30; padding: 12px 16px; border: 1px solid var(--color-border-strong); border-radius: 9px; background: #17181deb; box-shadow: 0 14px 50px #0008; font-size: 12px; }
 .compare-picker { position: relative; }
@@ -2450,6 +2456,7 @@ button.contribution-row[aria-pressed="true"] {
   .search-results { max-height: calc(100dvh - 250px); }
   .inline-investment-preview { grid-template-columns: 1fr; }
   .instrument-quote { margin-left: 0; }
+  .asset-search-price { flex-basis: 105px; }
   .compare-popover { position: fixed; inset: auto 10px 10px; width: auto; max-height: calc(100dvh - 20px); overflow: auto; }
   .transaction-row { grid-template-columns: 1fr auto; }
   .transaction-row > span:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }

@@ -4,13 +4,19 @@ import { assetCatalog, assetTypeLabels, type CatalogAsset } from "@/data/mock/ca
 import { marketDataConfig } from "@/lib/market-data/config";
 import { fetchMarketStatus, searchMarketAssets } from "@/lib/market-data/client";
 import { MarketDataError, type MarketDataErrorCode } from "@/lib/market-data/errors";
-import type { MarketAsset } from "@/lib/market-data/types";
+import { loadQuotePreview } from "@/lib/market-data/service";
+import type { MarketAsset, MarketQuote } from "@/lib/market-data/types";
 import type { PortfolioMode } from "./PortfolioProvider";
 import { AssetSearchResult } from "./AssetSearchResult";
 
 export type SearchAsset = CatalogAsset | MarketAsset;
 type SearchState = "idle" | "loading" | "ready" | "error";
 type ProviderState = "checking" | "configured" | "not-configured" | "unavailable";
+type QuotePreview = {
+  assetId: string;
+  state: "loading" | "ready" | "unavailable";
+  quote?: MarketQuote;
+};
 
 const recentKey = "lens-recent-market-assets-v1";
 const readRecent = (): MarketAsset[] => {
@@ -66,6 +72,7 @@ export function AssetSearch({
   const [errorCode, setErrorCode] = useState<MarketDataErrorCode>();
   const [lastHttpError, setLastHttpError] = useState<number>();
   const [statusAttempt, setStatusAttempt] = useState(0);
+  const [quotePreview, setQuotePreview] = useState<QuotePreview>();
 
   useEffect(() => {
     if (mode !== "personal") return;
@@ -139,6 +146,25 @@ export function AssetSearch({
     () => availableResults.filter((asset) => type === "all" || asset.type === type),
     [availableResults, type],
   );
+  const activeResult = results[active];
+
+  useEffect(() => {
+    if (mode !== "personal" || !activeResult || !("provider" in activeResult)) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setQuotePreview({ assetId: activeResult.id, state: "loading" });
+      void loadQuotePreview(activeResult, controller.signal)
+        .then((quote) => setQuotePreview({ assetId: activeResult.id, state: "ready", quote }))
+        .catch((reason) => {
+          if (reason instanceof DOMException && reason.name === "AbortError") return;
+          setQuotePreview({ assetId: activeResult.id, state: "unavailable" });
+        });
+    }, 250);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [activeResult, mode]);
   const loading = providerState === "configured" && (query.trim() !== settled || state === "loading");
   const disabled = mode === "personal" && providerState !== "configured";
   const hasResultsContext = results.length > 0 || loading || (settled.length >= 2 && state === "ready");
@@ -273,7 +299,11 @@ export function AssetSearch({
               id={`${listId}-${index}`}
               asset={asset}
               active={index === active}
+              quote={quotePreview?.assetId === asset.id ? quotePreview.quote : undefined}
+              quoteLoading={quotePreview?.assetId === asset.id && quotePreview.state === "loading"}
+              quoteUnavailable={quotePreview?.assetId === asset.id && quotePreview.state === "unavailable"}
               existing={existingIds.includes(asset.id)}
+              onActivate={() => setActive(index)}
               onSelect={() => choose(asset)}
             />
           ))}

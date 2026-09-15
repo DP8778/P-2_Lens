@@ -4,11 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Dialog } from "@/components/ui/Dialog";
 import { getPortfolioValue, type HoldingDraft } from "@/lib/finance/portfolio-engine";
-import { fetchMarketQuotes } from "@/lib/market-data/client";
-import { loadFxQuote } from "@/lib/market-data/service";
+import { loadFxQuote, loadQuotes } from "@/lib/market-data/service";
 import type { MarketAsset, MarketQuote } from "@/lib/market-data/types";
 import { allocation, money } from "@/components/charts/chart-formatters";
 import { AssetSearch } from "./AssetSearch";
+import { quotePriceLabel } from "./AssetSearchResult";
 import { usePortfolio } from "./PortfolioProvider";
 
 const currentDate = () => new Date().toISOString().slice(0, 10);
@@ -36,34 +36,49 @@ export function AddAssetDialog({
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quote, setQuote] = useState<MarketQuote>();
   const [quoteError, setQuoteError] = useState("");
-  const [currentFx, setCurrentFx] = useState(1);
+  const [fxLoading, setFxLoading] = useState(false);
+  const [fxError, setFxError] = useState("");
+  const [currentFx, setCurrentFx] = useState<number>();
   const existingHolding = holdings.find((position) => position.assetId === asset?.id);
 
   useEffect(() => {
     if (!asset) return;
-    const controller = new AbortController();
+    let cancelled = false;
     void Promise.resolve()
       .then(() => {
+        if (cancelled) return undefined;
+        setQuote(undefined);
         setQuoteLoading(true);
         setQuoteError("");
-        return Promise.all([
-          fetchMarketQuotes([asset], controller.signal).then((quotes) => quotes[0]),
-          asset.currency === "CZK"
-            ? Promise.resolve({ rate: 1 })
-            : loadFxQuote(asset.currency, "CZK"),
-        ]);
+        return loadQuotes([asset]).then((quotes) => quotes[0]);
       })
-      .then(([nextQuote, fx]) => {
+      .then((nextQuote) => {
+        if (cancelled) return;
         if (!nextQuote) throw new Error("Aktuální cena není dostupná.");
         setQuote(nextQuote);
-        setCurrentFx(fx.rate);
       })
-      .catch((reason) => {
-        if (reason instanceof DOMException && reason.name === "AbortError") return;
-        setQuoteError("Aktuální cena teď není dostupná.");
+      .catch(() => {
+        if (!cancelled) setQuoteError("Aktuální cena teď není dostupná.");
       })
-      .finally(() => setQuoteLoading(false));
-    return () => controller.abort();
+      .finally(() => { if (!cancelled) setQuoteLoading(false); });
+    return () => { cancelled = true; };
+  }, [asset]);
+
+  useEffect(() => {
+    if (!asset) return;
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (cancelled) return;
+      setCurrentFx(asset.currency === "CZK" ? 1 : undefined);
+      setFxLoading(asset.currency !== "CZK");
+      setFxError("");
+      if (asset.currency !== "CZK")
+        return loadFxQuote(asset.currency, "CZK")
+          .then((fx) => { if (!cancelled) setCurrentFx(fx.rate); })
+          .catch(() => { if (!cancelled) setFxError("Přepočet do CZK není dostupný."); })
+          .finally(() => { if (!cancelled) setFxLoading(false); });
+    });
+    return () => { cancelled = true; };
   }, [asset]);
 
   const parsedDraft = useMemo<HoldingDraft | undefined>(() => {
@@ -87,11 +102,14 @@ export function AddAssetDialog({
     if (!asset || !parsedDraft) return undefined;
     const resultingQuantity = (existingHolding?.quantity ?? 0) + parsedDraft.quantity;
     if (!quote) return { resultingQuantity };
-    const resultingValue = resultingQuantity * quote.price * currentFx;
+    const nativeValue = resultingQuantity * quote.price;
+    if (currentFx === undefined) return { resultingQuantity, nativeValue };
+    const resultingValue = nativeValue * currentFx;
     const currentValue = getPortfolioValue(holdings, currentDate(), market.prices, market.fxRates);
     const portfolioAfter = currentValue + parsedDraft.quantity * quote.price * currentFx;
     return {
       resultingQuantity,
+      nativeValue,
       value: resultingValue,
       allocation: portfolioAfter ? (resultingValue / portfolioAfter) * 100 : 100,
     };
@@ -158,9 +176,18 @@ export function AddAssetDialog({
               </div>
             </div>
             <div className="instrument-quote" aria-live="polite">
-              <span>Aktuální cena</span>
-              <strong>{quoteLoading ? "Načítám…" : quote ? `${quote.price.toLocaleString("cs-CZ")} ${quote.currency}` : "Nedostupná"}</strong>
+              <span>{quote ? quotePriceLabel(quote) : "Cena instrumentu"}</span>
+              <strong>{quoteLoading ? "Načítám…" : quote ? `${quote.price.toLocaleString("cs-CZ")} ${quote.currency}` : "Cena nedostupná"}</strong>
               <small>{quote ? `Aktualizováno ${new Date(quote.timestamp).toLocaleString("cs-CZ")}` : quoteError}</small>
+              {quote && asset.currency !== "CZK" && (
+                <small className="instrument-quote-fx">
+                  {fxLoading
+                    ? "Přepočítávám do CZK…"
+                    : currentFx !== undefined
+                      ? `≈ ${money(quote.price * currentFx)} / akcie`
+                      : fxError}
+                </small>
+              )}
             </div>
             {existingHolding && (
               <p className="inline-notice">
@@ -176,7 +203,7 @@ export function AddAssetDialog({
             </div>
             {quote && date === currentDate() && <button type="button" className="use-current-price" onClick={() => setCost(String(quote.price))}>Použít aktuální cenu</button>}
             <dl className="inline-investment-preview" aria-label="Náhled investice">
-              <div><dt>Odhadovaná současná hodnota</dt><dd>{preview?.value !== undefined ? money(preview.value) : "—"}</dd></div>
+              <div><dt>Odhadovaná současná hodnota</dt><dd>{preview?.nativeValue !== undefined ? `${preview.nativeValue.toLocaleString("cs-CZ", { maximumFractionDigits: 2 })} ${asset.currency}` : "—"}{preview?.value !== undefined && asset.currency !== "CZK" ? <small>≈ {money(preview.value)}</small> : null}</dd></div>
               <div><dt>Výsledné množství</dt><dd>{preview ? preview.resultingQuantity.toLocaleString("cs-CZ", { maximumFractionDigits: 8 }) : "—"}</dd></div>
               <div><dt>Předpokládaná alokace</dt><dd>{preview?.allocation !== undefined ? allocation(preview.allocation) : "—"}</dd></div>
             </dl>

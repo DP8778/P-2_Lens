@@ -39,6 +39,25 @@ export async function loadFxQuote(
   return request;
 }
 
+export async function loadQuotePreview(
+  asset: MarketAsset,
+  signal?: AbortSignal,
+  cache: MarketDataCache = getBrowserMarketDataCache(),
+) {
+  const cached = await cache.getQuote(asset.id);
+  if (cached && Date.now() - Date.parse(cached.updatedAt) <= marketDataConfig.quoteFreshMs)
+    return cached.quote;
+  try {
+    const quote = (await fetchMarketQuotes([asset], signal))[0];
+    if (!quote) throw new Error("Quote is unavailable.");
+    await cache.putQuote({ key: asset.id, quote, updatedAt: new Date().toISOString() });
+    return quote;
+  } catch (error) {
+    if (cached) return { ...cached.quote, freshness: "stale" as const, source: "cache" as const };
+    throw error;
+  }
+}
+
 export async function loadHistory(
   asset: MarketAsset,
   range: DateRange,
