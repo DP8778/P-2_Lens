@@ -73,7 +73,7 @@ export function HoldingsTable({
           <h2 id="holdings-title">
             Pozice <span className="count-badge">{holdings.length}</span>
           </h2>
-          <p>Vaše aktiva a jejich podíl na výsledku · {period}</p>
+          <p>Aktiva a jejich podíl na výsledku · {period}</p>
         </div>
         {editable && (
           <button className="quiet-button" onClick={onAdd}>
@@ -153,7 +153,7 @@ export function HoldingsTable({
         )}
       </div>
 
-      <div className="holdings-table-wrap surface">
+      <div className="holdings-table-wrap">
         <table className="holdings-table">
           <thead>
             <tr>

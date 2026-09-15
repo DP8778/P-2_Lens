@@ -116,17 +116,17 @@ export function DashboardView({ locale, initialAssetId }: { locale: Locale; dict
               <button aria-pressed={mode === "personal"} onClick={() => switchMode("personal")}><strong>Moje portfolio</strong><small>Vaše transakce · market data Twelve Data</small></button>
             </div>
           </details>
+          {mode === "personal" && (
+            <div className={`market-data-strip ${market.state}`} role="status">
+              <span>{marketStatusLabel(market, locale)}</span>
+              {holdings.length > 0 && <button className="icon-control" onClick={() => void refreshQuotes()} aria-label="Aktualizovat ceny"><RefreshCw size={14} /></button>}
+            </div>
+          )}
         </div>
         {mode === "personal" ? <button className="primary-button" onClick={() => setAdd({})}><Plus size={17} />Přidat investici</button> : <button className="quiet-button" onClick={() => switchMode("personal")}>Použít vlastní portfolio</button>}
       </header>
       {confirmation && <div className="portfolio-toast" role="status">{confirmation}</div>}
       {warning && <p role="status" className="inline-notice">{warning}</p>}
-      {mode === "personal" && (
-        <div className={`market-data-strip ${market.state}`} role="status">
-          <span>{marketStatusLabel(market, locale)}</span>
-          {holdings.length > 0 && <button className="icon-control" onClick={() => void refreshQuotes()} aria-label="Aktualizovat ceny"><RefreshCw size={14} /></button>}
-        </div>
-      )}
       {mode === "personal" && !analysis ? (
         <section className="personal-empty surface" aria-labelledby="personal-empty-title">
           <span className="portfolio-dot" />

@@ -1,15 +1,15 @@
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
-  --color-bg-canvas: #07080a;
-  --color-bg-surface: #0d0e11;
-  --color-bg-elevated: #191a20;
-  --color-bg-ink: #eeeee9;
-  --color-text-primary: #eeeee9;
-  --color-text-secondary: #b2b4bc;
-  --color-text-muted: #92959f;
-  --color-border-default: #ffffff13;
-  --color-border-strong: #ffffff2e;
+  --color-bg-canvas: #08090a;
+  --color-bg-surface: #101112;
+  --color-bg-elevated: #181a1c;
+  --color-bg-ink: #f3f2ec;
+  --color-text-primary: #f3f2ec;
+  --color-text-secondary: #b7b8b6;
+  --color-text-muted: #7f8284;
+  --color-border-default: #ffffff10;
+  --color-border-strong: #ffffff24;
   --color-data-positive: #b3cec1;
   --color-data-negative: #d9a8b0;
   --color-data-neutral: #9b9ca5;
@@ -17,11 +17,11 @@
   --color-ai-surface: #17171e;
   --color-ai-ink: #d6d4ed;
   --color-warm: #c8bdad;
-  --surface-fill: linear-gradient(155deg, #ffffff04, #ffffff00 50%), #0d0e11;
-  --glass-fill: linear-gradient(145deg, #ffffff0d, #ffffff02 45%, #b5b2e407), #121318ee;
-  --glass-border: #ffffff1c;
-  --glass-highlight: inset 0 1px 0 #ffffff0b;
-  --glass-blur: 24px;
+  --surface-fill: #101112;
+  --glass-fill: #121416f5;
+  --glass-border: #ffffff14;
+  --glass-highlight: 0 24px 70px #0007;
+  --glass-blur: 12px;
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;

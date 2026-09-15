@@ -191,7 +191,7 @@ export function AssetSearch({
           disabled={disabled}
           role="combobox"
           aria-label="Hledat akcii nebo ETF"
-          placeholder={providerState === "checking" ? "Ověřuji live market data…" : "Ticker nebo název instrumentu…"}
+          placeholder={providerState === "checking" ? "Ověřuji live market data…" : "AAPL, Apple, VWCE…"}
           aria-controls={hasResultsContext ? listId : undefined}
           aria-expanded={results.length > 0}
           aria-autocomplete="list"
@@ -263,10 +263,6 @@ export function AssetSearch({
         </div>
       )}
 
-      {!disabled && !query && !recent.length && (
-        <p className="asset-search-hint">Začněte tickerem, například AAPL nebo PLTR.</p>
-      )}
-
       {showFilters && (
         <div className="asset-type-filters" aria-label="Typ instrumentu">
           {(["all", "stock", "etf"] as const).map((value) => (
@@ -316,7 +312,7 @@ export function AssetSearch({
         </div>
       )}
 
-      {process.env.NODE_ENV === "development" && mode === "personal" && (
+      {process.env.NODE_ENV === "development" && mode === "personal" && (Boolean(query) || Boolean(inlineError)) && (
         <details className="market-search-diagnostics">
           <summary>Dev diagnostics</summary>
           <dl>

@@ -1,4 +1,3 @@
-import { ChevronRight } from "lucide-react";
 import { assetTypeLabels } from "@/data/mock/catalog";
 import type { AssetType } from "@/lib/finance/domain";
 import type { MarketQuote } from "@/lib/market-data/types";
@@ -69,7 +68,7 @@ export function AssetSearchResult({
             <><strong>Cena nedostupná</strong><small>Instrument lze stále vybrat</small></>
           )}
         </span>
-      ) : <ChevronRight size={16} />}
+      ) : null}
     </button>
   );
 }

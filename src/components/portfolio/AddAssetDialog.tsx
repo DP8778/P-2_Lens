@@ -148,17 +148,20 @@ export function AddAssetDialog({
     >
       <div className="add-asset-flow">
         {!asset ? (
-          <AssetSearch
-            mode="personal"
-            existingIds={holdings.map((holding) => holding.assetId)}
-            onSelect={(selected) => {
-              if (!("provider" in selected)) return;
-              setQuote(undefined);
-              setQuoteError("");
-              setAsset(selected);
-              setError("");
-            }}
-          />
+          <>
+            <h3 className="asset-search-title">Najděte instrument</h3>
+            <AssetSearch
+              mode="personal"
+              existingIds={holdings.map((holding) => holding.assetId)}
+              onSelect={(selected) => {
+                if (!("provider" in selected)) return;
+                setQuote(undefined);
+                setQuoteError("");
+                setAsset(selected);
+                setError("");
+              }}
+            />
+          </>
         ) : (
           <form onSubmit={(event) => { event.preventDefault(); void submit(); }} noValidate>
             <button
@@ -168,7 +171,7 @@ export function AddAssetDialog({
             >
               <ArrowLeft size={15} /> Změnit instrument
             </button>
-            <div className="selected-asset">
+            <div className="selected-asset selected-investment-identity">
               <span className="asset-monogram">{asset.symbol.slice(0, 2)}</span>
               <div>
                 <strong>{asset.symbol} · {asset.name}</strong>
@@ -202,11 +205,14 @@ export function AddAssetDialog({
               <label>Poplatek · {asset.currency}<input inputMode="decimal" value={fees} onChange={(event) => setFees(event.target.value)} aria-invalid={!!error} aria-describedby={error ? "position-error" : undefined} /></label>
             </div>
             {quote && date === currentDate() && <button type="button" className="use-current-price" onClick={() => setCost(String(quote.price))}>Použít aktuální cenu</button>}
-            <dl className="inline-investment-preview" aria-label="Náhled investice">
-              <div><dt>Odhadovaná současná hodnota</dt><dd>{preview?.nativeValue !== undefined ? `${preview.nativeValue.toLocaleString("cs-CZ", { maximumFractionDigits: 2 })} ${asset.currency}` : "—"}{preview?.value !== undefined && asset.currency !== "CZK" ? <small>≈ {money(preview.value)}</small> : null}</dd></div>
-              <div><dt>Výsledné množství</dt><dd>{preview ? preview.resultingQuantity.toLocaleString("cs-CZ", { maximumFractionDigits: 8 }) : "—"}</dd></div>
-              <div><dt>Předpokládaná alokace</dt><dd>{preview?.allocation !== undefined ? allocation(preview.allocation) : "—"}</dd></div>
-            </dl>
+            <section className="inline-investment-preview" aria-label="Náhled investice">
+              <h3>Po přidání</h3>
+              <dl>
+                <div><dt>Hodnota pozice</dt><dd>{preview?.nativeValue !== undefined ? `${preview.nativeValue.toLocaleString("cs-CZ", { maximumFractionDigits: 2 })} ${asset.currency}` : "—"}{preview?.value !== undefined && asset.currency !== "CZK" ? <small>≈ {money(preview.value)}</small> : null}</dd></div>
+                <div><dt>Množství</dt><dd>{preview ? preview.resultingQuantity.toLocaleString("cs-CZ", { maximumFractionDigits: 8 }) : "—"}</dd></div>
+                <div><dt>Alokace</dt><dd>{preview?.allocation !== undefined ? allocation(preview.allocation) : "—"}</dd></div>
+              </dl>
+            </section>
             {error && <p id="position-error" role="alert" className="form-error">{error}</p>}
             <div className="dialog-actions single-action">
               <button type="submit" className="primary-button" disabled={pending}>
@@ -219,7 +225,7 @@ export function AddAssetDialog({
             </div>
           </form>
         )}
-        <p className="dialog-footnote">Osobní transakce zůstávají pouze v tomto prohlížeči.</p>
+        {asset && <p className="dialog-footnote">Osobní transakce zůstávají pouze v tomto prohlížeči.</p>}
       </div>
     </Dialog>
   );
