@@ -47,6 +47,7 @@ Aplikace poběží na `http://localhost:3000` a přesměruje na české demo př
 | `npm run typecheck`                       | TypeScript bez emitování         |
 | `npm test` / `npm run test:watch`         | Jest testy                       |
 | `npm run test:e2e`                        | Produkční build + Playwright E2E |
+| `npm run test:market-live`                | Volitelný smoke test reálného Twelve Data API |
 | `npm run storybook`                       | Storybook na portu 6006          |
 | `npm run build-storybook`                 | Statický Storybook build         |
 | `npm run format` / `npm run format:check` | Prettier                         |
@@ -86,9 +87,7 @@ Detail architektury, freshness, cache a finančních omezení je v `src/lib/mark
 
 - `/cs-CZ/login` — demo autentizace
 - `/cs-CZ/dashboard` — hlavní analytický přehled
-- `/cs-CZ/portfolio` — filtrování a řazení pozic
-- `/cs-CZ/assets/[symbol]` — detail BTC, NVDA, SPY, AAPL, NVO nebo USD
-- `/cs-CZ/insights` — lokální mock historie
+- `/cs-CZ/portfolio`, `/cs-CZ/insights`, `/cs-CZ/assets/[symbol]` — kompatibilní redirect na dashboard
 - `/cs-CZ/settings` — locale, měna, vysvětlení, soukromí a vzhled
 - stejné routy pod `/en-US`
 - `GET /api/market/bitcoin`
@@ -103,8 +102,12 @@ Detail architektury, freshness, cache a finančních omezení je v `src/lib/mark
 ## Market data
 
 `Demo portfolio` používá výhradně stabilní `lens-demo-2026.09-v2`. `Moje portfolio` používá
-serverový `TwelveDataProvider`; offline testy používají deterministický `MockMarketDataProvider`.
+serverový `TwelveDataProvider`; běžné Playwright testy používají deterministické route mocks.
 Obě implementace plní stejný normalizovaný kontrakt a charty ani Lens Insight provider neznají.
+
+`npm run test:market-live` spustí samostatný lokální Next server a skutečně ověří search,
+quote, historii a USD/CZK proti Twelve Data. Bez `TWELVE_DATA_API_KEY` se bezpečně přeskočí,
+takže offline CI klíč nevyžaduje.
 
 ## AI architecture
 
@@ -145,7 +148,7 @@ Jest ověřuje finance, formátování, AI schemas, fallback, základní kompone
 - Neexistuje broker import; osobní transakce se zadávají ručně a zůstávají lokální.
 - Dividend total return a automatická úprava pre-split quantities nejsou v této fázi implementované.
 - Přihlášení je pouze demo bez identity a session.
-- Ceny nejsou živá tržní data.
+- Demo ceny nejsou živá tržní data; osobní portfolio je použije pouze s nakonfigurovaným Twelve Data.
 - AI historie se trvale neukládá.
 - Limiter je pouze in-memory a není vhodný pro distribuované nasazení.
 - Produkt neposkytuje finanční poradenství.

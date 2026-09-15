@@ -1,4 +1,5 @@
 import { MarketDataError, type MarketDataErrorCode } from "./errors";
+import { marketAssetSchema } from "./validation";
 import type {
   FxHistoryResult,
   FxQuote,
@@ -8,7 +9,18 @@ import type {
 } from "./types";
 
 async function fetchJson<T>(input: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(input, init);
+  let response: Response;
+  try {
+    response = await fetch(input, init);
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
+    throw new MarketDataError(
+      "UNAVAILABLE",
+      "Market data server není dostupný. Zkontrolujte připojení a zkuste to znovu.",
+      true,
+      503,
+    );
+  }
   const body = (await response.json().catch(() => ({}))) as T & {
     error?: { code?: MarketDataErrorCode; message?: string; retryable?: boolean };
   };
@@ -27,7 +39,15 @@ export async function searchMarketAssets(query: string, signal?: AbortSignal) {
     `/api/market/search?q=${encodeURIComponent(query)}`,
     { signal },
   );
-  return response.assets;
+  const parsed = marketAssetSchema.array().safeParse(response.assets);
+  if (!parsed.success)
+    throw new MarketDataError(
+      "INVALID_RESPONSE",
+      "Market data server vrátil neplatnou odpověď.",
+      false,
+      502,
+    );
+  return parsed.data;
 }
 
 export async function fetchMarketQuotes(assets: MarketAsset[], signal?: AbortSignal) {
@@ -56,6 +76,16 @@ export function fetchFxHistory(from: string, to: string, start: string, end: str
 }
 
 export function fetchMarketStatus(signal?: AbortSignal) {
-  return fetchJson<{ provider: string; configured: boolean }>("/api/market/status", { signal });
+  return fetchJson<{ provider: string; configured: boolean }>("/api/market/status", { signal }).then(
+    (status) => {
+      if (typeof status.provider !== "string" || typeof status.configured !== "boolean")
+        throw new MarketDataError(
+          "INVALID_RESPONSE",
+          "Market data status má neplatný formát.",
+          false,
+          502,
+        );
+      return status;
+    },
+  );
 }
-

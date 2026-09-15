@@ -121,7 +121,13 @@ export function AddAssetDialog({
   };
 
   return (
-    <Dialog open wide title="Přidat investici" onClose={pending ? () => {} : onClose}>
+    <Dialog
+      open
+      wide
+      className={!asset ? "asset-search-dialog" : ""}
+      title="Přidat investici"
+      onClose={pending ? () => {} : onClose}
+    >
       <div className="add-asset-flow">
         {!asset ? (
           <AssetSearch

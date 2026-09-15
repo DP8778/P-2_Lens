@@ -14,6 +14,12 @@ server-only. Provider responses are normalized to `MarketAsset`, `MarketQuote`,
 engine receives only normalized assets, prices and CZK-per-unit FX rates; it has no Twelve Data
 dependency.
 
+`GET /api/market/status` is the browser-safe configuration probe. A missing or whitespace-only
+`TWELVE_DATA_API_KEY` returns `configured: false`; the key value is never returned or logged.
+Search errors retain the normalized `AUTH`, `RATE_LIMIT`, `UNAVAILABLE`, `INVALID_RESPONSE`,
+`INVALID_SYMBOL` or `NOT_FOUND` code across the route boundary. `npm run test:market-live` is the
+only opt-in real-provider smoke path and skips cleanly when the server-side key is absent.
+
 ## Asset identity and discovery
 
 An asset ID is `provider:MIC:symbol`, falling back to exchange when MIC is absent. A ticker is not
@@ -56,7 +62,10 @@ not create five FX requests. Historical valuations use the rate for that date, n
 
 Twelve Data daily equity/ETF prices are split-adjusted. The current transaction model does not
 adjust pre-split quantities, so portfolios spanning a split require a future split-aware transaction
-normalizer; this limitation is not hidden. Performance is price-based plus user-recorded cash flows,
+normalizer. This is a known **P0 correctness limitation**: an unsplit historical quantity combined
+with a split-adjusted price understates post-split units and value. It requires explicit corporate
+action factors rather than a price heuristic and is therefore documented and regression-tracked,
+not silently approximated. Performance is price-based plus user-recorded cash flows,
 not dividend total return. Dividends are not inferred. Deposits/withdrawals remain external flows,
 so they do not create synthetic investment return.
 
@@ -65,4 +74,3 @@ so they do not create synthetic investment return.
 Correctness does not depend on persistent server memory. Route handlers are uncached request-time
 boundaries and the durable per-browser history cache is IndexedDB. Concurrent client quote requests
 for the same asset set are deduplicated, but that short-lived promise map is only an optimization.
-

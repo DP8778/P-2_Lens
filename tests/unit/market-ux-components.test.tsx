@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AssetSearch } from "@/components/portfolio/AssetSearch";
+import { AssetSearch, marketSearchErrorMessage } from "@/components/portfolio/AssetSearch";
 import { HoldingsTable } from "@/components/portfolio/HoldingsTable";
 import { ContributionView } from "@/components/charts/ContributionView";
 import { AnalysisProvider } from "@/components/portfolio/AnalysisProvider";
@@ -17,11 +17,18 @@ describe("large-universe portfolio UX", () => {
   afterEach(() => { global.fetch = originalFetch; localStorage.clear(); jest.restoreAllMocks(); });
 
   test("renders disambiguated listings, filters ETFs and supports keyboard selection", async () => {
-    global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ assets: instruments }) } as Response);
+    global.fetch = jest.fn().mockImplementation(async (input) => ({
+      ok: true,
+      status: 200,
+      json: async () => String(input).includes("/api/market/status")
+        ? { provider: "twelvedata", configured: true }
+        : { assets: instruments },
+    } as Response));
     const select = jest.fn();
     const user = userEvent.setup();
     render(<AssetSearch mode="personal" existingIds={[instruments[0].id]} onSelect={select} />);
     const search = screen.getByRole("combobox", { name: "Hledat akcii nebo ETF" });
+    await waitFor(() => expect(search).toBeEnabled());
     await user.type(search, "Alpha");
     await waitFor(() => expect(screen.getAllByRole("option")).toHaveLength(3));
     expect(screen.getByText(/NASDAQ · Akcie · USD/)).toBeInTheDocument();
@@ -32,6 +39,48 @@ describe("large-universe portfolio UX", () => {
     await user.click(search);
     await user.keyboard("{ArrowDown}{Enter}");
     expect(select).toHaveBeenCalledWith(expect.objectContaining({ id: "twelvedata:XETR:AAA" }));
+  });
+
+  test("blocks search immediately when the market provider is not configured", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ provider: "twelvedata", configured: false }),
+    } as Response);
+
+    render(<AssetSearch mode="personal" existingIds={[]} onSelect={() => undefined} />);
+
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Live market data nejsou nakonfigurována."));
+    expect(screen.getByLabelText("Hledat akcii nebo ETF")).toBeDisabled();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  test("shows an authorization failure without replacing it with a generic error", async () => {
+    global.fetch = jest.fn().mockImplementation(async (input) => {
+      if (String(input).includes("/api/market/status"))
+        return { ok: true, status: 200, json: async () => ({ provider: "twelvedata", configured: true }) } as Response;
+      return {
+        ok: false,
+        status: 503,
+        json: async () => ({ error: { code: "AUTH", message: "upstream auth", retryable: false } }),
+      } as Response;
+    });
+    const user = userEvent.setup();
+    render(<AssetSearch mode="personal" existingIds={[]} onSelect={() => undefined} />);
+    const search = screen.getByLabelText("Hledat akcii nebo ETF");
+    await waitFor(() => expect(search).toBeEnabled());
+    await user.type(search, "PLTR");
+
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("nebyl autorizován"));
+    expect(screen.queryByText("Vyhledávání je momentálně nedostupné.")).not.toBeInTheDocument();
+  });
+
+  test("keeps normalized search failures distinct from an empty result", () => {
+    expect(marketSearchErrorMessage("AUTH")).toMatch(/autorizován/);
+    expect(marketSearchErrorMessage("RATE_LIMIT")).toMatch(/Limit poskytovatele/);
+    expect(marketSearchErrorMessage("UNAVAILABLE")).toMatch(/nedostupná/);
+    expect(marketSearchErrorMessage("INVALID_RESPONSE")).toMatch(/neplatnou odpověď/);
+    expect(marketSearchErrorMessage("NOT_FOUND")).toMatch(/Žádné výsledky/);
   });
 
   test("searches, filters and sorts thirty holdings locally", async () => {

@@ -6,12 +6,14 @@ export function Dialog({
   children,
   onClose,
   wide = false,
+  className = "",
 }: {
   open: boolean;
   title: string;
   children: ReactNode;
   onClose: () => void;
   wide?: boolean;
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -32,7 +34,7 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
-      className={`lens-dialog glass ${wide ? "wide" : ""}`}
+      className={`lens-dialog glass ${wide ? "wide" : ""} ${className}`.trim()}
       aria-labelledby={titleId}
       onKeyDown={(event) => {
         if (event.key !== "Tab") return;

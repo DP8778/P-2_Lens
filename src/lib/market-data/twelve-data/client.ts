@@ -6,7 +6,11 @@ import { normalizeTwelveDataError, type TwelveDataErrorBody } from "./errors";
 const baseUrl = "https://api.twelvedata.com";
 
 export class TwelveDataClient {
-  constructor(private readonly apiKey = process.env.TWELVE_DATA_API_KEY) {}
+  private readonly apiKey?: string;
+
+  constructor(apiKey = process.env.TWELVE_DATA_API_KEY) {
+    this.apiKey = apiKey?.trim() || undefined;
+  }
 
   get configured() {
     return Boolean(this.apiKey);
@@ -24,11 +28,21 @@ export class TwelveDataClient {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) url.searchParams.set(key, String(value));
     });
-    const response = await fetch(url, {
-      headers: { Authorization: `apikey ${this.apiKey}`, Accept: "application/json" },
-      cache: "no-store",
-      signal: AbortSignal.timeout(marketDataConfig.requestTimeoutMs),
-    });
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        headers: { Authorization: `apikey ${this.apiKey}`, Accept: "application/json" },
+        cache: "no-store",
+        signal: AbortSignal.timeout(marketDataConfig.requestTimeoutMs),
+      });
+    } catch {
+      throw new MarketDataError(
+        "UNAVAILABLE",
+        "Twelve Data se nepodařilo kontaktovat.",
+        true,
+        502,
+      );
+    }
     const body = (await response.json().catch(() => ({}))) as TwelveDataErrorBody;
     if (!response.ok || body.status === "error") {
       throw normalizeTwelveDataError(response.status, body);

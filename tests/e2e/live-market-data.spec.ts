@@ -52,11 +52,14 @@ test("personal portfolio searches live universe, backfills history and updates a
   await expect(page.getByRole("heading", { name: "Moje portfolio" })).toBeVisible();
   await page.getByRole("button", { name: "Přidat první investici" }).click();
   const dialogWidth = await page.getByRole("dialog").evaluate((element) => Math.round(element.getBoundingClientRect().width));
-  expect(dialogWidth).toBeGreaterThanOrEqual(680);
-  expect(dialogWidth).toBeLessThanOrEqual(760);
+  expect(dialogWidth).toBeGreaterThanOrEqual(540);
+  expect(dialogWidth).toBeLessThanOrEqual(620);
   await page.getByLabel("Hledat akcii nebo ETF").fill("Apple");
   await expect(page.getByRole("option", { name: /AAPL Apple Inc/ })).toBeVisible();
   await page.getByRole("option", { name: /AAPL Apple Inc/ }).click();
+  const transactionWidth = await page.getByRole("dialog").evaluate((element) => Math.round(element.getBoundingClientRect().width));
+  expect(transactionWidth).toBeGreaterThanOrEqual(680);
+  expect(transactionWidth).toBeLessThanOrEqual(760);
   await expect(page.getByText("210 USD")).toBeVisible();
   await page.getByLabel("Množství", { exact: true }).fill("5");
   await page.getByLabel(/Nákupní cena/).fill("200");
