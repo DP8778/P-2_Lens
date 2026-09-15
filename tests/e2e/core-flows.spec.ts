@@ -8,6 +8,9 @@ test("opens the portfolio, switches modes, compares and selects a chart point", 
   await page.goto("/cs-CZ/dashboard");
   await expect(page.getByTestId("portfolio-value")).toBeVisible();
   await expect(page.locator(".insight-copy h3")).toBeVisible();
+  await expect(page.locator(".hero-chart")).toBeVisible();
+  await expect(page.locator("#holdings")).toBeAttached();
+  await expect(page.locator(".portfolio-drivers")).toHaveCount(0);
   await page.screenshot({ path: "test-results/lens-desktop.png", fullPage: true });
   const before = await page.locator(".summary-return").innerText();
   await page.getByRole("button", { name: "1Y", exact: true }).click();
@@ -48,7 +51,7 @@ test("opens the portfolio, switches modes, compares and selects a chart point", 
   await page.getByLabel("Benchmark", { exact: true }).selectOption("qqq");
   if ((await chartOptions.getAttribute("open")) !== null) await chartOptionsTrigger.click();
   await page.locator(".compare-trigger").click();
-  await page.locator(".compare-holdings").getByRole("button", { name: /BTC Bitcoin/ }).click();
+  await page.locator(".compare-results").getByRole("option", { name: /BTC Bitcoin/ }).click();
   await expect(page.locator(".chart-legend")).toContainText("Index 100");
   await expect(page.locator(".insight-copy h3")).toContainText("BTC");
   if ((await chartOptions.getAttribute("open")) !== null) await chartOptionsTrigger.click();
@@ -77,6 +80,13 @@ test("demo remains deterministic and read-only", async ({ page }) => {
   await page.keyboard.press("Escape");
   await page.reload();
   await expect(page.getByTestId("portfolio-value")).toHaveText(before);
+});
+
+test("legacy portfolio, insights and asset routes redirect to the canonical dashboard", async ({ page }) => {
+  for (const route of ["portfolio", "insights", "assets/NVDA"]) {
+    await page.goto(`/cs-CZ/${route}`);
+    await expect(page).toHaveURL(/\/cs-CZ\/dashboard$/);
+  }
 });
 
 test("dialogs trap focus, close with Escape and return focus", async ({ page }) => {
@@ -138,6 +148,10 @@ test("touch layout stays within the viewport and keeps data usable offline", asy
     true,
   );
   await expect(page.getByTestId("portfolio-value")).toBeVisible();
+  await page.locator("#holdings").scrollIntoViewIfNeeded();
+  const mobileRowHeight = await page.locator(".holdings-table tbody tr").first().evaluate((element) => Math.round(element.getBoundingClientRect().height));
+  expect(mobileRowHeight).toBeLessThanOrEqual(130);
+  await expect(page.locator(".holdings-table tbody tr").first().locator("td").nth(4)).not.toBeVisible();
   await page.getByRole("button", { name: "Detail BTC", exact: true }).click();
   await page.getByRole("button", { name: "Porovnat v grafu" }).click();
   await expect(page.locator(".chart-legend")).toContainText("BTC");

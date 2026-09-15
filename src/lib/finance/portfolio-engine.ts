@@ -104,6 +104,13 @@ const priceAt = (assetId: string, date: string, prices: PricePoint[] = portfolio
     .at(-1);
 };
 
+const transactionPriority: Record<Transaction["type"], number> = {
+  deposit: 0,
+  buy: 1,
+  sell: 2,
+  withdrawal: 3,
+};
+
 /** Prodeje snižují agregovanou průměrnou nákladovou bázi poměrem prodaného množství. */
 export function buildHoldings(
   transactions: Transaction[],
@@ -114,7 +121,12 @@ export function buildHoldings(
   let cashCzk = 0;
   for (const transaction of [...transactions]
     .filter((row) => row.occurredAt <= dateOnly(asOfDate))
-    .sort((a, b) => a.occurredAt.localeCompare(b.occurredAt) || a.id.localeCompare(b.id))) {
+    .sort(
+      (a, b) =>
+        a.occurredAt.localeCompare(b.occurredAt) ||
+        transactionPriority[a.type] - transactionPriority[b.type] ||
+        a.id.localeCompare(b.id),
+    )) {
     const fx = fxAt(transaction.currency, transaction.occurredAt, rates);
     const feeCzk = transaction.fee * fx;
     if (transaction.type === "deposit") {

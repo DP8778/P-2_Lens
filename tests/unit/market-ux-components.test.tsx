@@ -35,17 +35,18 @@ describe("large-universe portfolio UX", () => {
   });
 
   test("searches, filters and sorts thirty holdings locally", async () => {
-    const base = buildAnalysis(initialTransactions, timeframeRange("1M")).holdings.find((holding) => holding.assetId !== "cash")!;
+    const baseAnalysis = buildAnalysis(initialTransactions, timeframeRange("1M"));
+    const base = baseAnalysis.holdings.find((holding) => holding.assetId !== "cash")!;
     const holdings: HoldingMetric[] = Array.from({ length: 30 }, (_, index) => ({ ...base, assetId: `asset-${index}`, marketValue: (index + 1) * 1000, allocationPct: index + 1, pnl: index * 10, returnPct: index, contributionPctPoints: index / 10, asset: { ...base.asset, id: `asset-${index}`, symbol: index === 17 ? "AAPL" : `UX${index}`, name: `Test instrument ${index}`, currency: index % 2 ? "EUR" : "USD", type: index % 3 ? "stock" : "etf" } }));
     const user = userEvent.setup();
-    render(<HoldingsTable holdings={holdings} locale="cs-CZ" onSelect={() => undefined} onAdd={() => undefined} period="1M" />);
+    render(<HoldingsTable analysis={{ ...baseAnalysis, holdings }} holdings={holdings} locale="cs-CZ" onSelect={() => undefined} onAdd={() => undefined} period="1M" />);
     await user.type(screen.getByLabelText("Hledat pozici"), "AAPL");
     expect(screen.getAllByRole("button", { name: "Detail AAPL" })).toHaveLength(1);
     await user.clear(screen.getByLabelText("Hledat pozici"));
     await user.selectOptions(screen.getByLabelText("Měna instrumentu"), "EUR");
     expect(within(screen.getByRole("table")).getAllByRole("row")).toHaveLength(16);
-    await user.selectOptions(screen.getByLabelText("Řazení pozic"), "contribution");
-    expect(screen.getByLabelText("Řadit vzestupně")).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("Řazení pozic"), "contribution:desc");
+    expect(screen.getByLabelText("Řazení pozic")).toHaveValue("contribution:desc");
   });
 
   test("shows ranked contribution rows before the full thirty-position truth", async () => {

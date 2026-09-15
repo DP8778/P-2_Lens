@@ -96,7 +96,13 @@ export function ChartControls({
           {timeframe === "CUSTOM" && <span className="tertiary">Vlastní</span>}
         </div>
         <div className="chart-view-controls">
-          <ComparePicker assets={compareAssets} selected={s.compare} onSelect={(compare) => onChange({ ...s, compare })} />
+          <ComparePicker
+            assets={compareAssets}
+            selected={s.compare}
+            benchmarkSelected={s.showBenchmark}
+            onSelect={(compare) => onChange({ ...s, compare })}
+            onSelectBenchmark={() => onChange({ ...s, compare: "", showBenchmark: true })}
+          />
           {s.compare || s.showBenchmark ? (
             <span className="comparison-scale" title="Srovnávací řady začínají na hodnotě 100">
               Index 100

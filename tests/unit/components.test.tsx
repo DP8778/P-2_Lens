@@ -44,6 +44,7 @@ describe("core components", () => {
     const analysis = buildAnalysis(initialTransactions, timeframeRange("1M"));
     render(
       <HoldingsTable
+        analysis={analysis}
         holdings={analysis.holdings}
         locale="cs-CZ"
         onSelect={() => undefined}

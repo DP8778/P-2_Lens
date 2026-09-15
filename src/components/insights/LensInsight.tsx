@@ -156,7 +156,7 @@ export function LensInsight({
         <section className="insight-claims" aria-labelledby="insight-drivers-title">
           <h3 id="insight-drivers-title">Klíčový faktor</h3>
           <ul>
-            {insight.drivers.map((driver) => (
+            {insight.drivers.slice(0, 2).map((driver) => (
               <li key={`${driver.text}-${driver.evidenceIds.join("-")}`}>{driver.text}</li>
             ))}
           </ul>
@@ -167,7 +167,7 @@ export function LensInsight({
         <section className="insight-claims" aria-labelledby="insight-risk-title">
           <h3 id="insight-risk-title">Ke sledování</h3>
           <ul>
-            {insight.riskNotes.map((note) => (
+            {insight.riskNotes.slice(0, Math.max(0, 3 - Math.min(2, insight.drivers.length))).map((note) => (
               <li key={`${note.text}-${note.evidenceIds.join("-")}`}>{note.text}</li>
             ))}
           </ul>

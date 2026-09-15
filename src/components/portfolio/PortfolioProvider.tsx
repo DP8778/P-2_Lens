@@ -19,6 +19,11 @@ import {
   type Transaction,
 } from "@/lib/finance/portfolio-engine";
 import type { Asset, Benchmark, FxRate, PricePoint } from "@/lib/finance/domain";
+import {
+  createPositionLedgerEntries,
+  implicitCashFlowIdForTrade,
+  reconcilePositionLedgerCashFlows,
+} from "@/lib/finance/position-ledger";
 import { marketDataConfig } from "@/lib/market-data/config";
 import { fetchMarketStatus, searchMarketAssets } from "@/lib/market-data/client";
 import { loadFxHistory, loadHistory, loadQuotes } from "@/lib/market-data/service";
@@ -61,7 +66,13 @@ function hydrateStorage() {
   loaded = true;
   try {
     const rawPersonal = localStorage.getItem(personalKey);
-    if (rawPersonal) personalSnapshot = personalSchema.parse(JSON.parse(rawPersonal));
+    if (rawPersonal) {
+      const parsed = personalSchema.parse(JSON.parse(rawPersonal));
+      const transactions = reconcilePositionLedgerCashFlows(parsed.transactions as Transaction[]);
+      personalSnapshot = personalSchema.parse({ ...parsed, transactions });
+      if (transactions !== parsed.transactions)
+        localStorage.setItem(personalKey, JSON.stringify(personalSnapshot));
+    }
     const rawMode = localStorage.getItem(modeKey);
     if (rawMode === "personal" || rawMode === "demo") modeSnapshot = rawMode;
   } catch {
@@ -254,9 +265,8 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       const current = readPersonal();
       const timestamp = `${Date.now()}-${sequence++}`;
       const remaining = edit ? current.transactions.filter((transaction) => !("assetId" in transaction && transaction.assetId === asset.id) && !transaction.id.startsWith(`personal-funding-${asset.id}-`)) : current.transactions;
-      const funding: Transaction = { id: `personal-funding-${asset.id}-${timestamp}`, type: "deposit", occurredAt: row.date, amount: row.quantity * row.averageCost + row.fees, currency: asset.currency, fee: 0 };
-      const purchase: Transaction = { id: `personal-buy-${asset.id}-${timestamp}`, type: "buy", occurredAt: row.date, assetId: asset.id, quantity: row.quantity, unitPrice: row.averageCost, currency: asset.currency, fee: row.fees };
-      persistPersonal({ version: 1, assets: [...current.assets.filter((candidate) => candidate.id !== asset.id), asset], transactions: [...remaining, funding, purchase] });
+      const entries = createPositionLedgerEntries({ assetId: asset.id, type: "buy", quantity: row.quantity, unitPrice: row.averageCost, occurredAt: row.date, currency: asset.currency, fee: row.fees }, timestamp);
+      persistPersonal({ version: 1, assets: [...current.assets.filter((candidate) => candidate.id !== asset.id), asset], transactions: [...remaining, ...entries] });
     } catch (error) {
       setMarket((current) => ({ ...current, state: current.prices.length ? "stale" : "unavailable", error: error instanceof Error ? error.message : "Historická data se nepodařilo načíst." }));
       throw error;
@@ -285,20 +295,19 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     const edited = editId ? current.transactions.find((transaction) => transaction.id === editId && "quantity" in transaction) : undefined;
     if (type === "sell" && input.quantity > available + (edited?.type === "sell" ? edited.quantity : 0)) throw new Error("Nelze prodat více, než aktuálně držíte.");
     await Promise.all([loadHistory(asset, { from: input.date, to: today(), interval: "1day" }), asset.currency === "CZK" ? Promise.resolve() : loadFxHistory(asset.currency, "CZK", { from: input.date, to: today(), interval: "1day" })]);
-    const suffix = editId?.split(`personal-${edited?.type}-${assetId}-`)[1];
-    const withoutEdited = editId ? current.transactions.filter((transaction) => transaction.id !== editId && transaction.id !== `personal-funding-${assetId}-${suffix}`) : current.transactions;
+    const companionId = edited ? implicitCashFlowIdForTrade(edited as Transaction) : undefined;
+    const withoutEdited = editId ? current.transactions.filter((transaction) => transaction.id !== editId && transaction.id !== companionId) : current.transactions;
     const timestamp = `${Date.now()}-${sequence++}`;
-    const trade: Transaction = { id: `personal-${type}-${assetId}-${timestamp}`, type, occurredAt: input.date, assetId, quantity: input.quantity, unitPrice: input.unitPrice, currency: asset.currency, fee: input.fee };
-    const funding: Transaction[] = type === "buy" ? [{ id: `personal-funding-${assetId}-${timestamp}`, type: "deposit", occurredAt: input.date, amount: input.quantity * input.unitPrice + input.fee, currency: asset.currency, fee: 0 }] : [];
-    persistPersonal({ ...current, transactions: [...withoutEdited, ...funding, trade] });
+    const entries = createPositionLedgerEntries({ assetId, type, quantity: input.quantity, unitPrice: input.unitPrice, occurredAt: input.date, currency: asset.currency, fee: input.fee }, timestamp);
+    persistPersonal({ ...current, transactions: [...withoutEdited, ...entries] });
   }, [market.fxRates]);
 
   const removeTransaction = useCallback((id: string) => {
     const current = readPersonal();
     const transaction = current.transactions.find((row) => row.id === id);
     if (!transaction) return;
-    const suffix = "assetId" in transaction ? id.split(`personal-${transaction.type}-${transaction.assetId}-`)[1] : undefined;
-    persistPersonal({ ...current, transactions: current.transactions.filter((row) => row.id !== id && (!("assetId" in transaction) || row.id !== `personal-funding-${transaction.assetId}-${suffix}`)) });
+    const companionId = implicitCashFlowIdForTrade(transaction as Transaction);
+    persistPersonal({ ...current, transactions: current.transactions.filter((row) => row.id !== id && row.id !== companionId) });
   }, []);
 
   return (
@@ -319,7 +328,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       remove: (id) => {
         if (mode === "demo") throw new Error("Demo portfolio je read-only.");
         const current = readPersonal();
-        persistPersonal({ ...current, assets: current.assets.filter((asset) => asset.id !== id), transactions: current.transactions.filter((transaction) => !("assetId" in transaction && transaction.assetId === id) && !transaction.id.startsWith(`personal-funding-${id}-`)) });
+        persistPersonal({ ...current, assets: current.assets.filter((asset) => asset.id !== id), transactions: current.transactions.filter((transaction) => !("assetId" in transaction && transaction.assetId === id) && !transaction.id.startsWith(`personal-funding-${id}-`) && !transaction.id.startsWith(`personal-withdrawal-${id}-`)) });
       },
       refreshQuotes: refreshQuotesOnly,
       prepareComparison,

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings, ArrowUpRight } from "lucide-react";
+import { Settings } from "lucide-react";
 import type { Dictionary, Locale } from "@/i18n/getDictionary";
 import { Logo } from "./Logo";
 import { PortfolioProvider } from "@/components/portfolio/PortfolioProvider";
@@ -28,32 +28,15 @@ export function AppShell({
             <nav aria-label="Hlavní navigace">
               <Link
                 href={`/${locale}/dashboard`}
-                aria-current={pathname.endsWith("dashboard") ? "page" : undefined}
-              >
-                Přehled
-              </Link>
-              <Link
-                href={`/${locale}/portfolio#holdings`}
-                aria-current={pathname.endsWith("portfolio") ? "page" : undefined}
+                aria-current={!pathname.endsWith("settings") ? "page" : undefined}
               >
                 Portfolio
               </Link>
-              <Link
-                href={`/${locale}/insights#lens-insight`}
-                aria-current={pathname.endsWith("insights") ? "page" : undefined}
-              >
-                Souvislosti
-                <ArrowUpRight size={12} />
-              </Link>
             </nav>
             <div className="nav-account">
-              <span className="local-status">Lokální portfolio</span>
               <Link className="icon-control" href={`/${locale}/settings`} aria-label="Nastavení">
                 <Settings size={18} />
               </Link>
-              <span className="user-avatar" aria-label="Demo investor">
-                DI
-              </span>
             </div>
           </header>
           <main id="main-content">{children}</main>

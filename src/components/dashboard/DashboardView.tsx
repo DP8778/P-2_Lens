@@ -7,14 +7,12 @@ import {
   buildAnalysisFromDataset,
   timeline as demoTimeline,
   timeframeRange,
-  type Holding,
   type TimeRange,
 } from "@/lib/finance/portfolio-engine";
 import { PortfolioSummary } from "./PortfolioSummary";
 import { PortfolioHeroChart } from "@/components/charts/PortfolioHeroChart";
 import { LensInsight } from "@/components/insights/LensInsight";
 import { HoldingsTable } from "@/components/portfolio/HoldingsTable";
-import { PortfolioDrivers } from "@/components/portfolio/PortfolioDrivers";
 import { HoldingDetail } from "@/components/portfolio/HoldingDetail";
 import { AddAssetDialog } from "@/components/portfolio/AddAssetDialog";
 import { usePortfolio } from "@/components/portfolio/PortfolioProvider";
@@ -29,6 +27,18 @@ const freshnessLabel = (timestamp: string) => {
   if (seconds < 60) return `Aktualizováno před ${seconds} s`;
   const minutes = Math.round(seconds / 60);
   return minutes < 60 ? `Aktualizováno před ${minutes} min` : `Aktualizováno ${new Date(timestamp).toLocaleString("cs-CZ")}`;
+};
+const marketStatusLabel = (market: ReturnType<typeof usePortfolio>["market"], locale: string) => {
+  if (market.state === "loading") return "Aktualizuji ceny…";
+  if (market.state === "unavailable") return "Market data nejsou dostupná";
+  if (market.state === "stale")
+    return market.lastRefresh
+      ? `Data nejsou aktuální · ${freshnessLabel(market.lastRefresh).toLowerCase()}`
+      : "Používám poslední dostupné ceny";
+  if (!market.lastRefresh) return "Ceny připraveny";
+  const open = market.quotes.some((quote) => quote.marketState === "open");
+  if (open) return `${freshnessLabel(market.lastRefresh)} · trh otevřen`;
+  return `Poslední ceny · ${market.quotes[0] ? new Date(market.quotes[0].timestamp).toLocaleString(locale) : freshnessLabel(market.lastRefresh).toLowerCase()}`;
 };
 function liveRange(timeline: string[], timeframe: TimeRange | "CUSTOM", selected: [string, string] | null) {
   if (selected) {
@@ -48,7 +58,7 @@ export function DashboardView({ locale, initialAssetId }: { locale: Locale; dict
   const { mode, setMode, holdings, transactions, warning, market, analysisDataset, refreshQuotes } = usePortfolio();
   const { state, dispatch } = useAnalysisContext();
   const [detailId, setDetailId] = useState<string | undefined>(initialAssetId);
-  const [add, setAdd] = useState<{ assetId?: string; edit?: Holding }>();
+  const [add, setAdd] = useState<{ assetId?: string }>();
   const [confirmation, setConfirmation] = useState("");
   useEffect(() => {
     if (initialAssetId) dispatch({ type: "settings", value: { compareAssetId: initialAssetId } });
@@ -106,7 +116,6 @@ export function DashboardView({ locale, initialAssetId }: { locale: Locale; dict
               <button aria-pressed={mode === "personal"} onClick={() => switchMode("personal")}><strong>Moje portfolio</strong><small>Vaše transakce · market data Twelve Data</small></button>
             </div>
           </details>
-          <span className="demo-label">{mode === "demo" ? "Demo data" : "Osobní · CZK"}</span>
         </div>
         {mode === "personal" ? <button className="primary-button" onClick={() => setAdd({})}><Plus size={17} />Přidat investici</button> : <button className="quiet-button" onClick={() => switchMode("personal")}>Použít vlastní portfolio</button>}
       </header>
@@ -114,8 +123,7 @@ export function DashboardView({ locale, initialAssetId }: { locale: Locale; dict
       {warning && <p role="status" className="inline-notice">{warning}</p>}
       {mode === "personal" && (
         <div className={`market-data-strip ${market.state}`} role="status">
-          <span>{market.state === "loading" ? "Načítám market data…" : market.state === "stale" ? `Data nejsou aktuální · ${market.lastRefresh ? freshnessLabel(market.lastRefresh).toLowerCase() : "poslední uložené ceny"}` : market.state === "unavailable" ? market.error : market.lastRefresh ? freshnessLabel(market.lastRefresh) : "Twelve Data"}</span>
-          {market.lastRefresh && <small>{market.quotes.some((quote) => quote.marketState === "open") ? "● Trh otevřen" : `Poslední dostupné ceny · ${market.quotes[0] ? new Date(market.quotes[0].timestamp).toLocaleString(locale) : "trh zavřen"}`}</small>}
+          <span>{marketStatusLabel(market, locale)}</span>
           {holdings.length > 0 && <button className="icon-control" onClick={() => void refreshQuotes()} aria-label="Aktualizovat ceny"><RefreshCw size={14} /></button>}
         </div>
       )}
@@ -127,22 +135,21 @@ export function DashboardView({ locale, initialAssetId }: { locale: Locale; dict
             ? market.state === "loading"
               ? "Načítám historii a kurzy pro vaše portfolio…"
               : "Portfolio je uložené, ale market data teď nejsou dostupná."
-            : "Sledujte výkon a strukturu vlastního portfolia."}</p>
-          {market.configured === false && <small>Live market data nejsou nakonfigurována. Přidejte TWELVE_DATA_API_KEY do .env.local.</small>}
+            : market.configured === false
+              ? "Pro vlastní portfolio zatím nejsou dostupná market data. Nastavení můžete dokončit později."
+              : "Sledujte výkon a strukturu vlastního portfolia."}</p>
           <button className="primary-button" onClick={() => setAdd({})}><Plus size={17} />Přidat první investici</button>
           <button className="quiet-button" onClick={() => switchMode("demo")}>Zobrazit demo portfolio</button>
         </section>
       ) : analysis && overview && visibleAnalysis ? (
         <>
           <PortfolioSummary analysis={analysis} locale={locale} period={period} showBenchmark={state.showBenchmark} />
-          <div className="analytics-heading"><h2>Portfolio v souvislostech</h2><span>{dateLabel(analysis.metrics.startDate, locale)} — {dateLabel(analysis.metrics.endDate, locale)}</span></div>
+          <div className="analytics-heading"><h2>Výkon portfolia</h2><span>{dateLabel(analysis.metrics.startDate, locale)} — {dateLabel(analysis.metrics.endDate, locale)}</span></div>
           <div className="hero-analytics">
             <PortfolioHeroChart analysis={analysis} visibleAnalysis={visibleAnalysis} overview={overview} locale={locale} timelineDates={activeTimeline} />
             <LensInsight analysis={analysis} locale={locale} dataSource={mode === "personal" ? "live" : "mock"} context={{ transactions, selectedRange: state.selectedRange, timeframe: state.timeframe, mode: state.mode, benchmarkId: state.benchmarkId, compareAssetId: state.compareAssetId, showBenchmark: state.showBenchmark, selectedPoint: state.selectedPoint }} />
           </div>
-          <PortfolioDrivers analysis={analysis} locale={locale} />
-          <HoldingsTable holdings={analysis.holdings} locale={locale} onSelect={(position) => setDetailId(position.assetId)} onAdd={() => setAdd({})} period={period} quotes={market.quotes} editable={mode === "personal"} />
-          <footer className="portfolio-footer"><span>Lens · portfolio intelligence</span><p>{mode === "demo" ? "Verze dat lens-demo-2026.09-v2 · CZK, deterministické demo ceny a kurzy." : `Twelve Data · price-based return · ${market.lastRefresh ? `aktualizováno ${new Date(market.lastRefresh).toLocaleString(locale)}` : "market data"}.`}</p></footer>
+          <HoldingsTable analysis={analysis} holdings={analysis.holdings} locale={locale} onSelect={(position) => setDetailId(position.assetId)} onAdd={() => setAdd({})} period={period} editable={mode === "personal"} />
           <AnalysisInspector state={state} analysis={analysis} />
           <MarketDataInspector mode={mode} assets={analysisDataset?.assets ?? []} market={market} />
         </>
@@ -150,7 +157,7 @@ export function DashboardView({ locale, initialAssetId }: { locale: Locale; dict
       {detail && (
         <HoldingDetail holding={detail} locale={locale} onClose={() => setDetailId(undefined)} onCompare={() => { dispatch({ type: "settings", value: { compareAssetId: detail.assetId, mode: "performance" } }); setDetailId(undefined); document.querySelector(".hero-analytics")?.scrollIntoView({ behavior: "instant", block: "start" }); }} onAdd={() => { setAdd({ assetId: detail.assetId }); setDetailId(undefined); }} />
       )}
-      {add && <AddAssetDialog onClose={closeAdd} initialAssetId={add.assetId} edit={add.edit} onSaved={(symbol) => { setConfirmation(`${symbol} bylo přidáno do portfolia.`); window.setTimeout(() => setConfirmation(""), 3200); }} />}
+      {add && <AddAssetDialog onClose={closeAdd} initialAssetId={add.assetId} onSaved={(symbol) => { setConfirmation(`${symbol} bylo přidáno do portfolia.`); window.setTimeout(() => setConfirmation(""), 3200); }} />}
     </div>
   );
 }
