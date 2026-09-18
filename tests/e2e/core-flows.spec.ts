@@ -74,31 +74,34 @@ test("demo remains deterministic and read-only", async ({ page }) => {
   await page.goto("/cs-CZ/dashboard");
   const before = await page.getByTestId("portfolio-value").innerText();
   await expect(page.getByRole("button", { name: "Použít vlastní portfolio" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Přidat investici" })).toHaveCount(0);
-  await page.getByRole("button", { name: "Detail BTC", exact: true }).click();
-  await expect(page.getByText("Demo portfolio je read-only analytický scénář.")).toBeVisible();
-  await page.keyboard.press("Escape");
-  await page.reload();
+  await expect(page.getByRole("button", { name: "Přidat aktivum" })).toHaveCount(0);
+  await page.getByRole("link", { name: "Detail BTC", exact: true }).click();
+  await expect(page).toHaveURL(/\/cs-CZ\/assets\/btc$/);
+  await page.goto("/cs-CZ/dashboard");
   await expect(page.getByTestId("portfolio-value")).toHaveText(before);
 });
 
-test("legacy portfolio, insights and asset routes redirect to the canonical dashboard", async ({ page }) => {
-  for (const route of ["portfolio", "insights", "assets/NVDA"]) {
+test("legacy portfolio and insights redirect while asset detail remains a real route", async ({ page }) => {
+  for (const route of ["portfolio", "insights"]) {
     await page.goto(`/cs-CZ/${route}`);
     await expect(page).toHaveURL(/\/cs-CZ\/dashboard$/);
   }
+  await page.goto("/cs-CZ/assets/NVDA");
+  await expect(page).toHaveURL(/\/cs-CZ\/assets\/NVDA$/);
 });
 
 test("dialogs trap focus, close with Escape and return focus", async ({ page }) => {
   await page.goto("/cs-CZ/dashboard");
-  const detail = page.getByRole("button", { name: "Detail BTC", exact: true });
-  await detail.click();
+  const trigger = page.getByRole("button", { name: "Použít vlastní portfolio" });
+  await trigger.click();
+  const add = page.getByRole("button", { name: "Přidat první aktivum" });
+  await add.click();
   await page.getByRole("button", { name: "Zavřít", exact: true }).focus();
   await page.keyboard.press("Shift+Tab");
   expect(await page.evaluate(() => !!document.activeElement?.closest("dialog"))).toBe(true);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(detail).toBeFocused();
+  await expect(add).toBeFocused();
 });
 
 test("navigator mění pouze viewport a vlastní rozsah řídí analýzu", async ({ page }) => {
@@ -152,11 +155,11 @@ test("touch layout stays within the viewport and keeps data usable offline", asy
   const mobileRowHeight = await page.locator(".holdings-table tbody tr").first().evaluate((element) => Math.round(element.getBoundingClientRect().height));
   expect(mobileRowHeight).toBeLessThanOrEqual(130);
   await expect(page.locator(".holdings-table tbody tr").first().locator("td").nth(4)).not.toBeVisible();
-  await page.getByRole("button", { name: "Detail BTC", exact: true }).click();
-  await page.getByRole("button", { name: "Porovnat v grafu" }).click();
-  await expect(page.locator(".chart-legend")).toContainText("BTC");
+  await page.getByRole("link", { name: "Detail BTC", exact: true }).click();
+  await expect(page).toHaveURL(/\/cs-CZ\/assets\/btc$/);
+  await page.goto("/cs-CZ/dashboard");
   await page.getByRole("button", { name: "Použít vlastní portfolio" }).click();
-  await page.getByRole("button", { name: "Přidat první investici" }).click();
+  await page.getByRole("button", { name: "Přidat první aktivum" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   expect(await page.getByRole("dialog").evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(
     true,

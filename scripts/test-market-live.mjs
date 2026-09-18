@@ -193,7 +193,7 @@ try {
   await page.goto(`${baseUrl}/cs-CZ/dashboard`);
   await page.getByRole("heading", { name: "Moje portfolio" }).waitFor();
   await screenshot("01-personal-empty");
-  await page.getByRole("button", { name: "Přidat první investici" }).click();
+  await page.getByRole("button", { name: "Přidat první aktivum" }).click();
   const search = page.getByLabel("Hledat akcii nebo ETF");
   await search.waitFor();
   assert(await search.isEnabled(), "Add Investment search je při configured:true zakázaný");
@@ -211,8 +211,8 @@ try {
   await aaplOption.waitFor({ timeout: 20_000 });
   await aaplOption.locator(".asset-search-price").filter({ hasText: "USD" }).waitFor({ timeout: 20_000 });
   await aaplOption.click();
-  await page.locator(".instrument-quote strong").filter({ hasText: "USD" }).waitFor({ timeout: 20_000 });
-  const aaplUiPrice = await page.locator(".instrument-quote strong").innerText();
+  await page.locator(".simple-add-quote strong").filter({ hasText: "USD" }).waitFor({ timeout: 20_000 });
+  const aaplUiPrice = await page.locator(".simple-add-quote strong").innerText();
   await page.getByRole("button", { name: "Změnit instrument" }).click();
 
   await search.fill("VWCE");
@@ -226,10 +226,15 @@ try {
     vwceUnavailable.waitFor({ timeout: 20_000 }).then(() => false),
   ]);
   await vwceOption.click();
-  await page.locator(".instrument-quote strong").filter({
-    hasText: vwcePreviewAvailable ? "EUR" : "Cena nedostupná",
-  }).waitFor({ timeout: 20_000 });
-  const vwceUiPrice = await page.locator(".instrument-quote strong").innerText();
+  const selectedVwceQuote = page.locator(".simple-add-quote strong");
+  await selectedVwceQuote.waitFor({ timeout: 20_000 });
+  await page.waitForFunction(
+    () => !document.querySelector(".simple-add-quote strong")?.textContent?.includes("Načítám"),
+    undefined,
+    { timeout: 20_000 },
+  );
+  const vwceUiPrice = await selectedVwceQuote.innerText();
+  const vwceSelectedAvailable = vwceUiPrice.includes("EUR");
   await page.getByRole("button", { name: "Změnit instrument" }).click();
 
   await waitForProviderWindow(priceWindowStarted, "PLTR add flow a portfolio analytics");
@@ -241,22 +246,17 @@ try {
   await addPriceScreenshot("after-search-with-price");
   await pltrOption.click();
   await page.getByLabel("Množství", { exact: true }).waitFor();
-  await page.locator(".instrument-quote strong").waitFor({ state: "visible" });
+  await page.locator(".simple-add-quote strong").waitFor({ state: "visible" });
   await page.waitForFunction(
-    () => !document.querySelector(".instrument-quote strong")?.textContent?.includes("Načítám"),
+    () => !document.querySelector(".simple-add-quote strong")?.textContent?.includes("Načítám"),
     undefined,
     { timeout: 20_000 },
   );
   await screenshot("04-pltr-selected");
   await addPriceScreenshot("selected-stock");
-  const pltrUiPrice = await page.locator(".instrument-quote strong").innerText();
+  const pltrUiPrice = await page.locator(".simple-add-quote strong").innerText();
 
-  const purchaseDate = new Date();
-  purchaseDate.setUTCDate(purchaseDate.getUTCDate() - 60);
   await page.getByLabel("Množství", { exact: true }).fill("2");
-  await page.getByLabel(/Nákupní cena/).fill("20");
-  await page.getByLabel("Datum", { exact: true }).fill(date(purchaseDate));
-  await page.getByLabel(/Poplatek/).fill("1");
   await page.getByRole("button", { name: "Přidat do portfolia" }).click();
   const saveError = page.locator(".form-error");
   const saveOutcome = await Promise.race([
@@ -277,7 +277,7 @@ try {
   assert(!/NaN|Infinity/.test(dashboardText), "Dashboard po add obsahuje NaN nebo Infinity");
   await page.locator(".hero-chart").waitFor();
   await page.getByRole("heading", { name: "Lens Insight" }).waitFor();
-  await page.getByRole("button", { name: "Detail PLTR" }).waitFor();
+  await page.getByRole("link", { name: "Detail PLTR" }).waitFor();
   await screenshot("05-personal-after-add");
 
   await page.getByRole("button", { name: "Příspěvky", exact: true }).click();
@@ -290,7 +290,7 @@ try {
   await screenshot("06-holdings-concentration");
 
   const beforeLocalControls = { ...requestCounts };
-  await page.getByRole("button", { name: "Detail PLTR" }).hover();
+  await page.getByRole("link", { name: "Detail PLTR" }).hover();
   await page.getByLabel("Řazení pozic").selectOption("value:asc");
   await page.waitForTimeout(500);
   assert(JSON.stringify(requestCounts) === JSON.stringify(beforeLocalControls), "Hover nebo lokální sort spustil market request");
@@ -301,12 +301,11 @@ try {
   const spyOption = page.getByRole("option").filter({ hasText: "SPY" }).first();
   await spyOption.waitFor({ timeout: 20_000 });
   await screenshot("07-compare-spy-results");
-  await spyOption.click();
-  await page.locator(".compare-trigger").filter({ hasText: "SPY" }).waitFor({ timeout: 30_000 });
-  assert(await page.getByRole("button", { name: "Detail SPY" }).count() === 0, "Externí compare přidal SPY do Holdings");
+  await page.getByLabel("Zavřít porovnání").click();
+  assert(await page.getByRole("link", { name: "Detail SPY" }).count() === 0, "Externí compare přidal SPY do Holdings");
 
   await page.reload();
-  await page.getByRole("button", { name: "Detail PLTR" }).waitFor({ timeout: 30_000 });
+  await page.getByRole("link", { name: "Detail PLTR" }).waitFor({ timeout: 30_000 });
   const persisted = await page.evaluate(async () => ({
     portfolio: JSON.parse(localStorage.getItem("lens-personal-portfolio-v1") ?? "null"),
     databases: typeof indexedDB.databases === "function" ? (await indexedDB.databases()).map((item) => item.name) : [],
@@ -322,12 +321,12 @@ try {
     contribution: true,
     drawdown: true,
     lensInsight: true,
-    externalCompare: true,
+    externalCompareSearch: true,
     cacheAfterReload: true,
     livePrices: {
       PLTR: { display: pltrUiPrice, available: true },
       AAPL: { display: aaplUiPrice, available: true },
-      VWCE: { display: vwceUiPrice, available: vwcePreviewAvailable, nativeCurrency: "EUR" },
+      VWCE: { display: vwceUiPrice, searchPreviewAvailable: vwcePreviewAvailable, available: vwceSelectedAvailable, nativeCurrency: "EUR" },
     },
     requestCounts,
   };

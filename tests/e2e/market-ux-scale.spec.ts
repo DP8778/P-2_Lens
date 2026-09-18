@@ -22,7 +22,7 @@ const smallTransactions = [
   ]).flat(),
 ];
 
-test("six holdings avoid a permanent filter wall and long history is disclosed", async ({ page }) => {
+test("six holdings avoid a permanent filter wall and open a usable asset detail", async ({ page }) => {
   await page.addInitScript(({ assets, transactions }) => {
     localStorage.setItem("lens-portfolio-mode-v1", "personal");
     localStorage.setItem("lens-personal-portfolio-v1", JSON.stringify({ version: 1, assets, transactions }));
@@ -38,10 +38,15 @@ test("six holdings avoid a permanent filter wall and long history is disclosed",
   await expect(page.getByLabel("Hledat pozici")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Filtry" })).toHaveCount(0);
   await expect(page.getByLabel("Řazení pozic", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Detail AAPL" }).click();
-  await expect(page.locator(".transaction-row")).toHaveCount(5);
-  await page.getByRole("button", { name: "Zobrazit všechny (6)" }).click();
-  await expect(page.locator(".transaction-row")).toHaveCount(6);
+  const detailLink = page.getByRole("link", { name: "Detail AAPL" });
+  await expect(detailLink).toHaveAttribute("href", "/cs-CZ/assets/twelvedata%3AXETR%3AAAPL");
+  await page.goto((await detailLink.getAttribute("href"))!);
+  await expect(page).toHaveURL(/\/cs-CZ\/assets\/twelvedata(?::|%3A)XETR(?::|%3A)AAPL/);
+  await expect(page.getByRole("heading", { name: "Test instrument 17" })).toBeVisible();
+  await expect(page.getByTestId("asset-price-chart")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Moje pozice" })).toBeVisible();
+  await expect(page.locator(".asset-position-metrics")).toContainText("Množství");
+  await expect(page.getByRole("button", { name: "Dokoupit" })).toBeVisible();
 });
 
 test("thirty holdings use local search/sort and progressive contribution disclosure", async ({ page }) => {
@@ -63,7 +68,7 @@ test("thirty holdings use local search/sort and progressive contribution disclos
   await page.screenshot({ path: "test-results/lens-30-holdings.png", fullPage: false });
   const requestsAfterHydration = marketRequests;
   await page.getByLabel("Hledat pozici").fill("AAPL");
-  await expect(page.getByRole("button", { name: "Detail AAPL" })).toHaveCount(1);
+  await expect(page.getByRole("link", { name: "Detail AAPL" })).toHaveCount(1);
   await page.getByLabel("Hledat pozici").fill("");
   await page.getByLabel("Řazení pozic", { exact: true }).selectOption("contribution:desc");
   await expect(page.getByLabel("Typ aktiva")).not.toBeVisible();
@@ -81,5 +86,5 @@ test("personal portfolio shows a controlled unavailable state", async ({ page })
   await page.route("**/api/market/status", (route) => route.fulfill({ json: { provider: "twelvedata", configured: false } }));
   await page.goto("/cs-CZ/dashboard");
   await expect(page.getByText(/Pro vlastní portfolio zatím nejsou dostupná market data/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Přidat první investici" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Přidat první aktivum" })).toBeVisible();
 });

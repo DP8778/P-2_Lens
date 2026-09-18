@@ -43,8 +43,8 @@ async function createAddPage(
     ? route.fulfill({ status: 503, json: { error: { code: "UNAVAILABLE", message: "FX unavailable", retryable: true } } })
     : route.fulfill({ json: { base: "USD", quote: "CZK", rate: 24, timestamp: quote.timestamp, freshness: "fresh", source: "network" } }));
   await page.goto("/cs-CZ/dashboard");
-  await page.getByRole("button", { name: "Přidat první investici" }).click();
-  await expect(page.getByRole("heading", { name: "Přidat investici" })).toBeVisible();
+  await page.getByRole("button", { name: "Přidat první aktivum" }).click();
+  await expect(page.getByRole("heading", { name: "Přidat aktivum" })).toBeVisible();
   return { context, page };
 }
 
@@ -75,13 +75,14 @@ test("captures reliable Add Investment price states", async ({ browser }) => {
   const result = await searchWithPrice(view.page);
   await screenshot(view.page, "after-search-with-price");
   await result.click();
-  await expect(view.page.locator(".instrument-quote strong")).toContainText("234,56 USD");
+  await expect(view.page.locator(".simple-add-quote strong")).toContainText("234,56 USD");
   await screenshot(view.page, "selected-stock");
   await close(view.context);
 
   view = await createAddPage(browser, { fxFailure: true });
   await (await searchWithPrice(view.page)).click();
-  await expect(view.page.locator(".instrument-quote strong")).toContainText("234,56 USD");
+  await expect(view.page.locator(".simple-add-quote strong")).toContainText("234,56 USD");
+  await view.page.getByLabel("Množství").fill("2");
   await expect(view.page.getByText("Přepočet do CZK není dostupný.")).toBeVisible();
   await screenshot(view.page, "fx-failure-quote-success");
   await close(view.context);

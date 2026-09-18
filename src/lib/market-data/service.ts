@@ -58,6 +58,13 @@ export async function loadQuotePreview(
   }
 }
 
+export async function storeMarketQuote(
+  quote: MarketQuote,
+  cache: MarketDataCache = getBrowserMarketDataCache(),
+) {
+  await cache.putQuote({ key: quote.assetId, quote, updatedAt: new Date().toISOString() });
+}
+
 export async function loadHistory(
   asset: MarketAsset,
   range: DateRange,

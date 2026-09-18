@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { ArrowUpRight, ListFilter, Plus, Search } from "lucide-react";
 import type { HoldingMetric, PortfolioAnalysis } from "@/lib/finance/portfolio-engine";
 import { assetTypeLabels } from "@/data/mock/catalog";
@@ -18,7 +19,6 @@ export function HoldingsTable({
   analysis,
   holdings,
   locale,
-  onSelect,
   onAdd,
   period,
   editable = true,
@@ -26,7 +26,6 @@ export function HoldingsTable({
   analysis: PortfolioAnalysis;
   holdings: HoldingMetric[];
   locale: string;
-  onSelect: (holding: HoldingMetric) => void;
   onAdd: () => void;
   period: string;
   editable?: boolean;
@@ -78,7 +77,7 @@ export function HoldingsTable({
         {editable && (
           <button className="quiet-button" onClick={onAdd}>
             <Plus size={16} />
-            Přidat investici
+            Přidat aktivum
           </button>
         )}
       </header>
@@ -169,13 +168,13 @@ export function HoldingsTable({
             {filtered.map((holding) => (
               <tr key={holding.assetId}>
                 <td>
-                  <button className="holding-asset" onClick={() => onSelect(holding)} aria-label={`Detail ${holding.asset.symbol}`}>
+                  <Link className="holding-asset" href={`/${locale}/assets/${encodeURIComponent(holding.assetId)}`} aria-label={`Detail ${holding.asset.symbol}`}>
                     <span className={`asset-monogram ${holding.asset.type}`}>{holding.asset.symbol.slice(0, 2)}</span>
                     <span>
                       <strong>{holding.asset.symbol}<ArrowUpRight size={12} /></strong>
                       <small>{holding.asset.name}</small>
                     </span>
-                  </button>
+                  </Link>
                 </td>
                 <td data-label="Hodnota">{money(holding.marketValue, locale)}</td>
                 <td data-label="Alokace">

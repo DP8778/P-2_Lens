@@ -36,7 +36,7 @@ describe("core components", () => {
     );
     expect(screen.getByRole("link", { name: /Bitcoin/i })).toHaveAttribute(
       "href",
-      "/cs-CZ/assets/BTC",
+      `/cs-CZ/assets/${encodeURIComponent(row.asset.id)}`,
     );
     expect(screen.getByText(/\+2,1/)).toBeInTheDocument();
   });
@@ -47,12 +47,11 @@ describe("core components", () => {
         analysis={analysis}
         holdings={analysis.holdings}
         locale="cs-CZ"
-        onSelect={() => undefined}
         onAdd={() => undefined}
         period="1M"
       />,
     );
-    const cashRow = screen.getByRole("button", { name: "Detail CZK" }).closest("tr")!;
+    const cashRow = screen.getByRole("link", { name: "Detail CZK" }).closest("tr")!;
     expect(
       within(cashRow).getByLabelText("Výnos období není pro hotovost relevantní"),
     ).toHaveTextContent("—");

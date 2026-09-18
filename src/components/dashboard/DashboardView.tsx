@@ -13,7 +13,6 @@ import { PortfolioSummary } from "./PortfolioSummary";
 import { PortfolioHeroChart } from "@/components/charts/PortfolioHeroChart";
 import { LensInsight } from "@/components/insights/LensInsight";
 import { HoldingsTable } from "@/components/portfolio/HoldingsTable";
-import { HoldingDetail } from "@/components/portfolio/HoldingDetail";
 import { AddAssetDialog } from "@/components/portfolio/AddAssetDialog";
 import { usePortfolio } from "@/components/portfolio/PortfolioProvider";
 import { useAnalysisContext } from "@/components/portfolio/AnalysisProvider";
@@ -54,16 +53,11 @@ function liveRange(timeline: string[], timeframe: TimeRange | "CUSTOM", selected
   return [start, last] as [number, number];
 }
 
-export function DashboardView({ locale, initialAssetId }: { locale: Locale; dictionary?: Dictionary; initialAssetId?: string }) {
+export function DashboardView({ locale }: { locale: Locale; dictionary?: Dictionary }) {
   const { mode, setMode, holdings, transactions, warning, market, analysisDataset, refreshQuotes } = usePortfolio();
   const { state, dispatch } = useAnalysisContext();
-  const [detailId, setDetailId] = useState<string | undefined>(initialAssetId);
   const [add, setAdd] = useState<{ assetId?: string }>();
   const [confirmation, setConfirmation] = useState("");
-  useEffect(() => {
-    if (initialAssetId) dispatch({ type: "settings", value: { compareAssetId: initialAssetId } });
-  }, [dispatch, initialAssetId]);
-
   const personalReady = mode === "personal" && Boolean(analysisDataset && transactions.length);
   const activeTimeline = personalReady ? analysisDataset!.timeline : demoTimeline;
   useEffect(() => {
@@ -95,14 +89,12 @@ export function DashboardView({ locale, initialAssetId }: { locale: Locale; dict
     return buildAnalysis(transactions, [0, 730]);
   }, [activeTimeline.length, analysisDataset, mode, personalReady, state.compareAssetId, state.selectedPoint, transactions]);
   const visibleAnalysis = analysis;
-  const detail = analysis?.holdings.find((position) => position.assetId === detailId);
   const period = state.selectedRange ? "vlastní období" : state.timeframe;
   const closeAdd = () => { setAdd(undefined); dispatch({ type: "point", value: null }); };
   const switchMode = (next: "demo" | "personal") => {
     setMode(next);
     dispatch({ type: "timeframe", value: state.timeframe === "CUSTOM" ? "1M" : state.timeframe });
     dispatch({ type: "settings", value: { compareAssetId: "", benchmarkId: "spy" } });
-    setDetailId(undefined);
   };
 
   return (
@@ -123,7 +115,7 @@ export function DashboardView({ locale, initialAssetId }: { locale: Locale; dict
             </div>
           )}
         </div>
-        {mode === "personal" ? <button className="primary-button" onClick={() => setAdd({})}><Plus size={17} />Přidat investici</button> : <button className="quiet-button" onClick={() => switchMode("personal")}>Použít vlastní portfolio</button>}
+        {mode === "personal" ? <button className="primary-button" onClick={() => setAdd({})}><Plus size={17} />Přidat aktivum</button> : <button className="quiet-button" onClick={() => switchMode("personal")}>Použít vlastní portfolio</button>}
       </header>
       {confirmation && <div className="portfolio-toast" role="status">{confirmation}</div>}
       {warning && <p role="status" className="inline-notice">{warning}</p>}
@@ -138,7 +130,7 @@ export function DashboardView({ locale, initialAssetId }: { locale: Locale; dict
             : market.configured === false
               ? "Pro vlastní portfolio zatím nejsou dostupná market data. Nastavení můžete dokončit později."
               : "Sledujte výkon a strukturu vlastního portfolia."}</p>
-          <button className="primary-button" onClick={() => setAdd({})}><Plus size={17} />Přidat první investici</button>
+          <button className="primary-button" onClick={() => setAdd({})}><Plus size={17} />Přidat první aktivum</button>
           <button className="quiet-button" onClick={() => switchMode("demo")}>Zobrazit demo portfolio</button>
         </section>
       ) : analysis && overview && visibleAnalysis ? (
@@ -149,14 +141,11 @@ export function DashboardView({ locale, initialAssetId }: { locale: Locale; dict
             <PortfolioHeroChart analysis={analysis} visibleAnalysis={visibleAnalysis} overview={overview} locale={locale} timelineDates={activeTimeline} />
             <LensInsight analysis={analysis} locale={locale} dataSource={mode === "personal" ? "live" : "mock"} context={{ transactions, selectedRange: state.selectedRange, timeframe: state.timeframe, mode: state.mode, benchmarkId: state.benchmarkId, compareAssetId: state.compareAssetId, showBenchmark: state.showBenchmark, selectedPoint: state.selectedPoint }} />
           </div>
-          <HoldingsTable analysis={analysis} holdings={analysis.holdings} locale={locale} onSelect={(position) => setDetailId(position.assetId)} onAdd={() => setAdd({})} period={period} editable={mode === "personal"} />
+          <HoldingsTable analysis={analysis} holdings={analysis.holdings} locale={locale} onAdd={() => setAdd({})} period={period} editable={mode === "personal"} />
           <AnalysisInspector state={state} analysis={analysis} />
           <MarketDataInspector mode={mode} assets={analysisDataset?.assets ?? []} market={market} />
         </>
       ) : null}
-      {detail && (
-        <HoldingDetail holding={detail} locale={locale} onClose={() => setDetailId(undefined)} onCompare={() => { dispatch({ type: "settings", value: { compareAssetId: detail.assetId, mode: "performance" } }); setDetailId(undefined); document.querySelector(".hero-analytics")?.scrollIntoView({ behavior: "instant", block: "start" }); }} onAdd={() => { setAdd({ assetId: detail.assetId }); setDetailId(undefined); }} />
-      )}
       {add && <AddAssetDialog onClose={closeAdd} initialAssetId={add.assetId} onSaved={(symbol) => { setConfirmation(`${symbol} bylo přidáno do portfolia.`); window.setTimeout(() => setConfirmation(""), 3200); }} />}
     </div>
   );

@@ -90,7 +90,7 @@ test("captures the usability recovery comparison set", async ({ browser }) => {
   await shot(page, "03-personal-empty.png");
 
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.getByRole("button", { name: "Přidat první investici" }).click();
+  await page.getByRole("button", { name: "Přidat první aktivum" }).click();
   await page.getByLabel("Hledat akcii nebo ETF").fill("Apple");
   await expect(page.getByRole("option", { name: /AAPL Apple Inc/ })).toBeVisible();
   await shot(page, "04-add-search.png");
@@ -98,10 +98,6 @@ test("captures the usability recovery comparison set", async ({ browser }) => {
   await expect(page.getByLabel("Množství", { exact: true })).toBeVisible();
   await shot(page, "05-add-transaction.png");
   await page.getByLabel("Množství", { exact: true }).fill("2");
-  await page.getByLabel(/Nákupní cena/).fill("125");
-  await page.getByLabel("Datum", { exact: true }).fill("2026-09-10");
-  const review = page.getByRole("button", { name: "Zkontrolovat investici" });
-  if (await review.count()) await review.click();
   await shot(page, "06-add-review.png");
   await page.getByRole("button", { name: "Zavřít", exact: true }).click();
   await context.close();
@@ -126,7 +122,7 @@ test("captures the usability recovery comparison set", async ({ browser }) => {
   await scrollToHoldings(page);
   await shot(page, "12-mobile-holdings.png");
   await page.getByRole("button", { name: "Použít vlastní portfolio" }).click();
-  await page.getByRole("button", { name: "Přidat první investici" }).click();
+  await page.getByRole("button", { name: "Přidat první aktivum" }).click();
   await shot(page, "13-mobile-add.png");
   await context.close();
 });

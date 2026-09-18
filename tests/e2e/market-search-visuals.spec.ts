@@ -30,8 +30,8 @@ async function openAdd(page: Page, configured = true) {
     route.fulfill({ json: { provider: "twelvedata", configured } }),
   );
   await page.goto("/cs-CZ/dashboard");
-  await page.getByRole("button", { name: "Přidat první investici" }).click();
-  await expect(page.getByRole("heading", { name: "Přidat investici" })).toBeVisible();
+  await page.getByRole("button", { name: "Přidat první aktivum" }).click();
+  await expect(page.getByRole("heading", { name: "Přidat aktivum" })).toBeVisible();
 }
 
 async function shot(page: Page, name: string) {
