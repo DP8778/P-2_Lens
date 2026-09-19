@@ -29,9 +29,12 @@ export function AppShell({
             <nav aria-label="Hlavní navigace">
               <Link
                 href={`/${locale}/dashboard`}
-                aria-current={!pathname.endsWith("settings") ? "page" : undefined}
+                aria-current={pathname.endsWith("dashboard") ? "page" : undefined}
               >
                 Portfolio
+              </Link>
+              <Link href={`/${locale}/markets`} aria-current={pathname.endsWith("markets") ? "page" : undefined}>
+                Markets
               </Link>
             </nav>
             <GlobalAssetSearch locale={locale} />

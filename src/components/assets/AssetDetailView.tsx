@@ -14,6 +14,7 @@ import { searchMarketAssets } from "@/lib/market-data/client";
 import { loadFxQuote, loadHistory, loadQuoteAlternative, loadQuotePreview } from "@/lib/market-data/service";
 import type { MarketAsset, MarketPricePoint, MarketQuote } from "@/lib/market-data/types";
 import { quoteFailureDiagnostic } from "@/lib/market-data/diagnostics";
+import { calculateAssetPerformance } from "@/lib/market-data/asset-performance";
 import { allocation, money, percent } from "@/components/charts/chart-formatters";
 
 type AssetRange = "1W" | "1M" | "3M" | "1Y" | "ALL";
@@ -38,9 +39,12 @@ export function AssetDetailView({ assetId, locale }: { assetId: string; locale: 
   const [alternativeLoading, setAlternativeLoading] = useState(false);
   const [fxRate, setFxRate] = useState<number>();
   const [timeframe, setTimeframe] = useState<AssetRange>("1M");
-  const [history, setHistory] = useState<MarketPricePoint[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [historyError, setHistoryError] = useState(false);
+  const [annualHistory, setAnnualHistory] = useState<MarketPricePoint[]>([]);
+  const [annualHistoryLoading, setAnnualHistoryLoading] = useState(false);
+  const [annualHistoryError, setAnnualHistoryError] = useState(false);
+  const [allHistory, setAllHistory] = useState<MarketPricePoint[]>([]);
+  const [allHistoryLoading, setAllHistoryLoading] = useState(false);
+  const [allHistoryError, setAllHistoryError] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -117,20 +121,42 @@ export function AssetDetailView({ assetId, locale }: { assetId: string; locale: 
     if (!asset) return;
     let cancelled = false;
     const to = localDateISO();
-    const from = timeframe === "ALL" ? "2000-01-01" : addLocalDays(to, -rangeDays[timeframe]);
+    const from = addLocalDays(to, -365);
     void Promise.resolve().then(() => {
       if (cancelled) return undefined;
-      setHistoryLoading(true);
-      setHistoryError(false);
+      setAnnualHistory([]);
+      setAnnualHistoryLoading(true);
+      setAnnualHistoryError(false);
       return loadHistory(asset, { from, to, interval: "1day" });
     })
       .then((result) => {
         if (!result || cancelled) return;
-        setHistory(result.points);
-        setHistoryError(result.points.length === 0);
+        setAnnualHistory(result.points);
+        setAnnualHistoryError(result.points.length === 0);
       })
-      .catch(() => { if (!cancelled) { setHistory([]); setHistoryError(true); } })
-      .finally(() => { if (!cancelled) setHistoryLoading(false); });
+      .catch(() => { if (!cancelled) { setAnnualHistory([]); setAnnualHistoryError(true); } })
+      .finally(() => { if (!cancelled) setAnnualHistoryLoading(false); });
+    return () => { cancelled = true; };
+  }, [asset]);
+
+  useEffect(() => {
+    if (!asset || timeframe !== "ALL") return;
+    let cancelled = false;
+    const to = localDateISO();
+    void Promise.resolve().then(() => {
+      if (cancelled) return undefined;
+      setAllHistory([]);
+      setAllHistoryLoading(true);
+      setAllHistoryError(false);
+      return loadHistory(asset, { from: "2000-01-01", to, interval: "1day" });
+    })
+      .then((result) => {
+        if (!result || cancelled) return;
+        setAllHistory(result.points);
+        setAllHistoryError(result.points.length === 0);
+      })
+      .catch(() => { if (!cancelled) { setAllHistory([]); setAllHistoryError(true); } })
+      .finally(() => { if (!cancelled) setAllHistoryLoading(false); });
     return () => { cancelled = true; };
   }, [asset, timeframe]);
 
@@ -142,6 +168,18 @@ export function AssetDetailView({ assetId, locale }: { assetId: string; locale: 
     [holdings, market.fxRates, market.prices],
   );
   const positionAllocation = positionValue !== undefined && portfolioValue > 0 ? (positionValue / portfolioValue) * 100 : undefined;
+  const chartHistory = useMemo(() => {
+    if (timeframe === "ALL") return allHistory;
+    const cutoff = addLocalDays(localDateISO(), -rangeDays[timeframe]);
+    return annualHistory.filter((point) => point.date >= cutoff);
+  }, [allHistory, annualHistory, timeframe]);
+  const historyLoading = timeframe === "ALL" ? allHistoryLoading : annualHistoryLoading;
+  const historyError = (timeframe === "ALL" ? allHistoryError : annualHistoryError)
+    || (!historyLoading && chartHistory.length === 0);
+  const performance = useMemo(
+    () => calculateAssetPerformance(annualHistory, quote?.price, localDateISO()),
+    [annualHistory, quote?.price],
+  );
 
   if (!asset && assetLoading) return <main className="asset-detail-page"><p className="asset-detail-state">Načítám instrument…</p></main>;
   if (!asset && assetError) return <main className="asset-detail-page"><Link className="asset-back-link" href={`/${locale}/dashboard`}><ArrowLeft size={15} />Portfolio</Link><p className="asset-detail-state">Instrument se nepodařilo načíst.</p></main>;
@@ -180,6 +218,17 @@ export function AssetDetailView({ assetId, locale }: { assetId: string; locale: 
         </div>
       </header>
 
+      <section className="asset-performance-strip" aria-label="Výkonnost aktiva">
+        <dl>
+          <div><dt>1W</dt><dd className={performance.week === undefined ? "" : performance.week >= 0 ? "positive" : "negative"}>{performance.week === undefined ? "—" : percent(performance.week, locale)}</dd></div>
+          <div><dt>1M</dt><dd className={performance.month === undefined ? "" : performance.month >= 0 ? "positive" : "negative"}>{performance.month === undefined ? "—" : percent(performance.month, locale)}</dd></div>
+          <div><dt>1Y</dt><dd className={performance.year === undefined ? "" : performance.year >= 0 ? "positive" : "negative"}>{performance.year === undefined ? "—" : percent(performance.year, locale)}</dd></div>
+          <div><dt>52W high</dt><dd>{performance.high52Week === undefined ? "—" : nativeMoney(performance.high52Week, asset.currency, locale)}</dd></div>
+          <div><dt>52W low</dt><dd>{performance.low52Week === undefined ? "—" : nativeMoney(performance.low52Week, asset.currency, locale)}</dd></div>
+          <div><dt>Od 52W high</dt><dd className={performance.fromHigh === undefined ? "" : performance.fromHigh >= 0 ? "positive" : "negative"}>{performance.fromHigh === undefined ? "—" : percent(performance.fromHigh, locale)}</dd></div>
+        </dl>
+      </section>
+
       {!quote && quoteError && (
         <section className="asset-quote-fallback" aria-live="polite">
           {alternativeLoading ? <p>Hledám jiný dostupný listing…</p> : quoteAlternative ? (
@@ -205,12 +254,11 @@ export function AssetDetailView({ assetId, locale }: { assetId: string; locale: 
             {(["1W", "1M", "3M", "1Y", "ALL"] as const).map((value) => <button key={value} aria-pressed={timeframe === value} onClick={() => setTimeframe(value)}>{value}</button>)}
           </div>
         </div>
-        {historyLoading ? <div className="asset-chart-state">Načítám historická data…</div> : historyError ? <div className="asset-chart-state">Historická data momentálně nejsou dostupná.</div> : <AssetPriceChart data={history} currency={asset.currency} locale={locale} />}
+        {historyLoading ? <div className="asset-chart-state">Načítám historická data…</div> : historyError ? <div className="asset-chart-state">Historická data momentálně nejsou dostupná.</div> : <AssetPriceChart data={chartHistory} currency={asset.currency} locale={locale} />}
       </section>
 
-      <div className="asset-detail-columns">
-        {holding && (
-          <section className="asset-position-section" aria-labelledby="my-position-title">
+      {holding && (
+          <section className="asset-position-section asset-position-detail" aria-labelledby="my-position-title">
             <div className="asset-section-heading"><h2 id="my-position-title">Moje pozice</h2><button className="primary-button" onClick={() => setAddOpen(true)}><Plus size={16} />Dokoupit</button></div>
             <dl className="asset-position-metrics">
               <div><dt>Množství</dt><dd>{holding.quantity.toLocaleString(locale, { maximumFractionDigits: 8 })}</dd></div>
@@ -220,10 +268,10 @@ export function AssetDetailView({ assetId, locale }: { assetId: string; locale: 
               <div><dt>Podíl v portfoliu</dt><dd>{positionAllocation === undefined ? "—" : allocation(positionAllocation, locale)}</dd></div>
             </dl>
           </section>
-        )}
+      )}
 
-        <section className="asset-information-section" aria-labelledby="asset-information-title">
-          <h2 id="asset-information-title">Informace</h2>
+      <details className="asset-information-section">
+        <summary>Detaily instrumentu</summary>
           <dl>
             <div><dt>Ticker</dt><dd>{asset.symbol}</dd></div>
             {asset.exchange && <div><dt>Burza</dt><dd>{asset.exchange}</dd></div>}
@@ -234,8 +282,7 @@ export function AssetDetailView({ assetId, locale }: { assetId: string; locale: 
             {quote && <div><dt>Market state</dt><dd>{quote.marketState === "open" ? "Otevřen" : quote.marketState === "closed" ? "Zavřen" : "Neznámý"}</dd></div>}
             {quote && <div><dt>Poslední aktualizace</dt><dd>{new Date(quote.timestamp).toLocaleString(locale)}</dd></div>}
           </dl>
-        </section>
-      </div>
+      </details>
 
       {notice && <div className="portfolio-toast" role="status">{notice}</div>}
       {addOpen && <AddAssetDialog initialAsset={asset} initialAssetId={asset.id} onClose={() => setAddOpen(false)} onSaved={(symbol) => { setNotice(`${symbol} bylo přidáno do portfolia.`); window.setTimeout(() => setNotice(""), 3200); }} />}

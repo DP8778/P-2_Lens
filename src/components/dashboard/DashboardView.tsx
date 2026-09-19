@@ -20,6 +20,7 @@ import { AnalysisInspector } from "@/components/portfolio/AnalysisInspector";
 import { MarketDataInspector } from "@/components/portfolio/MarketDataInspector";
 import { dateLabel } from "@/components/charts/chart-formatters";
 import { mapSelectedRangeToIndices } from "@/lib/chart/chart-series";
+import { MarketPulse } from "@/components/markets/MarketPulse";
 
 const daysFor: Record<TimeRange, number> = { "1W": 7, "1M": 30, "3M": 90, YTD: 366, "1Y": 365, ALL: 100_000 };
 const freshnessLabel = (timestamp: string) => {
@@ -161,6 +162,7 @@ export function DashboardView({ locale }: { locale: Locale; dictionary?: Diction
           <MarketDataInspector mode={mode} assets={analysisDataset?.assets ?? []} market={market} />
         </>
       ) : null}
+      <MarketPulse locale={locale} />
       {add && <AddAssetDialog onClose={closeAdd} initialAssetId={add.assetId} onSaved={(symbol) => { setConfirmation(`${symbol} bylo přidáno do portfolia.`); window.setTimeout(() => setConfirmation(""), 3200); }} />}
     </div>
   );

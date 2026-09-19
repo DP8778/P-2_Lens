@@ -92,7 +92,7 @@ test("current-price Add Asset leads to provider-aware asset detail and supports 
   await expect(page.getByTestId("asset-price-chart")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Moje pozice" })).toBeVisible();
   await expect(page.getByText("V portfoliu · 3 ks")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Informace" })).toBeVisible();
+  await expect(page.locator(".asset-information-section > summary")).toHaveText("Detaily instrumentu");
   await expect(page.locator(".asset-information-section")).toContainText("XNAS");
 
   await page.getByRole("button", { name: "Dokoupit" }).click();
@@ -165,6 +165,6 @@ test("history failure keeps quote and metadata usable without exposing provider 
   await expect(page.getByRole("heading", { name: "Apple Inc." })).toBeVisible();
   await expect(page.locator(".asset-detail-quote")).toContainText("331,34 USD");
   await expect(page.getByText("Historická data momentálně nejsou dostupná.")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Informace" })).toBeVisible();
+  await expect(page.locator(".asset-information-section > summary")).toHaveText("Detaily instrumentu");
   await expect(page.getByText(/No data is available/i)).toHaveCount(0);
 });
