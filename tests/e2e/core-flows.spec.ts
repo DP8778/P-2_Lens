@@ -17,6 +17,7 @@ test("opens the portfolio, switches modes, compares and selects a chart point", 
   await expect(page.locator(".summary-return")).not.toHaveText(before);
   await page.getByRole("button", { name: "Příspěvky", exact: true }).click();
   await expect(page.getByRole("img", { name: "Příspěvky aktiv k výnosu" })).toBeVisible();
+  await expect(page.getByRole("slider", { name: "Začátek období" })).toHaveCount(0);
   await expect(page.locator(".contribution-summary")).toContainText("Výnos portfolia");
   await page.getByRole("button", { name: /BTC, příspěvek/ }).click();
   await expect(page.getByRole("button", { name: /BTC, příspěvek/ })).toHaveAttribute(
@@ -107,10 +108,28 @@ test("dialogs trap focus, close with Escape and return focus", async ({ page }) 
 test("navigator mění pouze viewport a vlastní rozsah řídí analýzu", async ({ page }) => {
   await page.goto("/cs-CZ/dashboard");
   const analyticalPeriod = await page.locator(".analytics-heading > span").innerText();
+  const summaryValue = await page.getByTestId("portfolio-value").innerText();
+  const summaryReturn = await page.locator(".summary-return").textContent();
+  const renderedDates = () => page.locator(".chart-data-table tbody tr td:first-child").allTextContents();
+  const datesBefore = await renderedDates();
   const start = page.getByRole("slider", { name: "Začátek období" });
   await start.focus();
   await page.keyboard.press("ArrowLeft");
+  await expect.poll(async () => (await renderedDates())[0]).not.toBe(datesBefore[0]);
+  const datesAfter = await renderedDates();
+  expect(datesAfter.at(-1)).toBe(datesBefore.at(-1));
   await expect(page.locator(".analytics-heading > span")).toHaveText(analyticalPeriod);
+  await expect(page.getByTestId("portfolio-value")).toHaveText(summaryValue);
+  expect(await page.locator(".summary-return").textContent()).toBe(summaryReturn);
+
+  await page.getByRole("button", { name: "1Y", exact: true }).click();
+  const oneYearStart = await start.getAttribute("aria-valuetext");
+  await start.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(start).not.toHaveAttribute("aria-valuetext", oneYearStart ?? "");
+  await page.getByRole("button", { name: "1M", exact: true }).click();
+  await page.getByRole("button", { name: "1Y", exact: true }).click();
+  await expect(start).toHaveAttribute("aria-valuetext", oneYearStart ?? "");
   await page.getByLabel("Nastavení grafu", { exact: true }).click();
   await page.getByLabel("Události", { exact: true }).check();
   await page.getByLabel("Nastavení grafu", { exact: true }).click();

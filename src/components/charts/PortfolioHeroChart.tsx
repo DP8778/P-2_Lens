@@ -1,7 +1,6 @@
 "use client";
 import { useId, useMemo, useRef, useState } from "react";
 import type { PortfolioAnalysis } from "@/lib/finance/portfolio-engine";
-import { timeline } from "@/lib/finance/portfolio-engine";
 import { useAnalysisContext } from "@/components/portfolio/AnalysisProvider";
 import { usePortfolio } from "@/components/portfolio/PortfolioProvider";
 import {
@@ -28,13 +27,11 @@ export function PortfolioHeroChart({
   visibleAnalysis,
   overview,
   locale,
-  timelineDates = timeline,
 }: {
   analysis: PortfolioAnalysis;
   visibleAnalysis: PortfolioAnalysis;
   overview: PortfolioAnalysis;
   locale: string;
-  timelineDates?: string[];
 }) {
   const { state, dispatch } = useAnalysisContext();
   const { transactions, mode } = usePortfolio();
@@ -50,7 +47,7 @@ export function PortfolioHeroChart({
   const plotTexture = `${gradient}-texture`;
   const lineGradient = `${gradient}-line`;
   const lineGlow = `${gradient}-glow`;
-  const data = state.mode === "performance" ? visibleAnalysis.points : analysis.points;
+  const data = state.mode === "contribution" ? analysis.points : visibleAnalysis.points;
   const settings: ChartSettings = {
     mode: state.mode,
     display: state.display,
@@ -60,7 +57,8 @@ export function PortfolioHeroChart({
     annotations: state.annotations,
     navigator: state.navigator,
   };
-  const range = mapSelectedRangeToIndices(state.viewportRange, timelineDates);
+  const overviewDates = overview.points.map((point) => point.timestamp);
+  const range = mapSelectedRangeToIndices(state.viewportRange, overviewDates);
   const selected = mapDateToPointIndex(data, state.selectedPoint);
   const onSelect = (index: number | null) =>
     dispatch({ type: "point", value: index === null ? null : (data[index]?.timestamp ?? null) });
@@ -78,7 +76,7 @@ export function PortfolioHeroChart({
       },
     });
   const onRange = (next: [number, number]) =>
-    dispatch({ type: "viewport", value: [timelineDates[next[0]], timelineDates[next[1]]] });
+    dispatch({ type: "viewport", value: [overviewDates[next[0]], overviewDates[next[1]]] });
   const g = useMemo(
     () =>
       chartGeometry(
@@ -655,7 +653,7 @@ export function PortfolioHeroChart({
           <span>Po přidání transakce zde uvidíte vývoj portfolia.</span>
         </div>
       )}
-      {settings.navigator && (
+      {settings.navigator && settings.mode !== "contribution" && overview.points.length > 1 && (
         <ChartNavigator data={overview.points} range={range} onChange={onRange} />
       )}
       <details className="chart-data-table">

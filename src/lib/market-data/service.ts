@@ -6,7 +6,8 @@ import {
   missingHistoryRanges,
   type MarketDataCache,
 } from "./cache/market-cache";
-import { fetchFxHistory, fetchFxRate, fetchMarketHistory, fetchMarketQuotes } from "./client";
+import { fetchFxHistory, fetchFxRate, fetchMarketHistory, fetchMarketQuotes, searchMarketAssets } from "./client";
+import { isSameCompanyListing } from "./listing-ranking";
 import type { DateRange, FxQuote, MarketAsset, MarketQuote } from "./types";
 
 const quoteRequests = new Map<string, Promise<MarketQuote[]>>();
@@ -56,6 +57,20 @@ export async function loadQuotePreview(
     if (cached) return { ...cached.quote, freshness: "stale" as const, source: "cache" as const };
     throw error;
   }
+}
+
+export async function loadQuoteAlternative(asset: MarketAsset, signal?: AbortSignal) {
+  const listings = await searchMarketAssets(asset.symbol, signal);
+  for (const candidate of listings) {
+    if (candidate.id === asset.id || !isSameCompanyListing(asset, candidate)) continue;
+    try {
+      const quote = await loadQuotePreview(candidate, signal);
+      return { asset: candidate, quote };
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") throw error;
+    }
+  }
+  return undefined;
 }
 
 export async function storeMarketQuote(

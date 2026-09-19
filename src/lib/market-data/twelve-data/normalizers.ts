@@ -19,6 +19,11 @@ const searchResponseSchema = z.object({
       instrument_type: z.string(),
       country: z.string().nullable().optional(),
       currency: z.string(),
+      access: z.object({
+        global: z.string().optional(),
+        plan: z.string().optional(),
+        plan_business: z.string().optional(),
+      }).optional(),
     }),
   ),
   status: z.string().optional(),
@@ -75,6 +80,11 @@ export function normalizeSearchResponse(input: unknown): MarketAsset[] {
         currency: row.currency.toUpperCase(),
         country: row.country || undefined,
         timezone: row.exchange_timezone || undefined,
+        access: row.access ? {
+          global: row.access.global,
+          plan: row.access.plan,
+          planBusiness: row.access.plan_business,
+        } : undefined,
       },
     ];
   });

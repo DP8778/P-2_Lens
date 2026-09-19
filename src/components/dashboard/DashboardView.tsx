@@ -19,6 +19,7 @@ import { useAnalysisContext } from "@/components/portfolio/AnalysisProvider";
 import { AnalysisInspector } from "@/components/portfolio/AnalysisInspector";
 import { MarketDataInspector } from "@/components/portfolio/MarketDataInspector";
 import { dateLabel } from "@/components/charts/chart-formatters";
+import { mapSelectedRangeToIndices } from "@/lib/chart/chart-series";
 
 const daysFor: Record<TimeRange, number> = { "1W": 7, "1M": 30, "3M": 90, YTD: 366, "1Y": 365, ALL: 100_000 };
 const freshnessLabel = (timestamp: string) => {
@@ -40,10 +41,12 @@ const marketStatusLabel = (market: ReturnType<typeof usePortfolio>["market"], lo
   return `Poslední ceny · ${market.quotes[0] ? new Date(market.quotes[0].timestamp).toLocaleString(locale) : freshnessLabel(market.lastRefresh).toLowerCase()}`;
 };
 function liveRange(timeline: string[], timeframe: TimeRange | "CUSTOM", selected: [string, string] | null) {
+  if (timeline.length < 2) return [0, Math.max(0, timeline.length - 1)] as [number, number];
   if (selected) {
     const start = timeline.findIndex((date) => date >= selected[0]);
     const end = timeline.findLastIndex((date) => date <= selected[1]);
-    return [Math.max(0, start), Math.max(start + 1, end)] as [number, number];
+    const safeStart = Math.max(0, start);
+    return [safeStart, Math.min(timeline.length - 1, Math.max(safeStart + 1, end))] as [number, number];
   }
   const last = timeline.length - 1;
   if (timeframe === "ALL" || timeframe === "CUSTOM") return [0, last] as [number, number];
@@ -61,18 +64,21 @@ export function DashboardView({ locale }: { locale: Locale; dictionary?: Diction
   const personalReady = mode === "personal" && Boolean(analysisDataset && transactions.length);
   const activeTimeline = personalReady ? analysisDataset!.timeline : demoTimeline;
   useEffect(() => {
-    if (!personalReady) return;
-    const next = liveRange(activeTimeline, state.timeframe, null);
+    if (activeTimeline.length < 2) return;
+    const next = personalReady
+      ? liveRange(activeTimeline, state.timeframe, state.selectedRange)
+      : state.selectedRange
+        ? mapSelectedRangeToIndices(state.selectedRange, activeTimeline)
+        : timeframeRange(state.timeframe === "CUSTOM" ? "1M" : state.timeframe);
     const viewport: [string, string] = [activeTimeline[next[0]], activeTimeline[next[1]]];
-    if (state.viewportRange[0] !== viewport[0] || state.viewportRange[1] !== viewport[1])
-      dispatch({ type: "viewport", value: viewport });
-  }, [activeTimeline, dispatch, personalReady, state.timeframe, state.viewportRange]);
+    dispatch({ type: "viewport", value: viewport });
+  }, [activeTimeline, dispatch, personalReady, state.selectedRange, state.timeframe]);
   const range = useMemo<[number, number]>(() => {
     if (personalReady) return liveRange(activeTimeline, state.timeframe, state.selectedRange);
     if (state.selectedRange) {
       const start = demoTimeline.findIndex((date) => date === state.selectedRange![0]);
       const end = demoTimeline.findIndex((date) => date === state.selectedRange![1]);
-      return [Math.max(0, start), end < 1 ? 730 : end];
+      return [Math.max(0, start), end < 1 ? demoTimeline.length - 1 : end];
     }
     return timeframeRange(state.timeframe === "CUSTOM" ? "1M" : state.timeframe);
   }, [activeTimeline, personalReady, state.selectedRange, state.timeframe]);
@@ -86,9 +92,18 @@ export function DashboardView({ locale }: { locale: Locale; dictionary?: Diction
     if (personalReady)
       return buildAnalysisFromDataset(transactions, [0, activeTimeline.length - 1], analysisDataset!, "spy", state.compareAssetId, state.selectedPoint, "ALL");
     if (mode === "personal") return undefined;
-    return buildAnalysis(transactions, [0, 730]);
+    return buildAnalysis(transactions, [0, demoTimeline.length - 1]);
   }, [activeTimeline.length, analysisDataset, mode, personalReady, state.compareAssetId, state.selectedPoint, transactions]);
-  const visibleAnalysis = analysis;
+  const visibleRange = useMemo(
+    () => mapSelectedRangeToIndices(state.viewportRange, activeTimeline),
+    [activeTimeline, state.viewportRange],
+  );
+  const visibleAnalysis = useMemo(() => {
+    if (!analysis) return undefined;
+    if (personalReady)
+      return buildAnalysisFromDataset(transactions, visibleRange, analysisDataset!, "spy", state.compareAssetId, state.selectedPoint, state.timeframe);
+    return buildAnalysis(transactions, visibleRange, state.benchmarkId, state.compareAssetId, state.selectedPoint);
+  }, [analysis, analysisDataset, personalReady, state.benchmarkId, state.compareAssetId, state.selectedPoint, state.timeframe, transactions, visibleRange]);
   const period = state.selectedRange ? "vlastní období" : state.timeframe;
   const closeAdd = () => { setAdd(undefined); dispatch({ type: "point", value: null }); };
   const switchMode = (next: "demo" | "personal") => {
@@ -138,7 +153,7 @@ export function DashboardView({ locale }: { locale: Locale; dictionary?: Diction
           <PortfolioSummary analysis={analysis} locale={locale} period={period} showBenchmark={state.showBenchmark} />
           <div className="analytics-heading"><h2>Výkon portfolia</h2><span>{dateLabel(analysis.metrics.startDate, locale)} — {dateLabel(analysis.metrics.endDate, locale)}</span></div>
           <div className="hero-analytics">
-            <PortfolioHeroChart analysis={analysis} visibleAnalysis={visibleAnalysis} overview={overview} locale={locale} timelineDates={activeTimeline} />
+            <PortfolioHeroChart analysis={analysis} visibleAnalysis={visibleAnalysis} overview={overview} locale={locale} />
             <LensInsight analysis={analysis} locale={locale} dataSource={mode === "personal" ? "live" : "mock"} context={{ transactions, selectedRange: state.selectedRange, timeframe: state.timeframe, mode: state.mode, benchmarkId: state.benchmarkId, compareAssetId: state.compareAssetId, showBenchmark: state.showBenchmark, selectedPoint: state.selectedPoint }} />
           </div>
           <HoldingsTable analysis={analysis} holdings={analysis.holdings} locale={locale} onAdd={() => setAdd({})} period={period} editable={mode === "personal"} />

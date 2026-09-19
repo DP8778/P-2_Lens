@@ -14,19 +14,20 @@ const aapl = {
   timezone: "America/New_York",
 };
 const spy = { ...aapl, id: "twelvedata:ARCX:SPY", providerSymbol: "SPY", symbol: "SPY", name: "SPDR S&P 500 ETF Trust", type: "etf", exchange: "NYSE Arca", micCode: "ARCX" };
+const spcx = { ...aapl, id: "twelvedata:XNYS:SPCX", providerSymbol: "SPCX", symbol: "SPCX", name: "SPAC and New Issue ETF", type: "etf", exchange: "NYSE", micCode: "XNYS" };
 const dates = ["2026-09-10", "2026-09-11", "2026-09-14", "2026-09-17"];
 
 async function mockMarket(page: Page, historyUnavailable = false) {
   await page.route("**/api/market/status", (route) => route.fulfill({ json: { provider: "twelvedata", configured: true } }));
   await page.route("**/api/market/search?*", async (route) => {
     const query = new URL(route.request().url()).searchParams.get("q")?.toUpperCase();
-    await route.fulfill({ json: { assets: query === "SPY" ? [spy] : [aapl] } });
+    await route.fulfill({ json: { assets: query === "SPY" ? [spy] : query === "SPCX" ? [spcx] : [aapl] } });
   });
   await page.route("**/api/market/quotes", async (route) => {
     const body = route.request().postDataJSON() as { assets: typeof aapl[] };
     await route.fulfill({ json: { quotes: body.assets.map((asset) => ({
       assetId: asset.id,
-      price: asset.symbol === "AAPL" ? 331.34 : 606,
+      price: asset.symbol === "AAPL" ? 331.34 : asset.symbol === "SPCX" ? 24.62 : 606,
       change: asset.symbol === "AAPL" ? 2.41 : 1.2,
       changePercent: asset.symbol === "AAPL" ? 0.73 : 0.2,
       currency: asset.currency,
@@ -112,6 +113,49 @@ test("current-price Add Asset leads to provider-aware asset detail and supports 
   expect(buys).toHaveLength(2);
   expect(buys.every((row) => row.unitPrice === 331.34)).toBe(true);
   expect(buys.every((row) => row.occurredAt === localToday)).toBe(true);
+});
+
+test("global navbar search navigates by provider-aware identity and shows current quote", async ({ page }) => {
+  await mockMarket(page);
+  await page.goto("/cs-CZ/dashboard");
+  const search = page.getByRole("combobox", { name: "Globální hledání aktiv" });
+  await search.fill("AAPL");
+  await expect(page.getByRole("option", { name: /AAPL Apple Inc/ })).toContainText("331,34 USD");
+  await search.press("Enter");
+  await expect(page).toHaveURL(/\/cs-CZ\/assets\/twelvedata(?::|%3A)XNAS(?::|%3A)AAPL/);
+  await expect(page.locator(".asset-detail-quote")).toContainText("331,34 USD");
+
+  await search.fill("SPCX");
+  await expect(page.getByRole("option", { name: /SPCX SPAC and New Issue ETF/ })).toContainText("24,62 USD");
+  await search.press("Enter");
+  await expect(page).toHaveURL(/\/cs-CZ\/assets\/twelvedata(?::|%3A)XNYS(?::|%3A)SPCX/);
+  await expect(page.locator(".asset-detail-quote")).toContainText("24,62 USD");
+});
+
+test("unavailable secondary listing offers an explicit available alternative", async ({ page }) => {
+  const bmv = { ...aapl, id: "twelvedata:XMEX:DUOL", providerSymbol: "DUOL", symbol: "DUOL", name: "Duolingo, Inc.", exchange: "BMV", micCode: "XMEX", currency: "MXN", country: "Mexico" };
+  const nasdaq = { ...bmv, id: "twelvedata:XNGS:DUOL", exchange: "NASDAQ", micCode: "XNGS", currency: "USD", country: "United States" };
+  await page.route("**/api/market/status", (route) => route.fulfill({ json: { provider: "twelvedata", configured: true } }));
+  await page.route("**/api/market/search?*", (route) => route.fulfill({ json: { assets: [nasdaq, bmv] } }));
+  await page.route("**/api/market/quotes", async (route) => {
+    const body = route.request().postDataJSON() as { assets: typeof bmv[] };
+    if (body.assets[0].id === bmv.id) {
+      await route.fulfill({ status: 503, json: { error: { code: "UNAVAILABLE", message: "raw provider quote failure", retryable: true } } });
+      return;
+    }
+    await route.fulfill({ json: { quotes: [{ assetId: nasdaq.id, price: 234.56, change: 1.2, changePercent: 0.52, currency: "USD", timestamp: "2026-09-18T13:30:00.000Z", marketState: "open", freshness: "fresh", source: "network" }] } });
+  });
+  await page.route("**/api/market/history?*", (route) => route.fulfill({ status: 404, json: { error: { code: "NO_HISTORY", message: "raw history", retryable: false } } }));
+  await page.route("**/api/market/fx?*", (route) => route.fulfill({ json: { base: "USD", quote: "CZK", rate: 22, timestamp: "2026-09-18T13:30:00.000Z", freshness: "fresh", source: "network" } }));
+
+  await page.goto(`/cs-CZ/assets/${encodeURIComponent(bmv.id)}`);
+  await expect(page.getByText("Cena pro BMV není dostupná.")).toBeVisible();
+  await expect(page.locator(".asset-quote-fallback")).toContainText("DUOL · NASDAQ · USD");
+  await expect(page.locator(".asset-quote-fallback")).toContainText("234,56 USD");
+  await expect(page.getByText(/raw provider quote failure/i)).toHaveCount(0);
+  await page.getByRole("button", { name: "Použít NASDAQ listing" }).click();
+  await expect(page).toHaveURL(/twelvedata(?::|%3A)XNGS(?::|%3A)DUOL/);
+  await expect(page.locator(".asset-detail-quote")).toContainText("234,56 USD");
 });
 
 test("history failure keeps quote and metadata usable without exposing provider messages", async ({ page }) => {

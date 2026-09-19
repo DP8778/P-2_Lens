@@ -6,6 +6,7 @@ import type { Dictionary, Locale } from "@/i18n/getDictionary";
 import { Logo } from "./Logo";
 import { PortfolioProvider } from "@/components/portfolio/PortfolioProvider";
 import { AnalysisProvider } from "@/components/portfolio/AnalysisProvider";
+import { GlobalAssetSearch } from "./GlobalAssetSearch";
 export function AppShell({
   children,
   locale,
@@ -33,6 +34,7 @@ export function AppShell({
                 Portfolio
               </Link>
             </nav>
+            <GlobalAssetSearch locale={locale} />
             <div className="nav-account">
               <Link className="icon-control" href={`/${locale}/settings`} aria-label="Nastavení">
                 <Settings size={18} />

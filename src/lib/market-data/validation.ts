@@ -16,6 +16,11 @@ export const marketAssetSchema = z
     currency: isoCurrency,
     country: z.string().trim().max(80).optional(),
     timezone: z.string().trim().max(80).optional(),
+    access: z.object({
+      global: z.string().trim().min(1).max(80).optional(),
+      plan: z.string().trim().min(1).max(80).optional(),
+      planBusiness: z.string().trim().min(1).max(80).optional(),
+    }).strict().optional(),
   })
   .strict();
 export const twelveDataAssetSchema = marketAssetSchema.refine(

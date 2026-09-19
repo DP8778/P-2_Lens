@@ -4,6 +4,12 @@ export type MarketDataProviderId = "twelvedata" | "mock" | "demo";
 export type MarketFreshness = "fresh" | "stale" | "lastClose" | "unavailable";
 export type MarketState = "open" | "closed" | "unknown";
 
+export interface MarketAssetAccess {
+  global?: string;
+  plan?: string;
+  planBusiness?: string;
+}
+
 export interface MarketAsset {
   id: string;
   provider: MarketDataProviderId;
@@ -16,6 +22,7 @@ export interface MarketAsset {
   currency: string;
   country?: string;
   timezone?: string;
+  access?: MarketAssetAccess;
 }
 
 export interface MarketQuote {
@@ -83,4 +90,3 @@ export const marketAssetIdentity = (
   exchange?: string,
 ) =>
   [provider, (micCode || exchange || "UNKNOWN").toUpperCase(), symbol.toUpperCase()].join(":");
-

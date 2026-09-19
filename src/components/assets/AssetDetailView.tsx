@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Plus } from "lucide-react";
 import type { Locale } from "@/i18n/getDictionary";
@@ -10,8 +11,9 @@ import { usePortfolio } from "@/components/portfolio/PortfolioProvider";
 import { getPortfolioValue } from "@/lib/finance/portfolio-engine";
 import { addLocalDays, localDateISO } from "@/lib/date/local-date";
 import { searchMarketAssets } from "@/lib/market-data/client";
-import { loadFxQuote, loadHistory, loadQuotePreview } from "@/lib/market-data/service";
+import { loadFxQuote, loadHistory, loadQuoteAlternative, loadQuotePreview } from "@/lib/market-data/service";
 import type { MarketAsset, MarketPricePoint, MarketQuote } from "@/lib/market-data/types";
+import { quoteFailureDiagnostic } from "@/lib/market-data/diagnostics";
 import { allocation, money, percent } from "@/components/charts/chart-formatters";
 
 type AssetRange = "1W" | "1M" | "3M" | "1Y" | "ALL";
@@ -21,6 +23,7 @@ const nativeMoney = (value: number, currency: string, locale: string) =>
   `${value.toLocaleString(locale, { maximumFractionDigits: 2 })} ${currency}`;
 
 export function AssetDetailView({ assetId, locale }: { assetId: string; locale: Locale }) {
+  const router = useRouter();
   const { assets, holdings, market } = usePortfolio();
   const ownedAsset = assets.find((candidate) => candidate.id === assetId);
   const [resolvedAsset, setResolvedAsset] = useState<MarketAsset>();
@@ -30,6 +33,9 @@ export function AssetDetailView({ assetId, locale }: { assetId: string; locale: 
   const [quote, setQuote] = useState<MarketQuote | undefined>(market.quotes.find((candidate) => candidate.assetId === assetId));
   const [quoteLoading, setQuoteLoading] = useState(true);
   const [quoteError, setQuoteError] = useState(false);
+  const [quoteDiagnostic, setQuoteDiagnostic] = useState<ReturnType<typeof quoteFailureDiagnostic>>();
+  const [quoteAlternative, setQuoteAlternative] = useState<{ asset: MarketAsset; quote: MarketQuote }>();
+  const [alternativeLoading, setAlternativeLoading] = useState(false);
   const [fxRate, setFxRate] = useState<number>();
   const [timeframe, setTimeframe] = useState<AssetRange>("1M");
   const [history, setHistory] = useState<MarketPricePoint[]>([]);
@@ -67,12 +73,29 @@ export function AssetDetailView({ assetId, locale }: { assetId: string; locale: 
     let cancelled = false;
     void Promise.resolve().then(() => {
       if (cancelled) return undefined;
+      setQuote(undefined);
       setQuoteLoading(true);
       setQuoteError(false);
+      setQuoteDiagnostic(undefined);
+      setQuoteAlternative(undefined);
+      setAlternativeLoading(false);
       return loadQuotePreview(asset);
     })
       .then((next) => { if (next && !cancelled) setQuote(next); })
-      .catch(() => { if (!cancelled) setQuoteError(true); })
+      .catch(async (reason) => {
+        if (cancelled) return;
+        setQuoteError(true);
+        setQuoteDiagnostic(quoteFailureDiagnostic(asset, reason));
+        setAlternativeLoading(true);
+        try {
+          const alternative = await loadQuoteAlternative(asset);
+          if (!cancelled) setQuoteAlternative(alternative);
+        } catch {
+          // The selected listing error remains the primary user-facing state.
+        } finally {
+          if (!cancelled) setAlternativeLoading(false);
+        }
+      })
       .finally(() => { if (!cancelled) setQuoteLoading(false); });
     return () => { cancelled = true; };
   }, [asset]);
@@ -152,10 +175,28 @@ export function AssetDetailView({ assetId, locale }: { assetId: string; locale: 
               )}
               <small>{quoteState} · aktualizováno {new Date(quote.timestamp).toLocaleString(locale)}</small>
             </>
-          ) : <strong className="quote-unavailable">Cena momentálně není dostupná.</strong>}
+          ) : <strong className="quote-unavailable">Cena pro {asset.exchange} není dostupná.</strong>}
           {quoteError && quote && <small>Aktualizace ceny se nezdařila; zobrazuji poslední dostupnou hodnotu.</small>}
         </div>
       </header>
+
+      {!quote && quoteError && (
+        <section className="asset-quote-fallback" aria-live="polite">
+          {alternativeLoading ? <p>Hledám jiný dostupný listing…</p> : quoteAlternative ? (
+            <>
+              <div><span>Jiný dostupný listing</span><strong>{quoteAlternative.asset.symbol} · {quoteAlternative.asset.exchange} · {quoteAlternative.asset.currency}</strong><b>{nativeMoney(quoteAlternative.quote.price, quoteAlternative.quote.currency, locale)}</b></div>
+              <button className="primary-button" onClick={() => router.push(`/${locale}/assets/${encodeURIComponent(quoteAlternative.asset.id)}`)}>Použít {quoteAlternative.asset.exchange} listing</button>
+            </>
+          ) : <p>Pro stejnou společnost jsme nenašli dostupný alternativní listing.</p>}
+        </section>
+      )}
+
+      {process.env.NODE_ENV === "development" && quoteDiagnostic && (
+        <details className="asset-quote-diagnostics">
+          <summary>Dev · quote diagnostics</summary>
+          <dl>{Object.entries(quoteDiagnostic).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>
+        </details>
+      )}
 
       <section className="asset-history-section" aria-labelledby="asset-history-title">
         <div className="asset-section-heading">

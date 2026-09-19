@@ -4,11 +4,11 @@ import { AssetDetailView } from "@/components/assets/AssetDetailView";
 export default async function AssetPage({
   params,
 }: {
-  params: Promise<{ lang: string; symbol: string }>;
+  params: Promise<{ lang: string; assetId: string }>;
 }) {
-  const { lang, symbol } = await params;
+  const { lang, assetId: routeAssetId } = await params;
   if (!isLocale(lang)) notFound();
-  let assetId = symbol;
-  try { assetId = decodeURIComponent(symbol); } catch { /* Next may already provide a decoded segment. */ }
+  let assetId = routeAssetId;
+  try { assetId = decodeURIComponent(routeAssetId); } catch { /* Next may already provide a decoded segment. */ }
   return <AssetDetailView assetId={assetId} locale={lang} />;
 }

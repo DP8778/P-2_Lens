@@ -10,7 +10,7 @@ import { normalizeTwelveDataError } from "@/lib/market-data/twelve-data/errors";
 const search = {
   status: "ok",
   data: [
-    { symbol: "ABC", instrument_name: "ABC US", exchange: "NASDAQ", mic_code: "XNAS", exchange_timezone: "America/New_York", instrument_type: "Common Stock", country: "United States", currency: "USD" },
+    { symbol: "ABC", instrument_name: "ABC US", exchange: "NASDAQ", mic_code: "XNAS", exchange_timezone: "America/New_York", instrument_type: "Common Stock", country: "United States", currency: "USD", access: { global: "Basic", plan: "Basic", plan_business: "Basic" } },
     { symbol: "ABC", instrument_name: "ABC Europe", exchange: "Xetra", mic_code: "XETR", exchange_timezone: "Europe/Berlin", instrument_type: "ETF", country: "Germany", currency: "EUR" },
     { symbol: "ABC1", instrument_name: "Unsupported", exchange: "OTC", instrument_type: "Bond", currency: "USD" },
   ],
@@ -22,6 +22,7 @@ describe("Twelve Data normalizers", () => {
     expect(result).toHaveLength(2);
     expect(result.map((asset) => asset.id)).toEqual(["twelvedata:XNAS:ABC", "twelvedata:XETR:ABC"]);
     expect(result.map((asset) => asset.type)).toEqual(["stock", "etf"]);
+    expect(result[0].access).toEqual({ global: "Basic", plan: "Basic", planBusiness: "Basic" });
   });
 
   test("normalizes USD and EUR quotes and market state", () => {

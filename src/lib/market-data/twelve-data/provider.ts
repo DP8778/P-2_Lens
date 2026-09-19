@@ -2,6 +2,7 @@ import "server-only";
 import type { MarketDataProvider } from "../provider";
 import { MarketDataError } from "../errors";
 import type { DateRange, MarketAsset, MarketQuote } from "../types";
+import { rankMarketListings } from "../listing-ranking";
 import { TwelveDataClient } from "./client";
 import {
   normalizeFxRate,
@@ -23,14 +24,12 @@ export class TwelveDataProvider implements MarketDataProvider {
   }
 
   async searchAssets(query: string) {
-    const response = await this.client.get("/symbol_search", { symbol: query, outputsize: 30 });
-    const needle = query.trim().toLowerCase();
-    return normalizeSearchResponse(response).sort((a, b) => {
-      const score = (asset: MarketAsset) =>
-        (asset.symbol.toLowerCase() === needle ? 0 : asset.name.toLowerCase() === needle ? 1 : 2) +
-        (asset.type === "stock" || asset.type === "etf" ? 0 : 10);
-      return score(a) - score(b);
+    const response = await this.client.get("/symbol_search", {
+      symbol: query,
+      outputsize: 30,
+      show_plan: "true",
     });
+    return rankMarketListings(normalizeSearchResponse(response), query);
   }
 
   async getQuote(asset: MarketAsset) {

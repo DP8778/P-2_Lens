@@ -70,6 +70,24 @@ async function historyFor(asset, from, to) {
   return json(`/api/market/history?${query}`);
 }
 
+async function quoteFor(asset) {
+  const response = await json("/api/market/quotes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ assets: [asset] }),
+  });
+  return response.quotes?.[0];
+}
+
+async function quoteOutcome(asset) {
+  try {
+    const quote = await quoteFor(asset);
+    return { available: Number.isFinite(quote?.price) && quote.price > 0, quote };
+  } catch (error) {
+    return { available: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
 try {
   await app.prepare();
   const handle = app.getRequestHandler();
@@ -91,12 +109,19 @@ try {
   const aaplAsset = aapl.assets?.find((asset) => asset.symbol === "AAPL");
   validateAsset(aaplAsset, "AAPL");
 
-  const quoteResponse = await json("/api/market/quotes", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ assets: [aaplAsset] }),
-  });
-  const quote = quoteResponse.quotes?.[0];
+  const duol = await json("/api/market/search?q=DUOL");
+  const duolListings = duol.assets?.filter((asset) => asset.symbol === "DUOL") ?? [];
+  const duolNasdaq = duolListings.find((asset) => asset.currency === "USD" && /NASDAQ/i.test(asset.exchange));
+  const duolBmv = duolListings.find((asset) => asset.currency === "MXN" && /BMV/i.test(asset.exchange));
+  validateAsset(duolNasdaq, "DUOL");
+  validateAsset(duolBmv, "DUOL");
+  assert(duolListings[0]?.id === duolNasdaq.id, "DUOL NASDAQ není preferred listing");
+
+  const spcx = await json("/api/market/search?q=SPCX");
+  const spcxAsset = spcx.assets?.find((asset) => asset.symbol === "SPCX");
+  validateAsset(spcxAsset, "SPCX");
+
+  const quote = await quoteFor(aaplAsset);
   assert(Number.isFinite(quote?.price) && quote.price > 0, "AAPL quote není konečná kladná cena");
   assert(quote.currency === aaplAsset.currency, "AAPL quote má chybnou měnu");
   assert(!Number.isNaN(Date.parse(quote.timestamp)), "AAPL quote má neplatný timestamp");
@@ -121,6 +146,11 @@ try {
 
   await waitForProviderWindow(coreWindowStarted, "evropské listingy a split audit");
   const auditWindowStarted = Date.now();
+  const duolNasdaqQuote = await quoteOutcome(duolNasdaq);
+  const duolBmvQuote = await quoteOutcome(duolBmv);
+  const spcxQuote = await quoteOutcome(spcxAsset);
+  assert(duolNasdaqQuote.available, "DUOL NASDAQ quote není dostupný");
+  assert(spcxQuote.available, "SPCX quote není dostupný");
   const europe = {};
   for (const symbol of ["VWCE", "CSPX"]) {
     const response = await json(`/api/market/search?q=${symbol}`);
@@ -150,6 +180,12 @@ try {
       quote: { price: quote.price, currency: quote.currency, timestamp: quote.timestamp, marketState: quote.marketState, freshness: quote.freshness },
       historyPoints: history.points.length,
     },
+    duol: {
+      preferred: duolListings[0]?.id,
+      nasdaq: { id: duolNasdaq.id, exchange: duolNasdaq.exchange, currency: duolNasdaq.currency, ...duolNasdaqQuote },
+      bmv: { id: duolBmv.id, exchange: duolBmv.exchange, currency: duolBmv.currency, ...duolBmvQuote },
+    },
+    spcx: { listing: { id: spcxAsset.id, exchange: spcxAsset.exchange, currency: spcxAsset.currency }, ...spcxQuote },
     fx: { current: fx.rate, historyPoints: fxHistory.points.length, orientation: `${fxHistory.base}/${fxHistory.quote}` },
     europe,
     splitAudit: { symbol: "AAPL", points: splitHistory.points.length, largestAdjacentMoveFactor: largestSplitWindowMove },

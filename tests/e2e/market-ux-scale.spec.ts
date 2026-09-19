@@ -38,6 +38,7 @@ test("six holdings avoid a permanent filter wall and open a usable asset detail"
   await expect(page.getByLabel("Hledat pozici")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Filtry" })).toHaveCount(0);
   await expect(page.getByLabel("Řazení pozic", { exact: true })).toBeVisible();
+  await expect(page.getByRole("slider", { name: "Konec období" })).not.toHaveAttribute("max", "730");
   const detailLink = page.getByRole("link", { name: "Detail AAPL" });
   await expect(detailLink).toHaveAttribute("href", "/cs-CZ/assets/twelvedata%3AXETR%3AAAPL");
   await page.goto((await detailLink.getAttribute("href"))!);

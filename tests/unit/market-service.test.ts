@@ -1,5 +1,5 @@
 import { MemoryMarketDataCache } from "@/lib/market-data/cache/market-cache";
-import { loadFxQuote, loadQuotePreview, loadQuotes } from "@/lib/market-data/service";
+import { loadFxQuote, loadQuoteAlternative, loadQuotePreview, loadQuotes } from "@/lib/market-data/service";
 import type { MarketAsset, MarketQuote } from "@/lib/market-data/types";
 
 const asset: MarketAsset = {
@@ -76,5 +76,20 @@ describe("market service quote cache", () => {
     expect((await loadFxQuote("EUR", "CZK", cache)).rate).toBe(24.8);
     expect((await loadFxQuote("EUR", "CZK", cache)).rate).toBe(24.8);
     expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  test("offers an available primary listing when a secondary listing has no quote", async () => {
+    const selected: MarketAsset = { ...asset, id: "twelvedata:XMEX:DUOL", providerSymbol: "DUOL", symbol: "DUOL", name: "Duolingo, Inc.", exchange: "BMV", micCode: "XMEX", currency: "MXN" };
+    const primary: MarketAsset = { ...selected, id: "twelvedata:XNGS:DUOL", name: "Duolingo Inc", exchange: "NASDAQ", micCode: "XNGS", currency: "USD" };
+    global.fetch = jest.fn().mockImplementation(async (input, init) => {
+      if (String(input).includes("/api/market/search")) return { ok: true, status: 200, json: async () => ({ assets: [primary, selected] }) } as Response;
+      const requested = JSON.parse(String(init?.body)).assets[0] as MarketAsset;
+      return { ok: true, status: 200, json: async () => ({ quotes: [{ ...quote(234.56), assetId: requested.id }] }) } as Response;
+    });
+    await expect(loadQuoteAlternative(selected)).resolves.toMatchObject({
+      asset: { id: primary.id, exchange: "NASDAQ", currency: "USD" },
+      quote: { assetId: primary.id, price: 234.56 },
+    });
+    expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 });
