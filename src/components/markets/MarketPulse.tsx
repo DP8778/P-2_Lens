@@ -25,6 +25,7 @@ function summarize(theme: MarketTheme, quotes: Map<string, MarketQuote>) {
   const sorted = [...available].sort((left, right) => right.quote.changePercent! - left.quote.changePercent!);
   return {
     average,
+    coverage: theme.constituents.filter((asset) => quotes.has(asset.id)).length,
     rising: available.filter((item) => item.quote.changePercent! > 0).length,
     falling: available.filter((item) => item.quote.changePercent! < 0).length,
     measured: available.length,
@@ -50,7 +51,6 @@ export function MarketPulse({ locale, variant = "compact", initialThemeId }: { l
       const cached = await Promise.all(marketThemeAssets.map((asset) => cache.getQuote(asset.id)));
       if (cancelled) return;
       setQuotes(cached.flatMap((record) => record ? [record.quote] : []));
-      setLoading(false);
       setError(false);
       const result = await loadQuotes(selectedTheme.constituents, cache);
       if (!cancelled) setQuotes((current) =>
@@ -74,11 +74,17 @@ export function MarketPulse({ locale, variant = "compact", initialThemeId }: { l
       <div className="market-theme-grid" aria-busy={loading}>
         {marketThemes.map((theme) => {
           const summary = summarize(theme, byAsset);
+          const pending = loading && selectedTheme.id === theme.id && !summary.coverage;
+          const partial = summary.measured < theme.constituents.length;
           const content = (
             <>
               <span>{theme.name}</span>
-              <strong className={summary.average === undefined ? "" : summary.average >= 0 ? "positive" : "negative"}>{loading ? "…" : summary.average === undefined ? "—" : percent(summary.average, locale)}</strong>
-              <small>{loading ? "Načítám…" : summary.measured ? `${summary.rising} / ${summary.measured} roste · ${summary.falling} klesá` : "Data nejsou dostupná"}</small>
+              <strong className={partial || summary.average === undefined ? "" : summary.average >= 0 ? "positive" : "negative"}>{pending ? "…" : partial || summary.average === undefined ? "—" : percent(summary.average, locale)}</strong>
+              <small>{pending ? "Načítám…" : summary.coverage
+                ? partial
+                  ? `Částečná data · ${summary.coverage}/${theme.constituents.length} titulů`
+                  : `${summary.coverage} / ${theme.constituents.length} titulů k dispozici · ${summary.rising} roste · ${summary.falling} klesá`
+                : "Data nejsou dostupná"}</small>
               {variant === "full" && summary.topGainer && summary.topLoser && (
                 <em><b>{summary.topGainer.asset.symbol} {percent(summary.topGainer.quote.changePercent!, locale)}</b><b>{summary.topLoser.asset.symbol} {percent(summary.topLoser.quote.changePercent!, locale)}</b></em>
               )}
@@ -86,7 +92,13 @@ export function MarketPulse({ locale, variant = "compact", initialThemeId }: { l
           );
           return variant === "compact"
             ? <Link className="market-theme-card" href={`/${locale}/markets?theme=${theme.id}`} key={theme.id}>{content}</Link>
-            : <button className="market-theme-card" aria-pressed={selectedTheme.id === theme.id} onClick={() => setSelectedThemeId(theme.id)} key={theme.id}>{content}</button>;
+            : <button className="market-theme-card" aria-pressed={selectedTheme.id === theme.id} onClick={() => {
+              if (theme.id !== selectedThemeId) {
+                setLoading(true);
+                setError(false);
+                setSelectedThemeId(theme.id);
+              }
+            }} key={theme.id}>{content}</button>;
         })}
       </div>
 
@@ -99,7 +111,7 @@ export function MarketPulse({ locale, variant = "compact", initialThemeId }: { l
               return (
                 <Link className="market-constituent-row" href={`/${locale}/assets/${encodeURIComponent(asset.id)}`} key={asset.id} aria-label={`Detail ${asset.symbol}`}>
                   <span><strong>{asset.symbol}</strong><small>{asset.name}</small></span>
-                  <b>{quote ? price(quote, locale) : "Cena nedostupná"}</b>
+                  <b>{quote ? price(quote, locale) : loading ? "Načítám…" : "Cena nedostupná"}</b>
                   <em className={quote?.changePercent === undefined ? "" : quote.changePercent >= 0 ? "positive" : "negative"}>{quote?.changePercent === undefined ? "—" : percent(quote.changePercent, locale)}</em>
                 </Link>
               );

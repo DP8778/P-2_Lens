@@ -196,7 +196,8 @@ export async function loadQuotes(
         await Promise.all(
           quotes.map((quote) => cache.putQuote({ key: quote.assetId, quote, updatedAt: new Date().toISOString() })),
         );
-      } catch {
+      } catch (error) {
+        if (!byId.size) throw error;
         // Keep every available quote, including stale fallbacks, if refresh fails.
       }
     }

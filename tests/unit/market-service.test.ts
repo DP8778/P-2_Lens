@@ -65,7 +65,7 @@ describe("market service quote cache", () => {
     expect(await loadQuotes([asset, stale, { ...asset, id: "missing" }], cache)).toEqual([
       quote(100), { ...quote(90), assetId: stale.id, freshness: "stale", source: "cache" },
     ]);
-    await expect(loadQuotes([{ ...asset, id: "missing" }], cache)).resolves.toEqual([]);
+    await expect(loadQuotes([{ ...asset, id: "missing" }], cache)).rejects.toMatchObject({ code: "UNAVAILABLE" });
   });
 
   test("uses the same fresh cache for a single-result search preview", async () => {
