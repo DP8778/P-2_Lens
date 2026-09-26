@@ -38,6 +38,36 @@ describe("market service quote cache", () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
+  test("refreshes only stale and missing assets in one batch, preserving partial results", async () => {
+    const cache = new MemoryMarketDataCache();
+    const assets = [asset, ...["STALE", "NEW", "MISSING"].map((symbol) => ({ ...asset, id: symbol, symbol, providerSymbol: symbol }))];
+    await cache.putQuote({ key: asset.id, quote: quote(100), updatedAt: new Date().toISOString() });
+    await cache.putQuote({ key: "STALE", quote: { ...quote(90), assetId: "STALE" }, updatedAt: "2020-01-01T00:00:00Z" });
+    const incoming = { ...quote(105), assetId: "NEW" };
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ quotes: [incoming] }) });
+
+    const result = await loadQuotes(assets, cache);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledWith("/api/market/quotes", expect.objectContaining({
+      body: JSON.stringify({ assets: assets.slice(1) }),
+    }));
+    expect(result).toEqual([quote(100), { ...quote(90), assetId: "STALE", freshness: "stale", source: "cache" }, incoming]);
+    expect((await cache.getQuote("STALE"))?.updatedAt).toBe("2020-01-01T00:00:00Z");
+    expect((await cache.getQuote("NEW"))?.quote).toEqual(incoming);
+  });
+
+  test("failed refresh preserves fresh and stale quotes and omits missing assets", async () => {
+    const cache = new MemoryMarketDataCache();
+    const stale = { ...asset, id: "stale" };
+    await cache.putQuote({ key: asset.id, quote: quote(100), updatedAt: new Date().toISOString() });
+    await cache.putQuote({ key: stale.id, quote: { ...quote(90), assetId: stale.id }, updatedAt: "2020-01-01T00:00:00Z" });
+    global.fetch = jest.fn().mockRejectedValue(new Error("unavailable"));
+    expect(await loadQuotes([asset, stale, { ...asset, id: "missing" }], cache)).toEqual([
+      quote(100), { ...quote(90), assetId: stale.id, freshness: "stale", source: "cache" },
+    ]);
+    await expect(loadQuotes([{ ...asset, id: "missing" }], cache)).resolves.toEqual([]);
+  });
+
   test("uses the same fresh cache for a single-result search preview", async () => {
     const cache = new MemoryMarketDataCache();
     await cache.putQuote({ key: asset.id, quote: quote(101), updatedAt: new Date().toISOString() });

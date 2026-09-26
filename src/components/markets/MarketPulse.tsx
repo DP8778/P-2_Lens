@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { Locale } from "@/i18n/getDictionary";
 import { marketThemeAssets, marketThemes, type MarketTheme } from "@/data/market-themes";
+import { getBrowserMarketDataCache } from "@/lib/market-data/cache/market-cache";
 import { loadQuotes } from "@/lib/market-data/service";
 import type { MarketQuote } from "@/lib/market-data/types";
 import { percent } from "@/components/charts/chart-formatters";
@@ -40,17 +41,28 @@ export function MarketPulse({ locale, variant = "compact", initialThemeId }: { l
     marketThemes.some((theme) => theme.id === initialThemeId) ? initialThemeId! : defaultTheme.id,
   );
 
+  const selectedTheme = marketThemes.find((theme) => theme.id === selectedThemeId) ?? defaultTheme;
+
   useEffect(() => {
     let cancelled = false;
-    void Promise.resolve().then(() => loadQuotes(marketThemeAssets))
-      .then((result) => { if (!cancelled) { setQuotes(result); setError(false); } })
-      .catch(() => { if (!cancelled) { setQuotes([]); setError(true); } })
+    const cache = getBrowserMarketDataCache();
+    void (async () => {
+      const cached = await Promise.all(marketThemeAssets.map((asset) => cache.getQuote(asset.id)));
+      if (cancelled) return;
+      setQuotes(cached.flatMap((record) => record ? [record.quote] : []));
+      setLoading(false);
+      setError(false);
+      const result = await loadQuotes(selectedTheme.constituents, cache);
+      if (!cancelled) setQuotes((current) =>
+        [...new Map([...current, ...result].map((quote) => [quote.assetId, quote])).values()],
+      );
+    })()
+      .catch(() => { if (!cancelled) setError(true); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [selectedTheme]);
 
   const byAsset = useMemo(() => new Map(quotes.map((quote) => [quote.assetId, quote])), [quotes]);
-  const selectedTheme = marketThemes.find((theme) => theme.id === selectedThemeId) ?? defaultTheme;
 
   return (
     <section className={`market-pulse ${variant}`} aria-labelledby={`market-pulse-title-${variant}`}>

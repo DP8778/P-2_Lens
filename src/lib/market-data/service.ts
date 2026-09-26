@@ -179,29 +179,31 @@ export async function loadQuotes(
   const request = (async () => {
     const cached = await Promise.all(assets.map((asset) => cache.getQuote(asset.id)));
     const now = Date.now();
-    const fresh = cached.filter(
-      (record) => record && now - Date.parse(record.updatedAt) <= marketDataConfig.quoteFreshMs,
+    const isFresh = cached.map(
+      (record) => !!record && now - Date.parse(record.updatedAt) <= marketDataConfig.quoteFreshMs,
     );
-    if (fresh.length === assets.length) return fresh.map((record) => record!.quote);
-    try {
-      const quotes = await fetchMarketQuotes(assets);
-      await Promise.all(
-        quotes.map((quote) => cache.putQuote({ key: quote.assetId, quote, updatedAt: new Date().toISOString() })),
-      );
-      const byId = new Map(quotes.map((quote) => [quote.assetId, quote]));
-      return assets.flatMap((asset, index) => {
-        const quote = byId.get(asset.id);
-        if (quote) return [quote];
-        const fallback = cached[index]?.quote;
-        return fallback ? [{ ...fallback, freshness: "stale" as const, source: "cache" as const }] : [];
-      });
-    } catch (error) {
-      const fallback = cached.flatMap((record) =>
-        record ? [{ ...record.quote, freshness: "stale" as const, source: "cache" as const }] : [],
-      );
-      if (fallback.length) return fallback;
-      throw error;
+    const missing = assets.filter((_, index) => !isFresh[index]);
+    const byId = new Map<string, MarketQuote>();
+    cached.forEach((record, index) => {
+      if (record) byId.set(assets[index].id, isFresh[index]
+        ? record.quote
+        : { ...record.quote, freshness: "stale", source: "cache" });
+    });
+    if (missing.length) {
+      try {
+        const quotes = await fetchMarketQuotes(missing);
+        quotes.forEach((quote) => byId.set(quote.assetId, quote));
+        await Promise.all(
+          quotes.map((quote) => cache.putQuote({ key: quote.assetId, quote, updatedAt: new Date().toISOString() })),
+        );
+      } catch {
+        // Keep every available quote, including stale fallbacks, if refresh fails.
+      }
     }
+    return assets.flatMap((asset) => {
+      const quote = byId.get(asset.id);
+      return quote ? [quote] : [];
+    });
   })().finally(() => quoteRequests.delete(key));
   quoteRequests.set(key, request);
   return request;
