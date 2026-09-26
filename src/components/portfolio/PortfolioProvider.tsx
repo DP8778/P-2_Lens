@@ -158,7 +158,7 @@ const Context = createContext<{
   removeTransaction: (id: string) => void;
 } | null>(null);
 
-export function PortfolioProvider({ children }: { children: ReactNode }) {
+export function PortfolioProvider({ children, hydrateMarket = true }: { children: ReactNode; hydrateMarket?: boolean }) {
   const mode = useSyncExternalStore(subscribe, readMode, () => "demo" as PortfolioMode);
   const demoTransactions = useSyncExternalStore(subscribe, readDemo, () => initialTransactions);
   const personal = useSyncExternalStore(subscribe, readPersonal, () => emptyPersonal);
@@ -185,11 +185,12 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     }
   }, [market.benchmark, mode, personal.assets]);
 
-  const hydratePersonalMarket = useCallback(async () => {
-    if (mode !== "personal") return;
+  const hydratePersonalMarket = useCallback(async (signal: AbortSignal) => {
+    if (!hydrateMarket || signal.aborted || mode !== "personal") return;
     setMarket((current) => ({ ...current, state: "loading", error: undefined }));
     try {
       const status = await fetchMarketStatus();
+      if (signal.aborted) return;
       if (!status.configured) {
         setMarket({ ...emptyRuntime, configured: false, state: "unavailable", error: "Live market data nejsou nakonfigurována." });
         return;
@@ -199,6 +200,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         return;
       }
       const benchmark = market.benchmark ?? (await searchMarketAssets("SPY")).find((asset) => asset.symbol === "SPY" && asset.type === "etf");
+      if (signal.aborted) return;
       const requestedAssets = benchmark ? [...personal.assets, benchmark] : personal.assets;
       const from = personalTransactions.filter((row) => "assetId" in row).map((row) => row.occurredAt).sort()[0] ?? today();
       const range = { from, to: today(), interval: "1day" as const };
@@ -208,6 +210,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         Promise.allSettled(currencies.map((currency) => loadFxHistory(currency, "CZK", range))),
         loadQuotes(requestedAssets),
       ]);
+      if (signal.aborted) return;
       const histories = historyResults.flatMap((result) => result.status === "fulfilled" ? [result.value] : []);
       const fxHistories = fxHistoryResults.flatMap((result) => result.status === "fulfilled" ? [result.value] : []);
       const historicalPrices: PricePoint[] = histories.flatMap((history) => history.points.map((point) => ({ assetId: point.assetId, date: point.date, close: point.close, currency: point.currency })));
@@ -233,13 +236,18 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         };
       });
     } catch {
+      if (signal.aborted) return;
       setMarket((current) => ({ ...current, configured: current.configured ?? true, state: current.prices.length ? "stale" : "unavailable", error: "Market data jsou dočasně nedostupná." }));
     }
-  }, [market.benchmark, mode, personal.assets, personalTransactions]);
+  }, [hydrateMarket, market.benchmark, mode, personal.assets, personalTransactions]);
 
-  useEffect(() => { void Promise.resolve().then(hydratePersonalMarket); }, [hydratePersonalMarket]);
   useEffect(() => {
-    if (mode !== "personal" || !personal.assets.length) return;
+    const controller = new AbortController();
+    void Promise.resolve().then(() => hydratePersonalMarket(controller.signal));
+    return () => controller.abort();
+  }, [hydratePersonalMarket]);
+  useEffect(() => {
+    if (!hydrateMarket || mode !== "personal" || !personal.assets.length) return;
     const refreshIfVisible = () => {
       if (document.visibilityState !== "visible") return;
       const age = market.lastRefresh ? Date.now() - Date.parse(market.lastRefresh) : Infinity;
@@ -253,7 +261,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     document.addEventListener("visibilitychange", onFocus);
     window.addEventListener("focus", onFocus);
     return () => { window.clearInterval(interval); document.removeEventListener("visibilitychange", onFocus); window.removeEventListener("focus", onFocus); };
-  }, [market.lastRefresh, market.quotes, mode, personal.assets.length, refreshQuotesOnly]);
+  }, [hydrateMarket, market.lastRefresh, market.quotes, mode, personal.assets.length, refreshQuotesOnly]);
 
   const transactions = mode === "demo" ? demoTransactions : personalTransactions;
   const holdings = useMemo(() => mode === "demo" ? buildHoldings(transactions) : buildHoldings(transactions, today(), market.fxRates), [market.fxRates, mode, transactions]);

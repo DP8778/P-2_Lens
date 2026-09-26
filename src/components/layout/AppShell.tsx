@@ -18,7 +18,7 @@ export function AppShell({
   const pathname = usePathname();
   if (pathname.endsWith("/login")) return <>{children}</>;
   return (
-    <PortfolioProvider>
+    <PortfolioProvider hydrateMarket={!/\/markets\/?$/.test(pathname)}>
       <AnalysisProvider>
         <div className="app-shell">
           <a className="skip-link" href="#main-content">

@@ -46,13 +46,12 @@ test("loads four annual histories once; 1M → 3M → 1Y and 1W are derived loca
   expect(screen.getByRole("region", { name: "Historie tématu Cybersecurity" })).toBeInTheDocument();
 });
 
-test.each(["missing", "failure", "gap"])("%s history hides chart, return and rankings without hiding controls", async (reason) => {
+test.each(["missing", "failure"])("%s history hides chart, return and rankings without hiding controls", async (reason) => {
   load.mockImplementation(async (asset, range) => {
     const result = history(asset, range);
     if (asset.id === marketThemes[0].constituents[0].id) {
       if (reason === "failure") throw new Error("offline");
       if (reason === "missing") result.points = [];
-      if (reason === "gap") result.points.splice(-2, 1);
     }
     return result;
   });

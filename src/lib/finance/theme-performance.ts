@@ -20,25 +20,25 @@ export function buildThemePerformance(
   const series = assets.map((asset) => (histories.get(asset.id) ?? [])
     .filter((point) => point.date >= range.from && point.date <= range.to)
     .sort((a, b) => a.date.localeCompare(b.date)));
-  const dates = [...new Set(series.flatMap((points) => points.map((point) => point.date)))].sort();
+  const byDate = series.map((points) => new Map(points.map((point) => [point.date, point])));
+  const dates = [...(byDate[0]?.keys() ?? [])].filter((date) => byDate.every((points) => points.has(date)));
   const valid = series.map((points, index) => points.length >= 2 && points.every((point) =>
     point.assetId === assets[index].id && point.currency === assets[index].currency && Number.isFinite(point.close) && point.close > 0,
   ) && new Set(points.map((point) => point.date)).size === points.length);
   const coverage = valid.filter(Boolean).length;
-  // Never shrink to an intersection or fill gaps: every constituent must cover every date.
+  // Use only observed common dates, without inventing prices or dropping constituents.
   // Four calendar days allow ordinary weekends/holiday closures at the range boundaries.
   const complete = assets.length > 0 && coverage === assets.length && dates.length >= 2
-    && series.every((points) => points.length === dates.length && points.every((point, index) => point.date === dates[index]))
-    && dates.every((date, index) => index === 0 || Date.parse(date) - Date.parse(dates[index - 1]) <= 4 * day)
     && Date.parse(dates[0]) - Date.parse(range.from) <= 4 * day
     && Date.parse(range.to) - Date.parse(dates.at(-1)!) <= 4 * day;
   if (!complete) return { status: "partial" as const, coverage, total: assets.length };
 
+  const aligned = byDate.map((prices) => dates.map((date) => prices.get(date)!));
   const points = dates.map((date, index) => ({
     date,
-    value: series.reduce((sum, prices) => sum + prices[index].close / prices[0].close * 100, 0) / assets.length,
+    value: aligned.reduce((sum, prices) => sum + prices[index].close / prices[0].close * 100, 0) / assets.length,
   }));
-  const ranked = assets.map((asset, index) => ({ asset, returnPct: (series[index].at(-1)!.close / series[index][0].close - 1) * 100 }))
+  const ranked = assets.map((asset, index) => ({ asset, returnPct: (aligned[index].at(-1)!.close / aligned[index][0].close - 1) * 100 }))
     .sort((a, b) => b.returnPct - a.returnPct || a.asset.symbol.localeCompare(b.asset.symbol));
   return {
     status: "complete" as const, coverage, total: assets.length, points,
