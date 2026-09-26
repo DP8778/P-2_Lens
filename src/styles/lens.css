@@ -2803,3 +2803,31 @@ button.contribution-row[aria-pressed="true"] {
     font-size: 23px;
   }
 }
+
+/* Selected Markets theme history. */
+.theme-detail { margin-bottom: 32px; padding: 26px; border: 1px solid var(--color-border-default); border-radius: 12px; background: var(--surface-fill); min-width: 0; }
+.theme-detail-header { display: flex; align-items: start; justify-content: space-between; gap: 20px; }
+.theme-detail-eyebrow, .theme-period-return > span { color: var(--color-text-muted); font-size: 11px; }
+.theme-detail h3 { margin: 8px 0; font-size: 30px; font-weight: 450; letter-spacing: -.035em; }
+.theme-detail-header p, .theme-history-summary, .theme-methodology { color: var(--color-text-muted); font-size: 11px; line-height: 1.6; }
+.theme-period-return { display: grid; flex-shrink: 0; gap: 6px; text-align: right; }
+.theme-period-return > strong { white-space: nowrap; font-size: 32px; font-weight: 450; font-variant-numeric: tabular-nums; }
+.theme-timeframes { display: flex; gap: 4px; margin-top: 22px; }
+.theme-timeframes button { padding: 7px 14px; border: 1px solid transparent; border-radius: 6px; color: var(--color-text-muted); font-size: 12px; }
+.theme-timeframes button[aria-pressed="true"] { background: #ffffff0b; border-color: #ffffff24; color: var(--color-text-primary); }
+.theme-timeframes button:focus-visible { outline: 2px solid var(--color-text-primary); outline-offset: 3px; }
+.theme-history-chart { height: 340px; width: 100%; margin-top: 14px; }
+.theme-history-placeholder { min-height: 340px; display: grid; place-content: center; color: var(--color-text-muted); text-align: center; }
+.theme-period-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding-top: 22px; margin-top: 20px; border-top: 1px solid #ffffff10; }
+.theme-period-stats h4 { color: var(--color-text-muted); font-size: 11px; font-weight: 400; margin-bottom: 12px; }
+.theme-period-stats strong { font-size: 16px; font-weight: 450; }
+.theme-period-stats p { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; margin-top: 8px; }
+.theme-period-stats b { font-weight: 450; font-variant-numeric: tabular-nums; }
+.theme-methodology { margin-top: 22px; }
+@media (max-width: 640px) {
+  .theme-detail { padding: 16px; }
+  .theme-detail h3 { font-size: 24px; }
+  .theme-period-return > strong { font-size: 24px; }
+  .theme-history-chart, .theme-history-placeholder { height: 260px; min-height: 260px; }
+  .theme-period-stats { grid-template-columns: 1fr; gap: 20px; }
+}

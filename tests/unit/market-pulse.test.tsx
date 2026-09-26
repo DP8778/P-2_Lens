@@ -6,6 +6,8 @@ import { marketThemes } from "@/data/market-themes";
 import { getBrowserMarketDataCache } from "@/lib/market-data/cache/market-cache";
 import type { MarketAsset, MarketQuote } from "@/lib/market-data/types";
 
+jest.mock("@/components/markets/ThemeDetail", () => ({ ThemeDetail: () => null }));
+
 const quote = (asset: MarketAsset): MarketQuote => ({
   assetId: asset.id, price: 123, currency: "USD", timestamp: new Date().toISOString(),
   marketState: "open", freshness: "fresh", source: "network", changePercent: 1,

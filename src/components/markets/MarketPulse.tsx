@@ -9,6 +9,8 @@ import { loadQuotes } from "@/lib/market-data/service";
 import type { MarketQuote } from "@/lib/market-data/types";
 import { percent } from "@/components/charts/chart-formatters";
 
+import { ThemeDetail } from "./ThemeDetail";
+
 const defaultTheme = marketThemes[0];
 
 const price = (quote: MarketQuote, locale: string) =>
@@ -101,6 +103,8 @@ export function MarketPulse({ locale, variant = "compact", initialThemeId }: { l
             }} key={theme.id}>{content}</button>;
         })}
       </div>
+
+      {variant === "full" && <ThemeDetail theme={selectedTheme} locale={locale} />}
 
       {variant === "full" && (
         <div className="market-constituents">
