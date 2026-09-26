@@ -3,20 +3,25 @@
 import { useEffect, useMemo, useState } from "react";
 import type { MarketTheme } from "@/data/market-themes";
 import { buildThemePerformance, themeHistoryRange, themeTimeframes, type ThemeTimeframe } from "@/lib/finance/theme-performance";
+import type { MarketPricePoint } from "@/lib/market-data/types";
 import { loadHistory } from "@/lib/market-data/service";
 import { getBrowserMarketDataCache } from "@/lib/market-data/cache/market-cache";
 import { percent, dateLabel } from "@/components/charts/chart-formatters";
 import { ThemeHistoryChart } from "./ThemeHistoryChart";
 
-type Result = { key: string; performance: ReturnType<typeof buildThemePerformance>; failed: boolean; stale: boolean };
+type Result = { key: string; histories: Map<string, MarketPricePoint[]>; failed: boolean; stale: boolean };
 
 export function ThemeDetail({ theme, locale }: { theme: MarketTheme; locale: string }) {
   const [timeframe, setTimeframe] = useState<ThemeTimeframe>("1M");
-  const range = useMemo(() => themeHistoryRange(timeframe), [timeframe]);
-  const key = `${theme.id}:${range.from}:${range.to}`;
+  const [referenceDate] = useState(() => new Date());
+  const historyRange = useMemo(() => themeHistoryRange("1Y", referenceDate), [referenceDate]);
+  const range = useMemo(() => themeHistoryRange(timeframe, referenceDate), [timeframe, referenceDate]);
+  const key = `${theme.id}:${historyRange.from}:${historyRange.to}`;
   const [result, setResult] = useState<Result>();
   const current = result?.key === key ? result : undefined;
-  const performance = current?.performance;
+  const performance = useMemo(() => current
+    ? buildThemePerformance(theme.constituents, current.histories, range)
+    : undefined, [current, theme, range]);
 
   useEffect(() => {
     let cancelled = false;
@@ -25,20 +30,20 @@ export function ThemeDetail({ theme, locale }: { theme: MarketTheme; locale: str
       const cache = getBrowserMarketDataCache();
       const results = await Promise.allSettled(theme.constituents.map(async (asset) => {
         try {
-          const history = await loadHistory(asset, range, cache);
+          const history = await loadHistory(asset, historyRange, cache);
           return { asset, points: history.points, stale: false };
         } catch (error) {
           const cached = await cache.getHistory(asset.id);
-          if (!cached || cached.from > range.from || cached.to < range.to) throw error;
+          if (!cached || cached.from > historyRange.from || cached.to < historyRange.to) throw error;
           return { asset, points: cached.points, stale: true };
         }
       }));
       if (cancelled) return;
       const available = results.flatMap((item) => item.status === "fulfilled" ? [item.value] : []);
-      setResult({ key, performance: buildThemePerformance(theme.constituents, new Map(available.map((item) => [item.asset.id, item.points])), range), failed: results.some((item) => item.status === "rejected"), stale: available.some((item) => item.stale) });
+      setResult({ key, histories: new Map(available.map((item) => [item.asset.id, item.points])), failed: results.some((item) => item.status === "rejected"), stale: available.some((item) => item.stale) });
     });
     return () => { cancelled = true; };
-  }, [key, range, theme]);
+  }, [key, historyRange, theme]);
 
   return (
     <section className="theme-detail" aria-label={`Historie tématu ${theme.name}`} aria-busy={!current}>

@@ -2,6 +2,7 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ThemeDetail } from "@/components/markets/ThemeDetail";
 import { marketThemes } from "@/data/market-themes";
+import { themeHistoryRange } from "@/lib/finance/theme-performance";
 import { loadHistory } from "@/lib/market-data/service";
 import { getBrowserMarketDataCache } from "@/lib/market-data/cache/market-cache";
 import type { DateRange, MarketAsset } from "@/lib/market-data/types";
@@ -17,7 +18,7 @@ const history = (asset: MarketAsset, range: DateRange) => {
 
 beforeEach(async () => { load.mockReset(); load.mockImplementation(async (asset, range) => history(asset, range)); await getBrowserMarketDataCache().clearMarketData(); });
 
-test("requests only selected theme history; period and theme switches update the detail", async () => {
+test("loads four annual histories once; 1M → 3M → 1Y and 1W are derived locally", async () => {
   const user = userEvent.setup();
   const { rerender } = render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
   await screen.findByTestId("theme-chart");
@@ -26,16 +27,22 @@ test("requests only selected theme history; period and theme switches update the
   expect(screen.getByText("2 nejsilnější tituly").parentElement!.querySelectorAll("p")).toHaveLength(2);
   expect(screen.getByText("2 nejslabší tituly").parentElement!.querySelectorAll("p")).toHaveLength(2);
   expect(screen.getByText(/Index 100 →/)).toHaveTextContent("4/4 titulů");
-  for (const period of ["1W", "3M", "1Y"]) {
+  expect(load).toHaveBeenCalledTimes(4);
+  expect(load.mock.calls.every(([, range]) => JSON.stringify(range) === JSON.stringify(themeHistoryRange("1Y")))).toBe(true);
+  let previousSummary = screen.getByText(/Index 100 →/).textContent;
+  for (const period of ["3M", "1Y", "1W"]) {
     await user.click(screen.getByRole("button", { name: period }));
     await screen.findByTestId("theme-chart");
     expect(screen.getByRole("button", { name: period })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText(`Výnos za ${period}`)).toBeInTheDocument();
+    expect(load).toHaveBeenCalledTimes(4);
+    expect(screen.getByText(/Index 100 →/).textContent).not.toBe(previousSummary);
+    previousSummary = screen.getByText(/Index 100 →/).textContent;
   }
-  expect(load).toHaveBeenCalledTimes(16);
+  expect(load).toHaveBeenCalledTimes(4);
   rerender(<ThemeDetail theme={marketThemes[4]} locale="cs-CZ" />);
   await screen.findByTestId("theme-chart");
-  expect(load.mock.calls.slice(16).map(([asset]) => asset.id)).toEqual(marketThemes[4].constituents.map((asset) => asset.id));
+  expect(load.mock.calls.slice(4).map(([asset]) => asset.id)).toEqual(marketThemes[4].constituents.map((asset) => asset.id));
   expect(screen.getByRole("region", { name: "Historie tématu Cybersecurity" })).toBeInTheDocument();
 });
 
@@ -45,7 +52,7 @@ test.each(["missing", "failure", "gap"])("%s history hides chart, return and ran
     if (asset.id === marketThemes[0].constituents[0].id) {
       if (reason === "failure") throw new Error("offline");
       if (reason === "missing") result.points = [];
-      if (reason === "gap") result.points.splice(2, 1);
+      if (reason === "gap") result.points.splice(-2, 1);
     }
     return result;
   });
@@ -95,13 +102,51 @@ test("existing history cache serves shorter periods and revisits without network
   });
   try {
     const user = userEvent.setup();
-    render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
+    const { rerender } = render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
     await screen.findByTestId("theme-chart");
     expect(global.fetch).toHaveBeenCalledTimes(4);
-    await user.click(screen.getByRole("button", { name: "1W" }));
+    for (const period of ["3M", "1Y", "1W", "1M"]) {
+      await user.click(screen.getByRole("button", { name: period }));
+      await screen.findByTestId("theme-chart");
+      expect(global.fetch).toHaveBeenCalledTimes(4);
+      expect(load).toHaveBeenCalledTimes(4);
+    }
+    // Infrastructure shares NVDA: only its other three histories need the network.
+    rerender(<ThemeDetail theme={marketThemes[1]} locale="cs-CZ" />);
     await screen.findByTestId("theme-chart");
-    await user.click(screen.getByRole("button", { name: "1M" }));
+    expect(global.fetch).toHaveBeenCalledTimes(7);
+    rerender(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
     await screen.findByTestId("theme-chart");
-    expect(global.fetch).toHaveBeenCalledTimes(4);
+    expect(global.fetch).toHaveBeenCalledTimes(7);
   } finally { global.fetch = originalFetch; }
+});
+
+test("switching period during the initial load reuses the same four pending histories", async () => {
+  const user = userEvent.setup();
+  const resolvers: (() => void)[] = [];
+  load.mockImplementation((asset, range) => new Promise((resolve) => { resolvers.push(() => resolve(history(asset, range))); }));
+  render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
+  await waitFor(() => expect(load).toHaveBeenCalledTimes(4));
+  await user.click(screen.getByRole("button", { name: "3M" }));
+  await user.click(screen.getByRole("button", { name: "1Y" }));
+  expect(load).toHaveBeenCalledTimes(4);
+  await act(async () => resolvers.forEach((resolve) => resolve()));
+  expect(screen.getByTestId("theme-chart")).toBeInTheDocument();
+  expect(screen.getByText("Šíře růstu za 1Y")).toBeInTheDocument();
+});
+
+test("an incomplete constituent remains unavailable across periods without refetching", async () => {
+  const user = userEvent.setup();
+  load.mockImplementation(async (asset, range) => {
+    if (asset.id === marketThemes[0].constituents[0].id) throw new Error("offline");
+    return history(asset, range);
+  });
+  render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
+  await screen.findByText(/Výkonnost vyžaduje úplnou historii/);
+  for (const period of ["3M", "1Y", "1W"]) {
+    await user.click(screen.getByRole("button", { name: period }));
+    expect(screen.getByText(/Výkonnost vyžaduje úplnou historii/)).toBeInTheDocument();
+    expect(screen.queryByTestId("theme-chart")).not.toBeInTheDocument();
+    expect(load).toHaveBeenCalledTimes(4);
+  }
 });
