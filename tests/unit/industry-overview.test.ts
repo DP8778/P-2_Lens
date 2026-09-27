@@ -44,3 +44,17 @@ test("size filters and return sorts keep missing history last instead of treatin
   expect(companySize(2e9)).toBe("Mid");
   expect(companySize(10e9)).toBe("Large");
 });
+
+test("all four timeframe columns derive from the same annual history and sort missing values last", () => {
+  const to = "2026-09-25";
+  const annual = new Map(theme.constituents.map((asset, assetIndex) => [asset.id, Array.from({ length: 366 }, (_, index) => ({ assetId: asset.id, date: new Date(Date.parse("2025-09-25") + index * 86400000).toISOString().slice(0, 10), close: 100 + index * (assetIndex + 1), currency: "USD", adjustedForSplits: true }))]));
+  const result = buildIndustryOverview(industryCompanies(theme), theme.constituents, annual, { ...range, from: "2026-08-26", to });
+  const nvda = result.rows.find((row) => row.asset.symbol === "NVDA")!;
+  expect(nvda.returns["1W"]).toBeCloseTo((465 / 458 - 1) * 100);
+  expect(nvda.returns["1M"]).toBeCloseTo((465 / 435 - 1) * 100);
+  expect(nvda.returns["3M"]).toBeCloseTo((465 / 375 - 1) * 100);
+  expect(nvda.returns["1Y"]).toBeCloseTo(365);
+  expect(filterIndustryCompanies(result.rows, "", "all", "1Y:desc")[0].asset.symbol).toBe("GOOGL");
+  expect(filterIndustryCompanies(result.rows, "", "all", "1Y:asc")[0].asset.symbol).toBe("NVDA");
+  expect(filterIndustryCompanies(result.rows, "", "all", "marketCap:desc").at(-1)!.asset.symbol).toBe("GOOGL");
+});

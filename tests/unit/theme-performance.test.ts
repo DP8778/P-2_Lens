@@ -107,3 +107,19 @@ test("contributions use the selected common-date baseline, not the annual baseli
   expect(result.contributors.find((item) => item.asset.symbol === "GOOGL")?.contributionPctPoints).toBeCloseTo((120 / 115 - 1) * 25);
   expect(result.contributors.reduce((sum, item) => sum + item.contributionPctPoints, 0)).toBeCloseTo(result.returnPct);
 });
+
+test("percentage-point contributions stay finite and sum to zero when gains offset losses", () => {
+  const data = histories();
+  const endPrices = [90, 110, 100, 100];
+  assets.forEach((asset, index) => {
+    const prices = data.get(asset.id)!;
+    prices.at(-1)!.close = endPrices[index] * (index + 1);
+  });
+  const result = buildThemePerformance(assets, data, range);
+  if (result.status !== "complete") throw new Error("Expected complete series");
+  expect(result.returnPct).toBeCloseTo(0);
+  expect(result.contributors.every((item) => Number.isFinite(item.contributionPctPoints))).toBe(true);
+  expect(result.contributors.reduce((sum, item) => sum + item.contributionPctPoints, 0)).toBeCloseTo(result.returnPct);
+  expect(result.contributors.find((item) => item.asset.symbol === "NVDA")!.contributionPctPoints).toBeCloseTo(-2.5);
+  expect(result.contributors.find((item) => item.asset.symbol === "PLTR")!.contributionPctPoints).toBeCloseTo(2.5);
+});

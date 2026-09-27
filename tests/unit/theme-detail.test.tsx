@@ -1,3 +1,4 @@
+jest.mock("next/navigation", () => ({ useRouter: () => ({ push: jest.fn() }) }));
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ThemeDetail } from "@/components/markets/ThemeDetail";

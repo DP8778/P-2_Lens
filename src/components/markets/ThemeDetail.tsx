@@ -10,6 +10,7 @@ import { percent, dateLabel } from "@/components/charts/chart-formatters";
 import { industryCompanies, industryDescriptions } from "@/data/market-industries";
 import { buildIndustryOverview } from "@/lib/finance/industry-overview";
 import { IndustryOverviewStrip, IndustryBreadth, IndustryCompanies } from "./IndustryCompanies";
+import { ThemeDrivers, IndustryVisualizations } from "./IndustryVisualizations";
 import { ThemeHistoryChart } from "./ThemeHistoryChart";
 
 type Result = { key: string; histories: Map<string, MarketPricePoint[]>; failed: boolean; stale: boolean };
@@ -82,7 +83,9 @@ export function ThemeDetail({ theme, locale }: { theme: MarketTheme; locale: str
             {current.stale && <p className="market-pulse-notice" role="status">Obnovení historie selhalo. Zobrazuji uložená data.</p>}
             <ThemeHistoryChart points={performance.points} locale={locale} />
             <p className="theme-history-summary">{dateLabel(performance.points[0].date, locale)} – {dateLabel(performance.points.at(-1)!.date, locale)} · Index 100 → {performance.points.at(-1)!.value.toLocaleString(locale, { maximumFractionDigits: 2 })} · výnos {percent(performance.returnPct, locale)} · {performance.total}/{performance.total} titulů.</p>
+            <ThemeDrivers performance={performance} timeframe={timeframe} locale={locale} />
           </>}
+      <IndustryVisualizations overview={overview} timeframe={timeframe} locale={locale} />
       <IndustryBreadth overview={overview} timeframe={timeframe} locale={locale} />
       <p className="theme-methodology">Stejná počáteční váha každého titulu; průměr cen normalizovaných na 100. Bez dividend a průběžného rebalancování. Denní závěrečné ceny, bez dnešního neuzavřeného dne.</p>
       <IndustryCompanies key={theme.id} overview={overview} timeframe={timeframe} locale={locale} />

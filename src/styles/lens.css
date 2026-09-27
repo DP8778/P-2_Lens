@@ -2892,3 +2892,36 @@ button.contribution-row[aria-pressed="true"] {
   .industry-overview-strip { grid-template-columns: 1fr 1fr; gap: 20px; }
   .industry-rankings { grid-template-columns: 1fr; gap: 18px; }
 }
+
+/* Compact industry distributions, with visible labels independent of color. */
+.industry-visualizations { margin-top: 24px; padding-top: 20px; border-top: 1px solid #ffffff10; }
+.industry-visualizations > header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px; }
+.industry-visualizations h4 { font-size: 19px; font-weight: 450; }
+.industry-visualizations header span { color: var(--color-text-muted); font-size: 11px; }
+.industry-mini-charts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px; margin-top: 20px; }
+.industry-mini-charts figure { margin: 0; min-width: 0; }
+.industry-mini-charts figcaption { margin-bottom: 12px; font-size: 12px; }
+.industry-breadth-bars { display: grid; align-content: center; gap: 18px; min-height: 126px; }
+.industry-breadth-bars > div { display: grid; grid-template-columns: 68px 1fr 22px; align-items: center; gap: 10px; font-size: 11px; }
+.industry-breadth-bars > div > div { height: 7px; background: #ffffff08; }
+.industry-breadth-bars i { display: block; height: 100%; background: #a3adae; }
+.industry-breadth-bars b { font-weight: 450; text-align: right; }
+.industry-size-chart { display: flex; align-items: center; gap: 12px; min-height: 126px; }
+.industry-size-chart svg { width: 112px; height: 112px; flex-shrink: 0; }
+.industry-size-chart ul { list-style: none; padding: 0; margin: 0; flex: 1; }
+.industry-size-chart li { display: flex; justify-content: space-between; gap: 10px; margin: 9px 0; font-size: 10px; }
+.industry-size-chart b { font-weight: 450; white-space: nowrap; }
+.industry-histogram { height: 126px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: end; gap: 5px; }
+.industry-histogram > div { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.industry-histogram b { font-size: 10px; font-weight: 450; }
+.industry-histogram i { width: 100%; background: #929d9f; min-height: 1px; }
+.industry-histogram span { min-height: 28px; font-size: 8px; line-height: 1.4; text-align: center; color: var(--color-text-muted); }
+.industry-no-distribution { min-height: 126px; display: grid; align-content: center; font-size: 11px; color: var(--color-text-muted); }
+.industry-companies th button { white-space: nowrap; padding: 0; text-align: inherit; }
+.industry-company-row { cursor: pointer; }
+.industry-company-row:focus-visible { outline: 2px solid var(--color-text-primary); outline-offset: -2px; }
+.industry-companies td:first-child a { min-width: 64px; }
+.industry-companies td:nth-child(2) { min-width: 180px; }
+.industry-companies td:nth-child(2) small { display: block; margin-top: 4px; font-size: 10px; color: var(--color-text-muted); }
+.industry-companies td:nth-child(n+3) { text-align: right; }
+@media (max-width: 900px) { .industry-mini-charts { grid-template-columns: 1fr; gap: 22px; } .industry-size-chart { max-width: 320px; } }
