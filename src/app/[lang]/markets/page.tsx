@@ -7,7 +7,7 @@ export default async function MarketsPage({ params, searchParams }: { params: Pr
   if (!isLocale(lang)) notFound();
   return (
     <div className="markets-page page-enter">
-      <header><span>Market Pulse</span><h1>Markets</h1><p>Jednoduchý pohled na dnešní vývoj technologických témat.</p></header>
+      <header><span>Market Pulse</span><h1>Markets</h1><p>Technologická odvětví, sledované firmy a jejich vývoj v čase.</p></header>
       <MarketPulse locale={lang} variant="full" initialThemeId={theme} />
     </div>
   );

@@ -87,3 +87,23 @@ test("requires at least two common dates even if each history has two prices", (
   data.get(assets[1].id)!.pop();
   expect(buildThemePerformance(assets, data, range).status).toBe("partial");
 });
+
+test("equal-weight contributions reconcile with theme return and separate positive and negative drivers", () => {
+  const result = buildThemePerformance(assets, histories(), range);
+  if (result.status !== "complete") throw new Error("Expected complete series");
+  expect(result.contributors.reduce((sum, item) => sum + item.contributionPctPoints, 0)).toBeCloseTo(result.returnPct);
+  expect(result.positiveContributors.map((item) => item.asset.symbol)).toEqual(["GOOGL", "MSFT"]);
+  expect(result.negativeContributors.map((item) => item.asset.symbol)).toEqual(["NVDA"]);
+  expect(result.positiveContributors[0].returnPct).toBeCloseTo(20);
+  expect(result.positiveContributors[0].contributionPctPoints).toBeCloseTo(5);
+  expect(result.negativeContributors[0].returnPct).toBeCloseTo(-10);
+  expect(result.negativeContributors[0].contributionPctPoints).toBeCloseTo(-2.5);
+  expect(result.contributors.find((item) => item.asset.symbol === "PLTR")?.contributionPctPoints).toBe(0);
+});
+
+test("contributions use the selected common-date baseline, not the annual baseline", () => {
+  const result = buildThemePerformance(assets, histories(), { ...range, from: "2026-09-22" });
+  if (result.status !== "complete") throw new Error("Expected complete series");
+  expect(result.contributors.find((item) => item.asset.symbol === "GOOGL")?.contributionPctPoints).toBeCloseTo((120 / 115 - 1) * 25);
+  expect(result.contributors.reduce((sum, item) => sum + item.contributionPctPoints, 0)).toBeCloseTo(result.returnPct);
+});

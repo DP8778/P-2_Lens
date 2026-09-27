@@ -38,12 +38,18 @@ export function buildThemePerformance(
     date,
     value: aligned.reduce((sum, prices) => sum + prices[index].close / prices[0].close * 100, 0) / assets.length,
   }));
-  const ranked = assets.map((asset, index) => ({ asset, returnPct: (aligned[index].at(-1)!.close / aligned[index][0].close - 1) * 100 }))
+  const ranked = assets.map((asset, index) => {
+    const returnPct = (aligned[index].at(-1)!.close / aligned[index][0].close - 1) * 100;
+    return { asset, returnPct, contributionPctPoints: returnPct / assets.length };
+  })
     .sort((a, b) => b.returnPct - a.returnPct || a.asset.symbol.localeCompare(b.asset.symbol));
   return {
     status: "complete" as const, coverage, total: assets.length, points,
     returnPct: points.at(-1)!.value - 100,
     positive: ranked.filter((item) => item.returnPct > 0).length,
+    contributors: ranked,
+    positiveContributors: ranked.filter((item) => item.contributionPctPoints > 0),
+    negativeContributors: ranked.filter((item) => item.contributionPctPoints < 0).reverse(),
     leaders: ranked.slice(0, 2), laggards: ranked.slice(-2).reverse(),
   };
 }

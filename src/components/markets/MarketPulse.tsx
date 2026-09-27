@@ -9,6 +9,7 @@ import { loadQuotes } from "@/lib/market-data/service";
 import type { MarketQuote } from "@/lib/market-data/types";
 import { percent } from "@/components/charts/chart-formatters";
 
+import { industryCompanies } from "@/data/market-industries";
 import { ThemeDetail } from "./ThemeDetail";
 
 const defaultTheme = marketThemes[0];
@@ -80,13 +81,14 @@ export function MarketPulse({ locale, variant = "compact", initialThemeId }: { l
           const partial = summary.measured < theme.constituents.length;
           const content = (
             <>
-              <span>{theme.name}</span>
+              <span>{theme.name}{variant === "full" && <small className="industry-selector-count">{industryCompanies(theme).length} {locale === "en-US" ? "tracked companies" : "sledovaných firem"}</small>}</span>
               <strong className={partial || summary.average === undefined ? "" : summary.average >= 0 ? "positive" : "negative"}>{pending ? "…" : partial || summary.average === undefined ? "—" : percent(summary.average, locale)}</strong>
               <small>{pending ? "Načítám…" : summary.coverage
                 ? partial
                   ? `Částečná data · ${summary.coverage}/${theme.constituents.length} titulů`
                   : `${summary.coverage} / ${theme.constituents.length} titulů k dispozici · ${summary.rising} roste · ${summary.falling} klesá`
                 : "Data nejsou dostupná"}</small>
+              {variant === "full" && <small>{locale === "en-US" ? "Daily Lens basket" : "Denní koš Lens"} · {theme.constituents.length}</small>}
               {variant === "full" && summary.topGainer && summary.topLoser && (
                 <em><b>{summary.topGainer.asset.symbol} {percent(summary.topGainer.quote.changePercent!, locale)}</b><b>{summary.topLoser.asset.symbol} {percent(summary.topLoser.quote.changePercent!, locale)}</b></em>
               )}
@@ -107,6 +109,7 @@ export function MarketPulse({ locale, variant = "compact", initialThemeId }: { l
       {variant === "full" && <ThemeDetail theme={selectedTheme} locale={locale} />}
 
       {variant === "full" && (
+        <details className="industry-basket-members"><summary>{locale === "en-US" ? "Lens calculation basket" : "Složení výpočtového koše Lens"} · {selectedTheme.constituents.length}</summary>
         <div className="market-constituents">
           <div><span>Lens Theme</span><h3>{selectedTheme.name}</h3><small>Equal-weight denní změna dostupných titulů · nejde o tržní index</small></div>
           <div className="market-constituent-list">
@@ -122,6 +125,7 @@ export function MarketPulse({ locale, variant = "compact", initialThemeId }: { l
             })}
           </div>
         </div>
+        </details>
       )}
     </section>
   );

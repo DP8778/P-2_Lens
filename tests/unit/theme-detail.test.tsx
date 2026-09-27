@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ThemeDetail } from "@/components/markets/ThemeDetail";
+import { industryCompanies } from "@/data/market-industries";
 import { marketThemes } from "@/data/market-themes";
 import { themeHistoryRange } from "@/lib/finance/theme-performance";
 import { loadHistory } from "@/lib/market-data/service";
@@ -23,9 +24,8 @@ test("loads four annual histories once; 1M → 3M → 1Y and 1W are derived loca
   const { rerender } = render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
   await screen.findByTestId("theme-chart");
   expect(load.mock.calls.map(([asset]) => asset.id)).toEqual(marketThemes[0].constituents.map((asset) => asset.id));
-  expect(screen.getByText("4 / 4 titulů v plusu")).toBeInTheDocument();
-  expect(screen.getByText("2 nejsilnější tituly").parentElement!.querySelectorAll("p")).toHaveLength(2);
-  expect(screen.getByText("2 nejslabší tituly").parentElement!.querySelectorAll("p")).toHaveLength(2);
+  expect(screen.getByText("Změřeno 4/18 sledovaných firem")).toBeInTheDocument();
+  expect(within(screen.getByRole("region", { name: "Šíře odvětví" })).getAllByRole("link")).toHaveLength(6);
   expect(screen.getByText(/Index 100 →/)).toHaveTextContent("4/4 titulů");
   expect(load).toHaveBeenCalledTimes(4);
   expect(load.mock.calls.every(([, range]) => JSON.stringify(range) === JSON.stringify(themeHistoryRange("1Y")))).toBe(true);
@@ -58,7 +58,7 @@ test.each(["missing", "failure"])("%s history hides chart, return and rankings w
   render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
   await screen.findByText(/Výkonnost vyžaduje úplnou historii/);
   expect(screen.queryByTestId("theme-chart")).not.toBeInTheDocument();
-  expect(screen.queryByText("2 nejsilnější tituly")).not.toBeInTheDocument();
+  expect(screen.getByText("Výnos celého sledovaného univerza").parentElement).toHaveTextContent("—");
   expect(screen.getByText("Výnos za 1M").parentElement).toHaveTextContent("—");
   expect(screen.getByRole("button", { name: "1Y" })).toBeEnabled();
 });
@@ -86,7 +86,7 @@ test("failed refresh can display a complete cached history with an explicit stal
   render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
   await screen.findByTestId("theme-chart");
   expect(screen.getByRole("status")).toHaveTextContent("Zobrazuji uložená data");
-  expect(screen.getByText("4 / 4 titulů v plusu")).toBeInTheDocument();
+  expect(screen.getByText("Změřeno 4/18 sledovaných firem")).toBeInTheDocument();
 });
 
 test("existing history cache serves shorter periods and revisits without network requests", async () => {
@@ -131,7 +131,7 @@ test("switching period during the initial load reuses the same four pending hist
   expect(load).toHaveBeenCalledTimes(4);
   await act(async () => resolvers.forEach((resolve) => resolve()));
   expect(screen.getByTestId("theme-chart")).toBeInTheDocument();
-  expect(screen.getByText("Šíře růstu za 1Y")).toBeInTheDocument();
+  expect(screen.getByText("Výnos za 1Y")).toBeInTheDocument();
 });
 
 test("an incomplete constituent remains unavailable across periods without refetching", async () => {
@@ -148,4 +148,34 @@ test("an incomplete constituent remains unavailable across periods without refet
     expect(screen.queryByTestId("theme-chart")).not.toBeInTheDocument();
     expect(load).toHaveBeenCalledTimes(4);
   }
+});
+
+
+test.each(["cs-CZ", "en-US"])("industry company rows navigate to Asset Detail and update periods locally for %s", async (locale) => {
+  render(<ThemeDetail theme={marketThemes[0]} locale={locale} />);
+  await screen.findByTestId("theme-chart");
+  const table = screen.getByRole("region", { name: locale === "en-US" ? "Industry companies" : "Firmy v odvětví" });
+  for (const asset of marketThemes[0].constituents) {
+    expect(within(table).getByRole("link", { name: new RegExp(asset.symbol) })).toHaveAttribute("href", `/${locale}/assets/${encodeURIComponent(asset.id)}`);
+  }
+  const nvda = within(table).getByRole("link", { name: /NVDA/ }).closest("tr")!;
+  const previous = nvda.textContent;
+  await userEvent.click(screen.getByRole("button", { name: "1Y" }));
+  expect(nvda.textContent).not.toBe(previous);
+  expect(load).toHaveBeenCalledTimes(4);
+});
+
+
+test("the wider company universe uses saved histories without requesting extra stocks", async () => {
+  const theme = marketThemes[0];
+  const extra = industryCompanies(theme).find((asset) => asset.symbol === "AI")!;
+  const range = themeHistoryRange("1Y");
+  await getBrowserMarketDataCache().putHistory({ key: extra.id, assetId: extra.id, ...range, points: history(extra, range).points, updatedAt: new Date().toISOString(), provider: extra.provider, version: 1 });
+  render(<ThemeDetail theme={theme} locale="cs-CZ" />);
+  await screen.findByText("Změřeno 5/18 sledovaných firem");
+  const table = screen.getByRole("table");
+  const row = within(table).getByRole("link", { name: /AI C3.ai/ }).closest("tr")!;
+  expect(row).not.toHaveTextContent("Bez historie");
+  expect(load).toHaveBeenCalledTimes(4);
+  expect(load.mock.calls.some(([asset]) => asset.id === extra.id)).toBe(false);
 });
