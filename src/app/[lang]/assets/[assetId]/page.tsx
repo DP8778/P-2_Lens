@@ -1,3 +1,4 @@
+import { fundamentalsSource } from "@/lib/fundamentals/snapshot-source";
 import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/getDictionary";
 import { AssetDetailView } from "@/components/assets/AssetDetailView";
@@ -10,5 +11,5 @@ export default async function AssetPage({
   if (!isLocale(lang)) notFound();
   let assetId = routeAssetId;
   try { assetId = decodeURIComponent(routeAssetId); } catch { /* Next may already provide a decoded segment. */ }
-  return <AssetDetailView assetId={assetId} locale={lang} />;
+  return <AssetDetailView assetId={assetId} locale={lang} fundamentals={fundamentalsSource.getCompany(assetId)} />;
 }

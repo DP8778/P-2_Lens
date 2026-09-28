@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Plus } from "lucide-react";
 import type { Locale } from "@/i18n/getDictionary";
+import type { FundamentalsRecord } from "@/lib/finance/industry-data";
 import { FinancialAnatomy } from "./FinancialAnatomy";
 import { AssetPriceChart } from "@/components/charts/AssetPriceChart";
 import { AddAssetDialog } from "@/components/portfolio/AddAssetDialog";
@@ -24,7 +25,7 @@ const typeLabels = { stock: "Akcie", etf: "ETF", crypto: "Kryptoměna", cash: "H
 const nativeMoney = (value: number, currency: string, locale: string) =>
   `${value.toLocaleString(locale, { maximumFractionDigits: 2 })} ${currency}`;
 
-export function AssetDetailView({ assetId, locale }: { assetId: string; locale: Locale }) {
+export function AssetDetailView({ assetId, locale, fundamentals }: { assetId: string; locale: Locale; fundamentals?: FundamentalsRecord }) {
   const router = useRouter();
   const { assets, holdings, market } = usePortfolio();
   const ownedAsset = assets.find((candidate) => candidate.id === assetId);
@@ -258,7 +259,7 @@ export function AssetDetailView({ assetId, locale }: { assetId: string; locale: 
         {historyLoading ? <div className="asset-chart-state">Načítám historická data…</div> : historyError ? <div className="asset-chart-state">Historická data momentálně nejsou dostupná.</div> : <AssetPriceChart data={chartHistory} currency={asset.currency} locale={locale} />}
       </section>
 
-      {asset.type === "stock" && <FinancialAnatomy assetId={asset.id} locale={locale} />}
+      {asset.type === "stock" && <FinancialAnatomy assetId={asset.id} locale={locale} statements={fundamentals?.statements} fetchedAt={fundamentals?.fetchedAt} stale={!!fundamentals?.errors?.length} />}
 
       {holding && (
           <section className="asset-position-section asset-position-detail" aria-labelledby="my-position-title">

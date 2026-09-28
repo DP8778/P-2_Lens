@@ -5,6 +5,7 @@ export interface FinancialStatement {
   currency: string;
   durationMonths: number;
   source: string;
+  segmentSource?: string;
   revenue: number;
   costOfRevenue: number;
   grossProfit: number;

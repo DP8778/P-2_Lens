@@ -176,3 +176,22 @@ git init
 git add .
 git commit -m "feat: scaffold p-2 lens portfolio intelligence dashboard"
 ```
+
+
+## Lens Top 100 a reálné výkazy
+
+`npm run data:refresh` obnoví tematické kandidáty, ověřené US listingy,
+kapitalizace a roční výkazy. Členství vybírá až 100 firem podle kapitalizace;
+nevytváří chybějící firmy ani fundamentální hodnoty. Ukládá zdroje, datum,
+obsahovou verzi a historii členství. Při selhání zdroje zachová poslední platná data.
+
+FundamentalsSource dodává existujícímu Financial Anatomy skutečné roční výkazy
+Stock Analysis; PLTR je navíc ověřen proti primárnímu SEC iXBRL včetně
+Government/Commercial a samostatných provozních nákladů. Cenové API a portfolio
+zůstávají oddělené. Podrobná metodika, omezení pokrytí a pravidla publikace jsou v
+[src/lib/fundamentals/README.md](src/lib/fundamentals/README.md).
+
+Workflow `Refresh Lens industry data` umožňuje ruční i pravidelné obnovení.
+Plánovač GitHubu začne fungovat až po zařazení workflow do výchozí větve; nový
+snapshot se v produkci projeví po nasazení. Nejde o scraping při každém otevření
+stránky a import nespotřebovává kredity cenového poskytovatele.

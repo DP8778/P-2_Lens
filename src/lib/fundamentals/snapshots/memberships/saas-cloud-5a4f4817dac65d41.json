@@ -1,0 +1,534 @@
+{
+  "id": "saas-cloud",
+  "members": [
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:GOOGL",
+        "provider": "twelvedata",
+        "providerSymbol": "GOOGL",
+        "symbol": "GOOGL",
+        "name": "Alphabet Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 4210000000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/communication-services/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:MSFT",
+        "provider": "twelvedata",
+        "providerSymbol": "MSFT",
+        "symbol": "MSFT",
+        "name": "Microsoft Corporation",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 3830000000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:AMZN",
+        "provider": "twelvedata",
+        "providerSymbol": "AMZN",
+        "symbol": "AMZN",
+        "name": "Amazon.com, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 2690000000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/consumer-discretionary/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:ORCL",
+        "provider": "twelvedata",
+        "providerSymbol": "ORCL",
+        "symbol": "ORCL",
+        "name": "Oracle Corporation",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 415620000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:IBM",
+        "provider": "twelvedata",
+        "providerSymbol": "IBM",
+        "symbol": "IBM",
+        "name": "International Business Machines Corporation",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 212460000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:CRM",
+        "provider": "twelvedata",
+        "providerSymbol": "CRM",
+        "symbol": "CRM",
+        "name": "Salesforce, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 192600000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:SHOP",
+        "provider": "twelvedata",
+        "providerSymbol": "SHOP",
+        "symbol": "SHOP",
+        "name": "Shopify Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 183030000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:NOW",
+        "provider": "twelvedata",
+        "providerSymbol": "NOW",
+        "symbol": "NOW",
+        "name": "ServiceNow, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 140210000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:NET",
+        "provider": "twelvedata",
+        "providerSymbol": "NET",
+        "symbol": "NET",
+        "name": "Cloudflare, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 124280000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:SNOW",
+        "provider": "twelvedata",
+        "providerSymbol": "SNOW",
+        "symbol": "SNOW",
+        "name": "Snowflake Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 118400000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:DDOG",
+        "provider": "twelvedata",
+        "providerSymbol": "DDOG",
+        "symbol": "DDOG",
+        "name": "Datadog, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 96280000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:DLR",
+        "provider": "twelvedata",
+        "providerSymbol": "DLR",
+        "symbol": "DLR",
+        "name": "Digital Realty Trust, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 67450000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/real-estate/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:WDAY",
+        "provider": "twelvedata",
+        "providerSymbol": "WDAY",
+        "symbol": "WDAY",
+        "name": "Workday, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 45660000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:TWLO",
+        "provider": "twelvedata",
+        "providerSymbol": "TWLO",
+        "symbol": "TWLO",
+        "name": "Twilio Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 42360000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:ZS",
+        "provider": "twelvedata",
+        "providerSymbol": "ZS",
+        "symbol": "ZS",
+        "name": "Zscaler, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 31480000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:ZM",
+        "provider": "twelvedata",
+        "providerSymbol": "ZM",
+        "symbol": "ZM",
+        "name": "Zoom Communications, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 26180000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:DOCN",
+        "provider": "twelvedata",
+        "providerSymbol": "DOCN",
+        "symbol": "DOCN",
+        "name": "DigitalOcean Holdings, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 16430000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:AKAM",
+        "provider": "twelvedata",
+        "providerSymbol": "AKAM",
+        "symbol": "AKAM",
+        "name": "Akamai Technologies, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 16379999999.999998,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:HUBS",
+        "provider": "twelvedata",
+        "providerSymbol": "HUBS",
+        "symbol": "HUBS",
+        "name": "HubSpot, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 10660000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:PAYC",
+        "provider": "twelvedata",
+        "providerSymbol": "PAYC",
+        "symbol": "PAYC",
+        "name": "Paycom Software, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 9760000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:PCOR",
+        "provider": "twelvedata",
+        "providerSymbol": "PCOR",
+        "symbol": "PCOR",
+        "name": "Procore Technologies, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 7490000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:DBX",
+        "provider": "twelvedata",
+        "providerSymbol": "DBX",
+        "symbol": "DBX",
+        "name": "Dropbox, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 7030000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:QLYS",
+        "provider": "twelvedata",
+        "providerSymbol": "QLYS",
+        "symbol": "QLYS",
+        "name": "Qualys, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 5970000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:BOX",
+        "provider": "twelvedata",
+        "providerSymbol": "BOX",
+        "symbol": "BOX",
+        "name": "Box, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 4310000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:FSLY",
+        "provider": "twelvedata",
+        "providerSymbol": "FSLY",
+        "symbol": "FSLY",
+        "name": "Fastly, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 3980000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:WK",
+        "provider": "twelvedata",
+        "providerSymbol": "WK",
+        "symbol": "WK",
+        "name": "Workiva Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 3790000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:FRSH",
+        "provider": "twelvedata",
+        "providerSymbol": "FRSH",
+        "symbol": "FRSH",
+        "name": "Freshworks Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 3270000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:WIX",
+        "provider": "twelvedata",
+        "providerSymbol": "WIX",
+        "symbol": "WIX",
+        "name": "Wix.com Ltd.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 3090000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:SPSC",
+        "provider": "twelvedata",
+        "providerSymbol": "SPSC",
+        "symbol": "SPSC",
+        "name": "SPS Commerce, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 2930000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGM:FIVN",
+        "provider": "twelvedata",
+        "providerSymbol": "FIVN",
+        "symbol": "FIVN",
+        "name": "Five9, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGM",
+        "currency": "USD"
+      },
+      "marketCap": 2670000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:AI",
+        "provider": "twelvedata",
+        "providerSymbol": "AI",
+        "symbol": "AI",
+        "name": "C3.ai, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 1710000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGM:PUBM",
+        "provider": "twelvedata",
+        "providerSymbol": "PUBM",
+        "symbol": "PUBM",
+        "name": "PubMatic, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGM",
+        "currency": "USD"
+      },
+      "marketCap": 847470000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:YEXT",
+        "provider": "twelvedata",
+        "providerSymbol": "YEXT",
+        "symbol": "YEXT",
+        "name": "Yext, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 640390000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    }
+  ],
+  "excluded": [
+    {
+      "symbol": "SINCH SS",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "VNET",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "4716 JP",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "BABA",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "KC",
+      "reason": "No verified supported common-stock listing"
+    }
+  ],
+  "candidateCount": 38,
+  "version": "5a4f4817dac65d41",
+  "updatedAt": "2026-09-28T02:50:56.197Z",
+  "rebalancedAt": "2026-09-28T02:28:22.501Z",
+  "sources": [
+    "https://assets.globalxetfs.com/funds/holdings/clou_full-holdings_20260925.csv",
+    "https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt",
+    "https://www.nasdaqtrader.com/dynamic/SymDir/otherlisted.txt"
+  ],
+  "sourceDates": {
+    "https://assets.globalxetfs.com/funds/holdings/clou_full-holdings_20260925.csv": "09/25/2026"
+  }
+}

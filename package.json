@@ -20,7 +20,8 @@
     "test:e2e": "node scripts/run-e2e.mjs",
     "test:market-live": "node --use-system-ca scripts/test-market-live.mjs",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "data:refresh": "node --use-system-ca scripts/refresh-industry-data.mjs"
   },
   "dependencies": {
     "date-fns": "4.4.0",

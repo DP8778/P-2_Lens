@@ -9,6 +9,7 @@ import { loadQuotes } from "@/lib/market-data/service";
 import type { MarketQuote } from "@/lib/market-data/types";
 import { percent } from "@/components/charts/chart-formatters";
 
+import type { IndustryView } from "@/lib/finance/industry-data";
 import { industryCompanies } from "@/data/market-industries";
 import { ThemeDetail } from "./ThemeDetail";
 
@@ -37,7 +38,7 @@ function summarize(theme: MarketTheme, quotes: Map<string, MarketQuote>) {
   };
 }
 
-export function MarketPulse({ locale, variant = "compact", initialThemeId }: { locale: Locale; variant?: "compact" | "full"; initialThemeId?: string }) {
+export function MarketPulse({ locale, variant = "compact", initialThemeId, industries }: { locale: Locale; variant?: "compact" | "full"; initialThemeId?: string; industries?: Record<string, IndustryView> }) {
   const [quotes, setQuotes] = useState<MarketQuote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -80,8 +81,8 @@ export function MarketPulse({ locale, variant = "compact", initialThemeId }: { l
           const pending = loading && selectedTheme.id === theme.id && !summary.coverage;
           const partial = summary.measured < theme.constituents.length;
           const content = variant === "full" ? <>
-            <span>{theme.name}<small className="industry-selector-count">{industryCompanies(theme).length} {locale === "en-US" ? "tracked companies" : "sledovaných firem"}</small></span>
-            <small>Industry Index →</small>
+            <span>{theme.name}<small className="industry-selector-count">{industries?.[theme.id]?.members.length ?? industryCompanies(theme).length} {locale === "en-US" ? "tracked companies" : "sledovaných firem"}</small></span>
+            <small>{industries ? "Lens Top 100 →" : "Industry Index →"}</small>
           </> : (
             <>
               <span>{theme.name}</span>
@@ -106,7 +107,7 @@ export function MarketPulse({ locale, variant = "compact", initialThemeId }: { l
         })}
       </div>
 
-      {variant === "full" && <ThemeDetail theme={selectedTheme} locale={locale} />}
+      {variant === "full" && <ThemeDetail theme={selectedTheme} locale={locale} industry={industries?.[selectedTheme.id]} />}
 
       {variant === "full" && (
         <details className="industry-basket-members"><summary>{locale === "en-US" ? "Lens calculation basket" : "Složení výpočtového koše Lens"} · {selectedTheme.constituents.length}</summary>

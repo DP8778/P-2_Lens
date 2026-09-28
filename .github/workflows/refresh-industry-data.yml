@@ -1,0 +1,36 @@
+name: Refresh Lens industry data
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '15 3 * * 2-6'
+permissions:
+  contents: write
+concurrency:
+  group: lens-data-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run data:refresh
+        env:
+          LENS_DATA_USER_AGENT: ${{ vars.LENS_DATA_USER_AGENT }}
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test -- --runInBand
+      - run: npm run build
+      - name: Persist verified snapshot and immutable membership versions
+        run: |
+          git add src/lib/fundamentals/snapshots
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Refresh verified Lens industry membership and fundamentals"
+          git push

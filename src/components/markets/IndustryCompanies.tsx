@@ -5,17 +5,24 @@ import { useRouter } from "next/navigation";
 import { themeTimeframes } from "@/lib/finance/theme-performance";
 import { useState } from "react";
 import { capitalizationSource, filterIndustryCompanies, type IndustryOverview } from "@/lib/finance/industry-overview";
+import type { IndustryView } from "@/lib/finance/industry-data";
 import { percent, points } from "@/components/charts/chart-formatters";
 
 const cap = (value: number, locale: string) => new Intl.NumberFormat(locale, { style: "currency", currency: "USD", notation: "compact", maximumFractionDigits: 2 }).format(value);
 
-export function IndustryOverviewStrip({ overview, locale }: { overview: IndustryOverview; locale: string }) {
+export function IndustryOverviewStrip({ overview, locale, industry }: { overview: IndustryOverview; locale: string; industry?: IndustryView }) {
   const en = locale === "en-US";
+  const economics = industry?.economics;
+  const totalCap = economics?.totalMarketCap ?? overview.capitalizationTotal;
   return <div className="industry-overview-strip">
-    <div><span>{en ? "Tracked companies" : "Sledované firmy"}</span><strong>{overview.total}</strong><small>{en ? "Curated universe, not the entire global industry" : "Kurátorovaný výběr, ne celé globální odvětví"}</small></div>
-    <div><span>{en ? "Period history" : "Historie období"}</span><strong>{overview.measured} / {overview.total}</strong><small>{en ? "Companies with sufficient history" : "Firmy s dostatečnou historií"}</small></div>
-    <div><span>{en ? "Rising companies" : "Rostoucí firmy"}</span><strong>{overview.positive} / {overview.measured}</strong><small>{en ? "Of companies with history" : "Z firem s dostupnou historií"}</small></div>
-    <div><span>{en ? "Known market caps · snapshot" : "Známé kapitalizace · snapshot"}</span><strong>{overview.capitalizationCoverage ? cap(overview.capitalizationTotal, locale) : "—"}</strong><small>{overview.capitalizationCoverage}/{overview.total} · {capitalizationSource.observedOn} · {en ? "not live" : "není živý údaj"}</small></div>
+    <div><span>{en ? "Total market capitalization" : "Celková kapitalizace"}</span><strong>{totalCap ? cap(totalCap, locale) : "—"}</strong><small>{en ? "Lens universe · snapshot" : "Univerzum Lens · snapshot"} {industry?.updatedAt.slice(0, 10) ?? capitalizationSource.observedOn}</small></div>
+    <div><span>{en ? "Aggregate annual revenue" : "Souhrnné roční tržby"}</span><strong>{economics?.aggregateRevenue === undefined ? "—" : cap(economics.aggregateRevenue, locale)}</strong><small>FY {economics?.fiscalYear ?? "—"} · {economics?.revenueCoverage ?? 0}/{overview.total} {en ? "companies; sum of available reports" : "firem; součet dostupných výkazů"}</small></div>
+    <div><span>{en ? "Revenue growth · YoY" : "Růst tržeb · meziročně"}</span><strong>{economics?.revenueGrowth === undefined ? "—" : percent(economics.revenueGrowth, locale)}</strong><small>{economics?.growthCoverage ?? 0}/{overview.total} {en ? "companies with paired annual reports" : "firem se srovnatelnými ročními výkazy"}</small></div>
+    <div><span>{en ? "Companies" : "Počet firem"}</span><strong>{overview.total}{industry ? " / 100" : ""}</strong><small>{en ? "Lens selection, not the entire global industry" : "Výběr Lens, nikoli celé globální odvětví"}</small></div>
+    <div><span>{en ? "Median period return" : "Medián výnosu období"}</span><strong>{overview.medianReturn === undefined ? "—" : percent(overview.medianReturn, locale)}</strong><small>{overview.measured}/{overview.total} {en ? "companies with history" : "firem s historií"}</small></div>
+    <div><span>{en ? "Companies rising" : "Podíl rostoucích firem"}</span><strong>{overview.risingPercent === undefined ? "—" : `${overview.risingPercent.toLocaleString(locale, { maximumFractionDigits: 1 })} %`}</strong><small>{overview.positive}/{overview.measured} · {en ? "of measured companies" : "ze změřených firem"}</small></div>
+    <div><span>{en ? "Top 10 concentration" : "Koncentrace Top 10"}</span><strong>{economics?.top10Concentration === undefined ? "—" : `${economics.top10Concentration.toLocaleString(locale, { maximumFractionDigits: 1 })} %`}</strong><small>{en ? "Share of Lens universe market cap" : "Podíl kapitalizace univerza Lens"}</small></div>
+    {economics && <p className="industry-economics-note">{en ? "Annual USD revenue, fiscal years ending in" : "Roční tržby v USD, fiskální roky končící v"} {economics.fiscalYear}. {en ? "Fiscal year-ends differ. YoY uses the same companies in both years; missing reports are excluded, not zero." : "Konce fiskálních roků se liší. Meziroční růst porovnává stejné firmy v obou letech; chybějící výkazy nejsou nuly."} {economics.oldestFetchedAt && `${en ? "Oldest financial refresh" : "Nejstarší aktualizace výkazů"}: ${economics.oldestFetchedAt.slice(0, 10)}.`}</p>}
   </div>;
 }
 
@@ -31,7 +38,7 @@ export function IndustryBreadth({ overview, timeframe, locale }: { overview: Ind
   </section>;
 }
 
-export function IndustryCompanies({ overview, timeframe, locale }: { overview: IndustryOverview; timeframe: string; locale: string }) {
+export function IndustryCompanies({ overview, timeframe, locale, capDate = capitalizationSource.observedOn, capSource = capitalizationSource.source }: { overview: IndustryOverview; timeframe: string; locale: string; capDate?: string; capSource?: string }) {
   const en = locale === "en-US";
   const [query, setQuery] = useState("");
   const [size, setSize] = useState("all");
@@ -53,7 +60,7 @@ export function IndustryCompanies({ overview, timeframe, locale }: { overview: I
       <label>{en ? "Company size" : "Velikost firmy"}<select value={size} onChange={(event) => setSize(event.target.value)}><option value="all">{en ? "All sizes" : "Všechny velikosti"}</option>{["Large", "Mid", "Small"].map((value) => <option key={value}>{value}</option>)}<option value="Unknown">{en ? "Unknown" : "Neznámá"}</option></select></label>
       <label>{en ? "Sort companies" : "Řadit firmy"}<select value={sort} onChange={(event) => setSort(event.target.value)}><option value="best">{en ? "Return: highest first" : "Výnos: od nejvyššího"}</option><option value="worst">{en ? "Return: lowest first" : "Výnos: od nejnižšího"}</option><option value="name">{en ? "Company name A–Z" : "Název firmy A–Z"}</option>{columns.flatMap((column) => ["asc", "desc"].map((direction) => <option key={`${column.key}:${direction}`} value={`${column.key}:${direction}`}>{column.label} {direction === "asc" ? "↑" : "↓"}</option>))}</select></label>
     </div>
-    <p className="industry-data-note">{en ? "Size uses a dated market-cap snapshot: Large ≥ $10bn, Mid $2–10bn, Small < $2bn (including micro-cap)." : "Velikost vychází ze snapshotu kapitalizací: Large ≥ 10 mld. USD, Mid 2–10 mld., Small < 2 mld. (včetně micro-cap)."} <a href={capitalizationSource.source} target="_blank" rel="noreferrer">Stock Analysis · {capitalizationSource.observedOn}</a></p>
+    <p className="industry-data-note">{en ? "Size uses a dated market-cap snapshot: Large ≥ $10bn, Mid $2–10bn, Small < $2bn (including micro-cap)." : "Velikost vychází ze snapshotu kapitalizací: Large ≥ 10 mld. USD, Mid 2–10 mld., Small < 2 mld. (včetně micro-cap)."} <a href={capSource} target="_blank" rel="noreferrer">Stock Analysis · {capDate}</a></p>
     <div className="industry-table-scroll" tabIndex={0} aria-label={en ? "Company table, scroll horizontally" : "Tabulka firem, lze posouvat vodorovně"}>
       <table><caption className="sr-only">{en ? "Whole tracked industry universe" : "Celé sledované univerzum odvětví"} · {timeframe}</caption>
         <thead><tr>{columns.map((column) => <th key={column.key} scope="col" aria-sort={sortColumn === column.key ? sortDirection === "asc" ? "ascending" : "descending" : "none"}><button onClick={() => sortBy(column.key)} aria-label={`${column.label} · ${en ? "sort" : "řadit"}`}>{column.label} <span aria-hidden="true">{sortColumn === column.key ? sortDirection === "asc" ? "↑" : "↓" : "↕"}</span></button></th>)}</tr></thead>

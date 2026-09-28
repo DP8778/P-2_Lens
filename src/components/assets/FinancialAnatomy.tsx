@@ -37,8 +37,8 @@ function FinancialFlow({ data, locale }: { data: Anatomy; locale: string }) {
   </figure>;
 }
 
-/** Current price providers expose no statements. Absent statements stay explicitly unavailable. */
-export function FinancialAnatomy({ assetId, locale, statements }: { assetId: string; locale: string; statements?: FinancialStatement[] }) {
+/** Only verified statements supplied by the provider-neutral data layer enter this view. */
+export function FinancialAnatomy({ assetId, locale, statements, fetchedAt, stale }: { assetId: string; locale: string; statements?: FinancialStatement[]; fetchedAt?: string; stale?: boolean }) {
   const en = locale === "en-US";
   const data = buildFinancialAnatomy(assetId, statements);
   const name = (id: string) => labels[id][en ? 1 : 0];
@@ -50,10 +50,11 @@ export function FinancialAnatomy({ assetId, locale, statements }: { assetId: str
       <p className="financial-flow-outline">{en ? "Revenue → Gross profit → Operating income → Net income" : "Tržby → Hrubý zisk → Provozní zisk → Čistý zisk"}</p>
       <p>{en ? "Revenue structure, growth, margins and the financial flow will appear only with verified statements." : "Struktura tržeb, růst, marže a finanční tok se zobrazí pouze s ověřenými výkazy."}</p>
     </div> : <>
+      {fetchedAt && <p className="industry-data-note">{en ? "Statements retrieved" : "Výkazy načteny"} · {new Date(fetchedAt).toLocaleDateString(locale)}{stale ? (en ? " · Refresh failed; last verified data" : " · Obnovení selhalo; poslední ověřená data") : ""}</p>}
       <p className="industry-data-note">{data.latest.period} · {data.latest.durationMonths} {en ? "months" : "měsíců"} · {data.latest.currency} · <a href={data.latest.source} target="_blank" rel="noreferrer">{en ? "Statement source" : "Zdroj výkazu"}</a></p>
       <dl className="financial-margins">{[{ title: en ? "Revenue growth · YoY" : "Růst tržeb · meziročně", value: data.revenueGrowth }, { title: en ? "Gross margin" : "Hrubá marže", value: data.grossMargin }, { title: en ? "Operating margin" : "Provozní marže", value: data.operatingMargin }].map((item) => <div key={item.title}><dt>{item.title}</dt><dd>{item.value === undefined ? "—" : percent(item.value, locale)}</dd></div>)}</dl>
       {data.flowAvailable ? <FinancialFlow data={data} locale={locale} /> : <p role="status">{en ? "Loss-making periods are shown as signed values below; the flow is unavailable." : "Ztrátové období je uvedeno se zápornými hodnotami níže; tok není dostupný."}</p>}
-      <div className="financial-revenue-structure"><h3>{en ? "Revenue structure" : "Struktura tržeb"}</h3>{data.segments.length ? <ul>{data.segments.map((segment, i) => <li key={i}><span>{segment.name === "Unallocated revenue" ? (en ? "Unallocated revenue" : "Nerozlišené tržby") : segment.name}</span><strong>{new Intl.NumberFormat(locale, { style: "currency", currency: data.latest.currency, notation: "compact" }).format(segment.revenue)}</strong></li>)}</ul> : <p>{en ? "Revenue segments unavailable." : "Segmenty tržeb nejsou dostupné."}</p>}</div>
+      <div className="financial-revenue-structure"><h3>{en ? "Revenue structure" : "Struktura tržeb"}</h3>{data.latest.segmentSource && <a className="industry-data-note" href={data.latest.segmentSource} target="_blank" rel="noreferrer">{en ? "Reported segment source" : "Zdroj vykázaných segmentů"}</a>}{data.segments.length ? <ul>{data.segments.map((segment, i) => <li key={i}><span>{segment.name === "Unallocated revenue" ? (en ? "Unallocated revenue" : "Nerozlišené tržby") : segment.name}</span><strong>{new Intl.NumberFormat(locale, { style: "currency", currency: data.latest.currency, notation: "compact" }).format(segment.revenue)}</strong></li>)}</ul> : <p>{en ? "Revenue segments unavailable." : "Segmenty tržeb nejsou dostupné."}</p>}</div>
       <h3>{en ? "Financial history" : "Historie hospodaření"}</h3>
       {data.history.length >= 2 && <div className="financial-trends">{metrics.map((key) => {
         const values = data.history.map((period) => period[key]);

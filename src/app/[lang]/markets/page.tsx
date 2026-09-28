@@ -1,3 +1,4 @@
+import { fundamentalsSource } from "@/lib/fundamentals/snapshot-source";
 import { notFound } from "next/navigation";
 import { MarketPulse } from "@/components/markets/MarketPulse";
 import { isLocale } from "@/i18n/getDictionary";
@@ -8,7 +9,7 @@ export default async function MarketsPage({ params, searchParams }: { params: Pr
   return (
     <div className="markets-page page-enter">
       <header><span>Market Pulse</span><h1>Markets</h1><p>Technologická odvětví, sledované firmy a jejich vývoj v čase.</p></header>
-      <MarketPulse locale={lang} variant="full" initialThemeId={theme} />
+      <MarketPulse locale={lang} variant="full" initialThemeId={theme} industries={fundamentalsSource.getIndustries()} />
     </div>
   );
 }

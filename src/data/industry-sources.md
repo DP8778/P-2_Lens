@@ -1,4 +1,13 @@
-# Markets curated industry directory
+# Legacy curated industry directory
+
+Production Markets now uses the dynamically refreshed, versioned Lens Top 100
+snapshot supplied by `src/lib/fundamentals/snapshot-source.ts`. See
+[`../lib/fundamentals/README.md`](../lib/fundamentals/README.md) for current sources,
+ranking, exclusions, update cadence and financial provenance.
+
+The directory and capitalization file below remain only as compatibility data
+for existing compact/legacy consumers and tests. They do not define production
+Top 100 membership or its capitalization weights.
 
 This is a Lens editorial selection of US-listed companies across different parts
 of each technology theme, not an exhaustive global industry or official index.
@@ -21,10 +30,6 @@ Size bands are Lens display thresholds: Large >= USD 10bn; Mid >= USD 2bn and
 < USD 10bn; Small < USD 2bn including micro-cap. Filters describe this dated
 snapshot, not a live classification. The UI links the source and displays its date.
 
-Extra directory companies read existing saved history only. No background API
-requests are made for the expanded universe. Period returns and rankings show
-explicit measured coverage; no partial sample is advertised as whole-industry
-performance. Only the unchanged calculation basket automatically loads history.
 
 Nasdaq Q/G/S listing categories map to MIC XNGS/XNGM/XNCM. Company
 exchange labels were also checked on their individual Stock Analysis pages.

@@ -8,8 +8,7 @@ export function companySize(marketCap?: number): CompanySize {
   if (marketCap === undefined || !Number.isFinite(marketCap) || marketCap <= 0) return "Unknown";
   return marketCap >= 10e9 ? "Large" : marketCap >= 2e9 ? "Mid" : "Small";
 }
-export function buildIndustryOverview(assets: MarketAsset[], basket: MarketAsset[], histories: Map<string, MarketPricePoint[]>, range: DateRange) {
-  const caps: Record<string, number> = capitalization.marketCaps;
+export function buildIndustryOverview(assets: MarketAsset[], basket: MarketAsset[], histories: Map<string, MarketPricePoint[]>, range: DateRange, caps: Record<string, number> = capitalization.marketCaps) {
   const basketIds = new Set(basket.map((asset) => asset.id));
   const basketPerformance = buildThemePerformance(basket, histories, range);
   const contributions = new Map(basketPerformance.status === "complete" ? basketPerformance.contributors.map((item) => [item.asset.id, item.contributionPctPoints]) : []);
@@ -34,6 +33,8 @@ export function buildIndustryOverview(assets: MarketAsset[], basket: MarketAsset
     unchanged: measured.filter((row) => row.returnPct === 0).length,
     leaders: measured.slice(0, 3), laggards: measured.slice(-3).reverse(),
     universeReturn: universe.status === "complete" ? universe.returnPct : undefined,
+    medianReturn: measured.length ? (measured[Math.floor((measured.length - 1) / 2)].returnPct! + measured[Math.ceil((measured.length - 1) / 2)].returnPct!) / 2 : undefined,
+    risingPercent: measured.length ? measured.filter((row) => row.returnPct! > 0).length / measured.length * 100 : undefined,
     capitalizationTotal: rows.reduce((sum, row) => sum + (row.marketCap ?? 0), 0),
     capitalizationCoverage: rows.filter((row) => row.marketCap !== undefined).length };
 }

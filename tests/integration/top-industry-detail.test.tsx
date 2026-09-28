@@ -1,0 +1,36 @@
+jest.mock("next/navigation", () => ({ useRouter: () => ({ push: jest.fn() }) }));
+jest.mock("@/lib/market-data/service", () => ({ loadHistory: jest.fn() }));
+jest.mock("@/components/markets/ThemeHistoryChart", () => ({ ThemeHistoryChart: () => <div data-testid="industry-chart" /> }));
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { ThemeDetail } from "@/components/markets/ThemeDetail";
+import { marketThemes } from "@/data/market-themes";
+import { fundamentalsSource } from "@/lib/fundamentals/snapshot-source";
+import { loadHistory } from "@/lib/market-data/service";
+import { getBrowserMarketDataCache } from "@/lib/market-data/cache/market-cache";
+
+test("the persisted universe powers all views; partial history is never presented as whole-industry performance", async () => {
+  await getBrowserMarketDataCache().clearMarketData();
+  const industry = fundamentalsSource.getIndustries().ai;
+  const included = industry.members.slice(0, 2).map((row) => row.asset.id);
+  jest.mocked(loadHistory).mockImplementation(async (asset, range) => {
+    if (!included.includes(asset.id)) throw new Error("No history in test fixture");
+    const start = Date.parse(range.from);
+    const length = Math.round((Date.parse(range.to) - start) / 86400000) + 1;
+    return { asset, range, source: "network", points: Array.from({ length }, (_, i) => ({ assetId: asset.id, date: new Date(start + i * 86400000).toISOString().slice(0, 10), close: 100 + i, currency: asset.currency, adjustedForSplits: true })) };
+  });
+  render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" industry={industry} />);
+  await screen.findByTestId("industry-chart");
+  expect(loadHistory).toHaveBeenCalledTimes(industry.members.length);
+  expect(screen.getByText(new RegExp(`Neúplný index: 2/${industry.members.length}`))).toBeVisible();
+  expect(screen.getByText("Celková kapitalizace")).toBeVisible();
+  expect(screen.getByText("Souhrnné roční tržby")).toBeVisible();
+  const map = screen.getByRole("region", { name: "Mapa odvětví" });
+  expect(within(map).getAllByRole("link")).toHaveLength(industry.members.length);
+  const table = screen.getByRole("region", { name: "Firmy v odvětví" });
+  expect(within(table).getAllByRole("row")).toHaveLength(industry.members.length + 1);
+  await userEvent.click(screen.getByRole("button", { name: "1Y" }));
+  await userEvent.click(screen.getByRole("button", { name: /Váženo kapitalizací/ }));
+  expect(loadHistory).toHaveBeenCalledTimes(industry.members.length);
+  expect(screen.getByText(new RegExp(`Neúplný index: 2/${industry.members.length}`))).toBeVisible();
+});

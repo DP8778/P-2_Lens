@@ -2963,3 +2963,16 @@ button.contribution-row[aria-pressed="true"] {
   .theme-detail .theme-period-return { max-width: 100%; text-align: left; }
 }
 .asset-detail-navigation { display: flex; align-items: center; gap: 20px; }
+.industry-economics-note { grid-column: 1 / -1; color: var(--color-text-muted); font-size: 11px; line-height: 1.6; margin: 0; }
+.industry-coverage-warning { padding: 12px 14px; border-left: 3px solid #c4aa78; background: #c4aa780b; color: var(--color-text-primary); font-size: 12px; line-height: 1.6; }
+.industry-market-map { margin: 24px 0; padding: 20px 0; border-top: 1px solid #ffffff10; }
+.industry-market-map header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.industry-market-map h4 { font-size: 14px; margin: 0; }
+.industry-market-map header span { color: var(--color-text-muted); font-size: 11px; }
+.industry-map-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 4px; margin-top: 12px; }
+.industry-map-tiles a { display: grid; gap: 5px; padding: 12px; font-size: 12px; background: #ffffff07; text-decoration: none; }
+.industry-map-tiles a.falling { background: #bd83830a; }
+.industry-map-tiles a.rising { background: #91b5a50c; }
+.industry-map-tiles a.unavailable { color: var(--color-text-muted); }
+.industry-map-tiles a:hover, .industry-map-tiles a:focus-visible { outline: 1px solid #ffffff55; }
+.industry-map-tiles small { color: var(--color-text-muted); font-size: 10px; }
