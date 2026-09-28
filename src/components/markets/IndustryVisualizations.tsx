@@ -3,18 +3,18 @@
 import Link from "next/link";
 import { percent, points } from "@/components/charts/chart-formatters";
 import { buildIndustryDistributions, capitalizationSource, type IndustryOverview } from "@/lib/finance/industry-overview";
-import type { buildThemePerformance } from "@/lib/finance/theme-performance";
+import type { IndustryIndex } from "@/lib/finance/industry-index";
 
-type CompletePerformance = Extract<ReturnType<typeof buildThemePerformance>, { status: "complete" }>;
+type CompletePerformance = Extract<IndustryIndex, { status: "complete" }>;
 
 export function ThemeDrivers({ performance, timeframe, locale }: { performance: CompletePerformance; timeframe: string; locale: string }) {
   const en = locale === "en-US";
   return <section className="theme-drivers" aria-label={en ? "What drives this theme?" : "Co táhne téma?"}>
-    <header><div><h4>{en ? "What drives this theme?" : "Co táhne téma?"}</h4><p>{en ? "Lens calculation basket" : "Výpočtový koš Lens"} · {performance.total} {en ? "stocks" : "tituly"} · {timeframe}</p></div><span>{percent(performance.returnPct, locale)}</span></header>
+    <header><div><h4>{en ? "What drives this theme?" : "Co táhne téma?"}</h4><p>{en ? "Lens Industry Index" : "Lens Industry Index"} · {performance.coverage}/{performance.total} {en ? "companies" : "firem"} · {performance.weighting === "equal" ? "Equal-weight" : "Market-cap weighted"} · {timeframe}</p></div><span>{percent(performance.returnPct, locale)}</span></header>
     <div className="theme-driver-groups">
       {[{ title: en ? "Top 3 contributors" : "Nejlepší přispěvatelé · top 3", items: performance.contributors.slice(0, 3) }, { title: en ? "Bottom 3 contributors" : "Nejhorší přispěvatelé · bottom 3", items: performance.contributors.slice(-3).reverse() }].map((group) => <div className="theme-driver-group" key={group.title}><h5>{group.title}</h5><div className="theme-driver-columns" aria-hidden="true"><span>{en ? "Company" : "Firma"}</span><span>{en ? "Return" : "Výnos"}</span><span>{en ? "Contribution" : "Příspěvek"}</span></div>{group.items.map((item) => <Link className="theme-driver-row" key={item.asset.id} href={`/${locale}/assets/${encodeURIComponent(item.asset.id)}`}><span><strong>{item.asset.symbol}</strong><small>{item.asset.name}</small></span><span>{percent(item.returnPct, locale)}</span><b>{en ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2, signDisplay: "exceptZero" }).format(item.contributionPctPoints)} pp` : points(item.contributionPctPoints, locale)}</b></Link>)}</div>)}
     </div>
-    <p className="theme-driver-note">{en ? "Contribution in percentage points = stock return × starting weight. All constituents sum to the basket return before rounding. With fewer than six stocks the lists overlap." : "Příspěvek v procentních bodech = výnos akcie × počáteční váha. Součet všech titulů odpovídá výnosu koše před zaokrouhlením. U méně než šesti titulů se seznamy překrývají."}</p>
+    <p className="theme-driver-note">{en ? "Contribution in percentage points = stock return × starting weight. All constituents sum to the index return before rounding. With fewer than six stocks the lists overlap." : "Příspěvek v procentních bodech = výnos akcie × počáteční váha. Součet všech titulů odpovídá výnosu indexu před zaokrouhlením. U méně než šesti titulů se seznamy překrývají."}</p>
   </section>;
 }
 

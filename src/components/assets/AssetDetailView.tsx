@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Plus } from "lucide-react";
 import type { Locale } from "@/i18n/getDictionary";
+import { FinancialAnatomy } from "./FinancialAnatomy";
 import { AssetPriceChart } from "@/components/charts/AssetPriceChart";
 import { AddAssetDialog } from "@/components/portfolio/AddAssetDialog";
 import { usePortfolio } from "@/components/portfolio/PortfolioProvider";
@@ -192,7 +193,7 @@ export function AssetDetailView({ assetId, locale }: { assetId: string; locale: 
 
   return (
     <main className="asset-detail-page page-enter">
-      <Link className="asset-back-link" href={`/${locale}/dashboard`}><ArrowLeft size={15} />Portfolio</Link>
+      <nav className="asset-detail-navigation" aria-label={locale === "en-US" ? "Asset navigation" : "Navigace aktiva"}><Link className="asset-back-link" href={`/${locale}/dashboard`}><ArrowLeft size={15} />Portfolio</Link>{asset.type === "stock" && <Link className="asset-back-link" href={`/${locale}/markets`}>Markets</Link>}</nav>
 
       <header className="asset-detail-header">
         <div className="asset-detail-identity">
@@ -256,6 +257,8 @@ export function AssetDetailView({ assetId, locale }: { assetId: string; locale: 
         </div>
         {historyLoading ? <div className="asset-chart-state">Načítám historická data…</div> : historyError ? <div className="asset-chart-state">Historická data momentálně nejsou dostupná.</div> : <AssetPriceChart data={chartHistory} currency={asset.currency} locale={locale} />}
       </section>
+
+      {asset.type === "stock" && <FinancialAnatomy assetId={asset.id} locale={locale} />}
 
       {holding && (
           <section className="asset-position-section asset-position-detail" aria-labelledby="my-position-title">

@@ -9,12 +9,12 @@ import { percent, points } from "@/components/charts/chart-formatters";
 
 const cap = (value: number, locale: string) => new Intl.NumberFormat(locale, { style: "currency", currency: "USD", notation: "compact", maximumFractionDigits: 2 }).format(value);
 
-export function IndustryOverviewStrip({ overview, basketCount, locale }: { overview: IndustryOverview; basketCount: number; locale: string }) {
+export function IndustryOverviewStrip({ overview, locale }: { overview: IndustryOverview; locale: string }) {
   const en = locale === "en-US";
   return <div className="industry-overview-strip">
     <div><span>{en ? "Tracked companies" : "Sledované firmy"}</span><strong>{overview.total}</strong><small>{en ? "Curated universe, not the entire global industry" : "Kurátorovaný výběr, ne celé globální odvětví"}</small></div>
-    <div><span>{en ? "Lens calculation basket" : "Výpočtový koš Lens"}</span><strong>{basketCount} / {overview.total}</strong><small>{en ? "Equal starting weights · Index 100" : "Stejné počáteční váhy · Index 100"}</small></div>
-    <div><span>{en ? "Whole tracked universe return" : "Výnos celého sledovaného univerza"}</span><strong>{overview.universeReturn === undefined ? "—" : percent(overview.universeReturn, locale)}</strong><small>{overview.universeReturn === undefined ? (en ? `History available for ${overview.measured}/${overview.total} companies; no partial-universe average.` : `Historie dostupná pro ${overview.measured}/${overview.total} firem; průměr neúplného univerza nepočítáme.`) : (en ? "Equal-weight · all tracked companies" : "Equal-weight · všechny sledované firmy")}</small></div>
+    <div><span>{en ? "Period history" : "Historie období"}</span><strong>{overview.measured} / {overview.total}</strong><small>{en ? "Companies with sufficient history" : "Firmy s dostatečnou historií"}</small></div>
+    <div><span>{en ? "Rising companies" : "Rostoucí firmy"}</span><strong>{overview.positive} / {overview.measured}</strong><small>{en ? "Of companies with history" : "Z firem s dostupnou historií"}</small></div>
     <div><span>{en ? "Known market caps · snapshot" : "Známé kapitalizace · snapshot"}</span><strong>{overview.capitalizationCoverage ? cap(overview.capitalizationTotal, locale) : "—"}</strong><small>{overview.capitalizationCoverage}/{overview.total} · {capitalizationSource.observedOn} · {en ? "not live" : "není živý údaj"}</small></div>
   </div>;
 }
@@ -63,7 +63,7 @@ export function IndustryCompanies({ overview, timeframe, locale }: { overview: I
             onClick={(event) => { if (!(event.target as HTMLElement).closest("a") && !event.metaKey && !event.ctrlKey) router.push(href); }}
             onKeyDown={(event) => { if (event.key === "Enter" && event.target === event.currentTarget) router.push(href); }}>
             <td><Link href={href}><strong>{row.asset.symbol}</strong><span className="sr-only">{row.asset.name}</span></Link></td>
-            <td><span>{row.asset.name}</span><small>{row.size === "Unknown" ? (en ? "Unknown size" : "Velikost neznámá") : row.size}{row.inBasket ? (en ? " · Lens basket" : " · Koš Lens") : ""}</small></td>
+            <td><span>{row.asset.name}</span><small>{row.size === "Unknown" ? (en ? "Unknown size" : "Velikost neznámá") : row.size}{row.inBasket ? (en ? " · Industry Index" : " · Industry Index") : ""}</small></td>
             <td>{row.marketCap === undefined ? "—" : cap(row.marketCap, locale)}</td>
             {themeTimeframes.map((period) => <td key={period}>{row.returns[period] === undefined ? <span className="industry-missing" aria-label={en ? "No history" : "Bez historie"}>—</span> : percent(row.returns[period]!, locale)}</td>)}
             <td>{row.contributionPctPoints === undefined ? "—" : en ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2, signDisplay: "exceptZero" }).format(row.contributionPctPoints)} pp` : points(row.contributionPctPoints, locale)}</td>
@@ -72,6 +72,6 @@ export function IndustryCompanies({ overview, timeframe, locale }: { overview: I
       </table>
     </div>
     {!rows.length && <p role="status">{en ? "No companies match these filters." : "Žádná firma neodpovídá filtrům."}</p>}
-    <p className="industry-data-note">{en ? "Period returns use available saved daily history. Only the Lens calculation basket loads automatically. Open a company for its current details. Market caps are a dated snapshot, not live fundamentals." : "Výnosy období používají dostupnou uloženou denní historii. Automaticky se načítá pouze výpočtový koš Lens. Aktuální detail otevřete kliknutím na firmu. Kapitalizace jsou datovaný snapshot, nikoli živá fundamentální data."}</p>
+    <p className="industry-data-note">{en ? "Period returns use available saved daily history. Annual history loads for the selected industry only; period switches use that same history. Contributions refer to the selected index weighting. Open a company for its current details. Market caps are a dated snapshot, not live fundamentals." : "Výnosy období používají dostupnou uloženou denní historii. Roční historie se načítá pouze pro vybrané odvětví; změna období využívá stejnou historii. Příspěvky odpovídají zvolenému vážení indexu. Aktuální detail otevřete kliknutím na firmu. Kapitalizace jsou datovaný snapshot, nikoli živá fundamentální data."}</p>
   </section>;
 }

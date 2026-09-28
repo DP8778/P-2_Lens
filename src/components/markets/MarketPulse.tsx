@@ -70,7 +70,7 @@ export function MarketPulse({ locale, variant = "compact", initialThemeId }: { l
   return (
     <section className={`market-pulse ${variant}`} aria-labelledby={`market-pulse-title-${variant}`}>
       <header>
-        <div><span>Lens Theme</span><h2 id={`market-pulse-title-${variant}`}>Technology</h2></div>
+        <div><span>{variant === "full" ? "Lens Industries" : "Lens Theme"}</span><h2 id={`market-pulse-title-${variant}`}>Technology</h2></div>
         {variant === "compact" && <Link href={`/${locale}/markets`}>Zobrazit Markets →</Link>}
       </header>
       {error && <p className="market-pulse-notice" role="status">Část aktuálních market dat není dostupná.</p>}
@@ -79,19 +79,19 @@ export function MarketPulse({ locale, variant = "compact", initialThemeId }: { l
           const summary = summarize(theme, byAsset);
           const pending = loading && selectedTheme.id === theme.id && !summary.coverage;
           const partial = summary.measured < theme.constituents.length;
-          const content = (
+          const content = variant === "full" ? <>
+            <span>{theme.name}<small className="industry-selector-count">{industryCompanies(theme).length} {locale === "en-US" ? "tracked companies" : "sledovaných firem"}</small></span>
+            <small>Industry Index →</small>
+          </> : (
             <>
-              <span>{theme.name}{variant === "full" && <small className="industry-selector-count">{industryCompanies(theme).length} {locale === "en-US" ? "tracked companies" : "sledovaných firem"}</small>}</span>
+              <span>{theme.name}</span>
               <strong className={partial || summary.average === undefined ? "" : summary.average >= 0 ? "positive" : "negative"}>{pending ? "…" : partial || summary.average === undefined ? "—" : percent(summary.average, locale)}</strong>
               <small>{pending ? "Načítám…" : summary.coverage
                 ? partial
                   ? `Částečná data · ${summary.coverage}/${theme.constituents.length} titulů`
                   : `${summary.coverage} / ${theme.constituents.length} titulů k dispozici · ${summary.rising} roste · ${summary.falling} klesá`
                 : "Data nejsou dostupná"}</small>
-              {variant === "full" && <small>{locale === "en-US" ? "Daily Lens basket" : "Denní koš Lens"} · {theme.constituents.length}</small>}
-              {variant === "full" && summary.topGainer && summary.topLoser && (
-                <em><b>{summary.topGainer.asset.symbol} {percent(summary.topGainer.quote.changePercent!, locale)}</b><b>{summary.topLoser.asset.symbol} {percent(summary.topLoser.quote.changePercent!, locale)}</b></em>
-              )}
+
             </>
           );
           return variant === "compact"

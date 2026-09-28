@@ -31,10 +31,10 @@ describe("MarketPulse quote budget", () => {
     expect(requested((global.fetch as jest.Mock).mock.calls[0])).toEqual(marketThemes[0].constituents);
     expect(screen.getAllByText("123 USD")).toHaveLength(4);
     const card = screen.getAllByRole("button")[0];
-    expect(card).toHaveTextContent("4 / 4 titulů k dispozici");
-    expect(card).not.toHaveTextContent("Částečná data");
-    expect(card.querySelector("strong")).toHaveTextContent(/1.*%/);
-    expect(card).toHaveTextContent("4 roste · 0 klesá");
+    expect(card).toHaveTextContent("18 sledovaných firem");
+    expect(card).toHaveTextContent("Industry Index");
+    expect(card.querySelector("strong")).toBeNull();
+
   });
 
   test("switching themes requests only missing constituents and revisiting uses cache", async () => {
@@ -58,10 +58,9 @@ describe("MarketPulse quote budget", () => {
     expect(requested((global.fetch as jest.Mock).mock.calls[0])).toEqual(theme.constituents);
     expect(screen.getAllByText("Cena nedostupná")).toHaveLength(3);
     const card = screen.getByRole("button", { name: /Cybersecurity/ });
-    expect(card).toHaveTextContent("Částečná data · 1/4 titulů");
+    expect(card).toHaveTextContent("20 sledovaných firem");
     expect(card).not.toHaveTextContent(/roste|klesá/);
-    expect(card.querySelector("strong")).toHaveTextContent(/^—$/);
-    expect(card.querySelector("strong")).not.toHaveClass("positive", "negative");
+    expect(card.querySelector("strong")).toBeNull();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
@@ -82,7 +81,7 @@ describe("MarketPulse quote budget", () => {
     render(<MarketPulse locale="cs-CZ" variant="full" />);
     await screen.findByText("123 USD");
     await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
-    expect(screen.getAllByRole("button")[0]).toHaveTextContent("Částečná data · 1/4 titulů");
+    expect(screen.getAllByRole("button")[0]).toHaveTextContent("18 sledovaných firem");
     await act(async () => rejectRefresh(new Error("offline")));
     expect(screen.getByText("123 USD")).toBeInTheDocument();
     expect(screen.getAllByText("Cena nedostupná")).toHaveLength(3);
@@ -98,19 +97,19 @@ describe("MarketPulse quote budget", () => {
     render(<MarketPulse locale="cs-CZ" variant="full" />);
     await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
     const ai = screen.getAllByRole("button")[0];
-    expect(ai).toHaveTextContent("Načítám…");
+    expect(screen.getAllByText("Načítám…")).toHaveLength(4);
     expect(ai).not.toHaveTextContent("Data nejsou dostupná");
     expect(screen.queryByText("Cena nedostupná")).not.toBeInTheDocument();
     await act(async () => resolveRefresh({ ok: true, json: async () => ({ quotes: marketThemes[0].constituents.map(quote) }) }));
     await user.click(screen.getByRole("button", { name: /Cybersecurity/ }));
     await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
     const cyber = screen.getByRole("button", { name: /Cybersecurity/ });
-    expect(cyber).toHaveTextContent("Načítám…");
+    expect(screen.getAllByText("Načítám…")).toHaveLength(4);
     expect(cyber).not.toHaveTextContent("Data nejsou dostupná");
-    expect(ai).toHaveTextContent("4 / 4 titulů k dispozici");
+    expect(ai).toHaveTextContent("18 sledovaných firem");
     await act(async () => resolveRefresh({ ok: true, json: async () => ({ quotes: [] }) }));
-    expect(cyber).toHaveTextContent("Data nejsou dostupná");
-    expect(cyber.querySelector("strong")).toHaveTextContent(/^—$/);
+    expect(screen.getAllByText("Cena nedostupná")).toHaveLength(4);
+    expect(cyber.querySelector("strong")).toBeNull();
     expect(cyber).not.toHaveTextContent(/Částečná data|roste|klesá/);
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
