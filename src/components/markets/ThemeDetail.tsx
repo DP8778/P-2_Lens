@@ -1,5 +1,7 @@
 "use client";
 
+import { interpretIndustryPulse, industryPulseCopy, comparableIndustryIndices } from "@/lib/finance/industry-pulse";
+import type { IndustryNavigation } from "@/lib/markets/industry-navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { IndustryView } from "@/lib/finance/industry-data";
 import { IndustryMarketMap } from "./IndustryMarketMap";
@@ -18,14 +20,14 @@ import { ThemeHistoryChart } from "./ThemeHistoryChart";
 
 type Result = { key: string; histories: Map<string, MarketPricePoint[]>; failed: boolean; stale: boolean };
 
-export function ThemeDetail({ theme, locale, industry }: { theme: MarketTheme; locale: string; industry?: IndustryView }) {
+export function ThemeDetail({ theme, locale, industry, initialNavigation, onNavigationChange }: { theme: MarketTheme; locale: string; industry?: IndustryView; initialNavigation?: IndustryNavigation; onNavigationChange?: (navigation: IndustryNavigation) => void }) {
   const english = locale === "en-US";
-  const [timeframe, setTimeframe] = useState<ThemeTimeframe>("1M");
-  const [weighting, setWeighting] = useState<IndustryWeighting>("equal");
+  const [timeframe, setTimeframe] = useState<ThemeTimeframe>(initialNavigation?.period ?? "1M");
+  const [weighting, setWeighting] = useState<IndustryWeighting>(initialNavigation?.weighting ?? "equal");
   const universe = useMemo(() => industry?.members.map((member) => member.asset) ?? industryCompanies(theme), [theme, industry]);
   const caps = useMemo(() => industry ? Object.fromEntries(industry.members.map((member) => [member.asset.symbol, member.marketCap])) : capitalizationSource.marketCaps, [industry]);
   const capDate = industry?.updatedAt.slice(0, 10) ?? capitalizationSource.observedOn;
-  const [referenceDate] = useState(() => new Date());
+  const [referenceDate] = useState(() => initialNavigation?.asOf ? new Date(`${initialNavigation.asOf}T12:00:00Z`) : new Date());
   const historyRange = useMemo(() => themeHistoryRange("1Y", referenceDate), [referenceDate]);
   const range = useMemo(() => themeHistoryRange(timeframe, referenceDate), [timeframe, referenceDate]);
   const key = `${theme.id}:${industry?.version ?? "legacy"}:${historyRange.from}:${historyRange.to}`;
@@ -41,6 +43,11 @@ export function ThemeDetail({ theme, locale, industry }: { theme: MarketTheme; l
     const contributions = new Map(performance.status === "complete" ? performance.contributors.map((item) => [item.asset.id, item.contributionPctPoints]) : []);
     return { ...data, rows: data.rows.map((row) => ({ ...row, inBasket: contributions.has(row.asset.id), contributionPctPoints: contributions.get(row.asset.id) })) };
   }, [universe, current, range, performance, caps]);
+
+  const navigation = useMemo<IndustryNavigation>(() => ({ industry: theme.id, period: timeframe, weighting, asOf: referenceDate.toISOString().slice(0, 10), version: industry?.version }), [theme.id, timeframe, weighting, referenceDate, industry?.version]);
+  useEffect(() => { onNavigationChange?.(navigation); }, [navigation, onNavigationChange]);
+  const comparable = comparableIndustryIndices(indices.equal, indices.capitalization);
+  const pulse = interpretIndustryPulse(indices.equal, indices.capitalization, overview, industry?.economics.top10Concentration, current?.stale);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,11 +75,11 @@ export function ThemeDetail({ theme, locale, industry }: { theme: MarketTheme; l
     <section className="theme-detail" aria-label={`Historie tématu ${theme.name}`} aria-busy={!current}>
       <header className="theme-detail-header">
         <div><span className="theme-detail-eyebrow">{english ? "Industry · Technology" : "Odvětví · Technology"}</span><h3>{theme.name}</h3><p>{industryDescriptions[theme.id]}</p></div>
-        <div className="theme-period-return"><span>Výnos za {timeframe}</span><strong className={performance?.status === "complete" ? performance.returnPct >= 0 ? "positive" : "negative" : ""}>{!current ? "…" : performance?.status === "complete" ? percent(performance.returnPct, locale) : "—"}</strong><small>{weighting === "equal" ? "Equal-weight" : "Market-cap weighted"} · {performance.coverage} / {universe.length} {english ? "companies included" : "firem zahrnuto"}{performance.partial ? (english ? " · partial coverage" : " · částečné pokrytí") : ""}</small></div>
+
       </header>
       <IndustryOverviewStrip overview={overview} locale={locale} industry={industry} />
-      <div className="industry-trend-label"><h4>{industry ? "Lens Top 100 · Industry Index" : "Lens Industry Index"}</h4><span>Index 100 · {english ? "Tracked universe · not an official index" : "Sledované univerzum · nejde o oficiální index"}</span></div>
-      {industry && <p className="industry-data-note">{universe.length}/100 {english ? "eligible companies; US listings only" : "způsobilých firem; pouze US listingy"} · {english ? "Updated" : "Aktualizace"} {dateLabel(industry.updatedAt.slice(0, 10), locale)} · {english ? "Rebalance" : "Rebalance"} {dateLabel(industry.rebalancedAt.slice(0, 10), locale)} · v{industry.version.slice(0, 8)}</p>}
+      <div className="industry-trend-label"><h4>Industry Pulse <small>· {industry ? "Lens Top 100" : "Lens Industry Index"}</small></h4><span>Index 100 · {english ? "Tracked universe · not an official index" : "Sledované univerzum · nejde o oficiální index"}</span></div>
+        <div className="theme-period-return"><span>Výnos za {timeframe}</span><strong className={performance?.status === "complete" ? performance.returnPct >= 0 ? "positive" : "negative" : ""}>{!current ? "…" : performance?.status === "complete" ? percent(performance.returnPct, locale) : "—"}</strong><small>{weighting === "equal" ? "Equal-weight" : "Market-cap weighted"} · {performance.coverage} / {universe.length} {english ? "companies included" : "firem zahrnuto"}{performance.partial ? (english ? " · partial coverage" : " · částečné pokrytí") : ""}</small></div>
       <div className="industry-index-comparison" role="group" aria-label={english ? "Index weighting" : "Vážení indexu"}>
         {(["equal", "capitalization"] as const).map((mode) => <button key={mode} aria-pressed={weighting === mode} onClick={() => setWeighting(mode)}>
           <span>{mode === "equal" ? "Equal-weight" : english ? "Market-cap weighted" : "Váženo kapitalizací"}</span>
@@ -80,7 +87,6 @@ export function ThemeDetail({ theme, locale, industry }: { theme: MarketTheme; l
           <small>{indices[mode].coverage}/{universe.length} {english ? "companies" : "firem"}</small>
         </button>)}
       </div>
-      <p className="industry-data-note">{english ? "Each view uses companies with sufficient history; the weighted view also requires a known market cap. Different coverage can affect the comparison." : "Každý pohled zahrnuje firmy s dostatečnou historií; vážený pohled navíc vyžaduje známou kapitalizaci. Rozdílné pokrytí může ovlivnit srovnání."} {english ? "Capitalization weights use a fixed snapshot, not historical caps" : "Kapitalizační váhy vycházejí z pevného snapshotu, nikoli historických kapitalizací"} · {capDate}.</p>
       <div className="theme-timeframes" role="group" aria-label="Období historie tématu">
         {themeTimeframes.map((value) => <button key={value} aria-pressed={timeframe === value} onClick={() => setTimeframe(value)}>{value}</button>)}
       </div>
@@ -89,15 +95,29 @@ export function ThemeDetail({ theme, locale, industry }: { theme: MarketTheme; l
           : <>
             {(current.stale || current.failed) && <p className="market-pulse-notice" role="status">Část historie se nepodařilo obnovit. Zobrazuji dostupná data včetně uložené historie.</p>}
             {performance.partial && <p className="industry-coverage-warning" role="status">{english ? "Partial index" : "Neúplný index"}: {performance.coverage}/{universe.length} {english ? "companies included. This is not the return of the full Lens universe." : "firem zahrnuto. Nejde o výnos celého univerza Lens."}</p>}
-            <ThemeHistoryChart points={performance.points} locale={locale} />
+            <ThemeHistoryChart points={comparable && indices.equal.status === "complete" ? indices.equal.points : performance.points} comparison={comparable && indices.capitalization.status === "complete" ? indices.capitalization.points : undefined} locale={locale} />
+            {comparable && <p className="industry-chart-legend">— Equal-weight · ┄ Market-cap weighted</p>}
+            <p className="industry-data-note">{english ? "Fixed starting weights · capitalization snapshot" : "Pevné počáteční váhy · snapshot kapitalizací"}: {capDate}.</p>
             <p className="theme-history-summary">{dateLabel(performance.points[0].date, locale)} – {dateLabel(performance.points.at(-1)!.date, locale)} · Index 100 → {performance.points.at(-1)!.value.toLocaleString(locale, { maximumFractionDigits: 2 })} · výnos {percent(performance.returnPct, locale)} · {performance.coverage}/{performance.total} {english ? "companies included" : "firem zahrnuto"}{performance.partial ? (english ? " · partial coverage" : " · částečné pokrytí") : ""}.</p>
-            <ThemeDrivers performance={performance} timeframe={timeframe} locale={locale} />
+
           </>}
-      <IndustryVisualizations overview={overview} timeframe={timeframe} locale={locale} capDate={capDate} />
-      <IndustryMarketMap overview={overview} timeframe={timeframe} locale={locale} />
-      <IndustryBreadth overview={overview} timeframe={timeframe} locale={locale} />
+      {current && <p className="industry-pulse-reading" role="status">{industryPulseCopy[pulse.kind][english ? 1 : 0]}</p>}
+      <section className="industry-participation" aria-label={english ? "Participation and concentration" : "Účast a koncentrace"}>
+        <div><span>{english ? "Companies rising" : "Podíl rostoucích firem"}</span><strong>{overview.risingPercent === undefined ? "—" : `${overview.risingPercent.toLocaleString(locale, { maximumFractionDigits: 1 })} %`}</strong><small>{overview.positive}/{overview.measured} · {english ? "measured companies" : "změřených firem"}</small></div>
+        <div><span>{english ? "Median period return" : "Medián výnosu období"}</span><strong>{overview.medianReturn === undefined ? "—" : percent(overview.medianReturn, locale)}</strong><small>{overview.measured}/{overview.total} · {timeframe}</small></div>
+        <div><span>{english ? "Top 10 concentration" : "Koncentrace Top 10"}</span><strong>{industry?.economics.top10Concentration === undefined ? "—" : `${industry.economics.top10Concentration.toLocaleString(locale, { maximumFractionDigits: 1 })} %`}</strong><small>{english ? "Share of universe capitalization" : "Podíl kapitalizace univerza"}</small></div>
+      </section>
+      <IndustryMarketMap overview={overview} timeframe={timeframe} locale={locale} navigation={navigation} />
+      {performance.status === "complete" && <ThemeDrivers performance={performance} timeframe={timeframe} locale={locale} navigation={navigation} />}
+      <details className="industry-disclosure"><summary>{english ? "Explore participation and return distribution" : "Prozkoumat šíři růstu a rozdělení výnosů"}</summary><IndustryVisualizations overview={overview} timeframe={timeframe} locale={locale} capDate={capDate} /><IndustryBreadth overview={overview} timeframe={timeframe} locale={locale} navigation={navigation} /></details>
+      <details className="industry-disclosure"><summary>{english ? "Explore all companies" : "Prozkoumat všechny firmy"} · {universe.length}</summary>
+      <IndustryCompanies navigation={navigation} key={theme.id} overview={overview} timeframe={timeframe} locale={locale} capDate={capDate} capSource={industry?.members[0]?.marketCapSource} />
+      </details>
+      <details className="industry-disclosure"><summary>{english ? "Index methodology and coverage" : "Metodika indexu a pokrytí"}</summary>
+      {industry && <p className="industry-data-note">{universe.length}/100 {english ? "eligible companies; US listings only" : "způsobilých firem; pouze US listingy"} · {english ? "Updated" : "Aktualizace"} {dateLabel(industry.updatedAt.slice(0, 10), locale)} · {english ? "Rebalance" : "Rebalance"} {dateLabel(industry.rebalancedAt.slice(0, 10), locale)} · v{industry.version.slice(0, 8)}</p>}
+      <p className="industry-data-note">{english ? "Each view uses companies with sufficient history; the weighted view also requires a known market cap. Different coverage can affect the comparison." : "Každý pohled zahrnuje firmy s dostatečnou historií; vážený pohled navíc vyžaduje známou kapitalizaci. Rozdílné pokrytí může ovlivnit srovnání."} {english ? "Capitalization weights use a fixed snapshot, not historical caps" : "Kapitalizační váhy vycházejí z pevného snapshotu, nikoli historických kapitalizací"} · {capDate}.</p>
       <p className="theme-methodology">{english ? "Fixed starting weights: equal, or proportional to the market-cap snapshot" : "Pevné počáteční váhy: stejné, nebo úměrné snapshotu kapitalizací"} · {capDate}. {english ? "These are not historical market caps. Price returns without dividends, FX or rebalancing; only observed common dates. Coverage can differ by period. Excluded companies remain in the table." : "Nejde o historické kapitalizace. Cenové výnosy bez dividend, FX a rebalancování; jen společná pozorovaná data. Pokrytí se může lišit podle období. Nezahrnuté firmy zůstávají v tabulce."}</p>
-      <IndustryCompanies key={theme.id} overview={overview} timeframe={timeframe} locale={locale} capDate={capDate} capSource={industry?.members[0]?.marketCapSource} />
+      </details>
       {industry && <details className="industry-data-note"><summary>{english ? "Membership sources & exclusions" : "Zdroje členství a vyřazení kandidáti"} · {industry.candidateCount} → {universe.length}</summary><ul>{industry.sources.map((source) => <li key={source}><a href={source} target="_blank" rel="noreferrer">{source}</a></li>)}</ul><ul>{industry.excluded.map((item) => <li key={item.symbol}>{item.symbol}: {item.reason}</li>)}</ul></details>}
     </section>
   );

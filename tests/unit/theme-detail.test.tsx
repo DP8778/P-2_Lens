@@ -26,6 +26,7 @@ test("loads the full selected universe once; 1M → 3M → 1Y and 1W are derived
   await screen.findByTestId("theme-chart");
   expect(load.mock.calls.map(([asset]) => asset.id)).toEqual(industryCompanies(marketThemes[0]).map((asset) => asset.id));
   expect(screen.getByText("Změřeno 18/18 sledovaných firem")).toBeInTheDocument();
+  await user.click(screen.getByText("Prozkoumat šíři růstu a rozdělení výnosů"));
   expect(within(screen.getByRole("region", { name: "Šíře odvětví" })).getAllByRole("link")).toHaveLength(6);
   expect(screen.getByText(/Index 100 →/)).toHaveTextContent("18/18 firem zahrnuto");
   expect(load).toHaveBeenCalledTimes(18);
@@ -92,7 +93,7 @@ test("failed refresh can display a complete cached history with an explicit stal
   });
   render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
   await screen.findByTestId("theme-chart");
-  expect(screen.getByRole("status")).toHaveTextContent("Zobrazuji dostupná data");
+  expect(screen.getByText(/Zobrazuji dostupná data/)).toBeVisible();
   expect(screen.getByText("Změřeno 18/18 sledovaných firem")).toBeInTheDocument();
 });
 
@@ -161,9 +162,10 @@ test("an incomplete constituent remains unavailable across periods without refet
 test.each(["cs-CZ", "en-US"])("industry company rows navigate to Asset Detail and update periods locally for %s", async (locale) => {
   render(<ThemeDetail theme={marketThemes[0]} locale={locale} />);
   await screen.findByTestId("theme-chart");
+  await userEvent.click(screen.getByText(locale === "en-US" ? /Explore all companies/ : /Prozkoumat všechny firmy/));
   const table = screen.getByRole("region", { name: locale === "en-US" ? "Industry companies" : "Firmy v odvětví" });
   for (const asset of marketThemes[0].constituents) {
-    expect(within(table).getByRole("link", { name: new RegExp(asset.symbol) })).toHaveAttribute("href", `/${locale}/assets/${encodeURIComponent(asset.id)}`);
+    expect(within(table).getByRole("link", { name: new RegExp(asset.symbol) })).toHaveAttribute("href", `/${locale}/assets/${encodeURIComponent(asset.id)}?industry=ai&period=1M&weighting=equal&asOf=${new Date().toISOString().slice(0, 10)}`);
   }
   const nvda = within(table).getByRole("link", { name: /NVDA/ }).closest("tr")!;
   const previous = nvda.textContent;

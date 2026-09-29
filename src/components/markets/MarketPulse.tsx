@@ -11,6 +11,7 @@ import { percent } from "@/components/charts/chart-formatters";
 
 import type { IndustryView } from "@/lib/finance/industry-data";
 import { industryCompanies } from "@/data/market-industries";
+import { industryAssetHref, type IndustryNavigation } from "@/lib/markets/industry-navigation";
 import { ThemeDetail } from "./ThemeDetail";
 
 const defaultTheme = marketThemes[0];
@@ -38,10 +39,11 @@ function summarize(theme: MarketTheme, quotes: Map<string, MarketQuote>) {
   };
 }
 
-export function MarketPulse({ locale, variant = "compact", initialThemeId, industries }: { locale: Locale; variant?: "compact" | "full"; initialThemeId?: string; industries?: Record<string, IndustryView> }) {
+export function MarketPulse({ locale, variant = "compact", initialThemeId, industries, initialNavigation }: { locale: Locale; variant?: "compact" | "full"; initialThemeId?: string; industries?: Record<string, IndustryView>; initialNavigation?: IndustryNavigation }) {
   const [quotes, setQuotes] = useState<MarketQuote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [navigation, setNavigation] = useState<IndustryNavigation | undefined>(initialNavigation);
   const [selectedThemeId, setSelectedThemeId] = useState(
     marketThemes.some((theme) => theme.id === initialThemeId) ? initialThemeId! : defaultTheme.id,
   );
@@ -107,7 +109,7 @@ export function MarketPulse({ locale, variant = "compact", initialThemeId, indus
         })}
       </div>
 
-      {variant === "full" && <ThemeDetail theme={selectedTheme} locale={locale} industry={industries?.[selectedTheme.id]} />}
+      {variant === "full" && <ThemeDetail onNavigationChange={setNavigation} initialNavigation={initialNavigation} theme={selectedTheme} locale={locale} industry={industries?.[selectedTheme.id]} />}
 
       {variant === "full" && (
         <details className="industry-basket-members"><summary>{locale === "en-US" ? "Lens calculation basket" : "Složení výpočtového koše Lens"} · {selectedTheme.constituents.length}</summary>
@@ -117,7 +119,7 @@ export function MarketPulse({ locale, variant = "compact", initialThemeId, indus
             {selectedTheme.constituents.map((asset) => {
               const quote = byAsset.get(asset.id);
               return (
-                <Link className="market-constituent-row" href={`/${locale}/assets/${encodeURIComponent(asset.id)}`} key={asset.id} aria-label={`Detail ${asset.symbol}`}>
+                <Link className="market-constituent-row" href={industryAssetHref(locale, asset.id, navigation)} key={asset.id} aria-label={`Detail ${asset.symbol}`}>
                   <span><strong>{asset.symbol}</strong><small>{asset.name}</small></span>
                   <b>{quote ? price(quote, locale) : loading ? "Načítám…" : "Cena nedostupná"}</b>
                   <em className={quote?.changePercent === undefined ? "" : quote.changePercent >= 0 ? "positive" : "negative"}>{quote?.changePercent === undefined ? "—" : percent(quote.changePercent, locale)}</em>

@@ -19,6 +19,7 @@ test("the persisted universe powers all views; partial history is never presente
     const length = Math.round((Date.parse(range.to) - start) / 86400000) + 1;
     return { asset, range, source: "network", points: Array.from({ length }, (_, i) => ({ assetId: asset.id, date: new Date(start + i * 86400000).toISOString().slice(0, 10), close: 100 + i, currency: asset.currency, adjustedForSplits: true })) };
   });
+  const bounds = jest.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ width: 800, height: 360, top: 0, left: 0, bottom: 360, right: 800, x: 0, y: 0, toJSON: () => ({}) });
   render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" industry={industry} />);
   await screen.findByTestId("industry-chart");
   expect(loadHistory).toHaveBeenCalledTimes(industry.members.length);
@@ -27,6 +28,8 @@ test("the persisted universe powers all views; partial history is never presente
   expect(screen.getByText("Souhrnné roční tržby")).toBeVisible();
   const map = screen.getByRole("region", { name: "Mapa odvětví" });
   expect(within(map).getAllByRole("link")).toHaveLength(industry.members.length);
+  await userEvent.click(screen.getByText(/Prozkoumat všechny firmy/));
+  bounds.mockRestore();
   const table = screen.getByRole("region", { name: "Firmy v odvětví" });
   expect(within(table).getAllByRole("row")).toHaveLength(industry.members.length + 1);
   await userEvent.click(screen.getByRole("button", { name: "1Y" }));

@@ -76,3 +76,11 @@ export function buildIndustryDistributions(overview: IndustryOverview) {
   }));
   return { breadth, sizes, histogram };
 }
+
+/** Financial values for the treemap; layout is delegated to Recharts. */
+export function industryMapData(overview: IndustryOverview) {
+  const known = overview.rows.filter((row) => row.marketCap !== undefined && Number.isFinite(row.marketCap) && row.marketCap > 0);
+  const total = known.reduce((sum, row) => sum + row.marketCap!, 0);
+  return { total, missing: overview.rows.length - known.length,
+    data: known.sort((a, b) => b.marketCap! - a.marketCap!).map((row) => ({ name: row.asset.symbol, value: row.marketCap!, sharePct: row.marketCap! / total * 100, row })) };
+}

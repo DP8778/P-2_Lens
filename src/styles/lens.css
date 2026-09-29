@@ -2969,10 +2969,49 @@ button.contribution-row[aria-pressed="true"] {
 .industry-market-map header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .industry-market-map h4 { font-size: 14px; margin: 0; }
 .industry-market-map header span { color: var(--color-text-muted); font-size: 11px; }
-.industry-map-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 4px; margin-top: 12px; }
-.industry-map-tiles a { display: grid; gap: 5px; padding: 12px; font-size: 12px; background: #ffffff07; text-decoration: none; }
-.industry-map-tiles a.falling { background: #bd83830a; }
-.industry-map-tiles a.rising { background: #91b5a50c; }
-.industry-map-tiles a.unavailable { color: var(--color-text-muted); }
-.industry-map-tiles a:hover, .industry-map-tiles a:focus-visible { outline: 1px solid #ffffff55; }
-.industry-map-tiles small { color: var(--color-text-muted); font-size: 10px; }
+
+/* Industry narrative: scale → pulse → structure → companies. */
+.theme-detail .industry-overview-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 36px; }
+.theme-detail .theme-detail-header { display: block; }
+.theme-detail .theme-period-return { text-align: left; margin: 12px 0 18px; }
+.theme-detail .industry-index-comparison { display: flex; gap: 24px; flex-wrap: wrap; margin: 12px 0; }
+.theme-detail .industry-index-comparison button { background: transparent; border: 0; border-radius: 0; padding: 8px 0; border-bottom: 2px solid transparent; min-width: 150px; text-align: left; }
+.theme-detail .industry-index-comparison button[aria-pressed="true"] { border-bottom-color: #b4bec6; background: transparent; }
+.industry-chart-legend, .industry-map-caption { font-size: 12px; color: var(--color-text-muted); margin: 10px 0; min-height: 32px; }
+.industry-pulse-reading { font-size: 17px; line-height: 1.6; margin: 24px 0 14px; max-width: 780px; }
+.industry-participation { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; padding-bottom: 24px; }
+.industry-participation > div { display: grid; gap: 6px; }
+.industry-participation span, .industry-participation small { color: var(--color-text-muted); font-size: 12px; }
+.industry-participation strong { font-size: 24px; font-weight: 500; }
+.industry-treemap { height: 380px; width: 100%; min-width: 0; }
+.industry-treemap-link:focus { outline: none; }
+.industry-treemap-link:focus-visible rect { stroke: #f1f4f6; stroke-width: 3px; }
+.industry-disclosure { margin-top: 24px; border-top: 1px solid #ffffff12; padding-top: 18px; min-width: 0; }
+.industry-disclosure > summary, .financial-sources > summary { cursor: pointer; color: var(--color-text-secondary); font-size: 13px; line-height: 1.6; }
+.industry-disclosure > summary:focus-visible, .financial-sources > summary:focus-visible { outline: 2px solid #b4bec6; outline-offset: 5px; }
+.asset-industry-context { padding: 20px 0; margin-bottom: 24px; border-block: 1px solid #ffffff16; }
+.asset-industry-context header { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13px; }
+.asset-industry-context header span { color: var(--color-text-muted); }
+.asset-industry-context dl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 20px 0 10px; }
+.asset-industry-context dt { font-size: 12px; color: var(--color-text-muted); }
+.asset-industry-context dd { margin: 6px 0 0; font-size: 20px; }
+.asset-detail .asset-history-unavailable, .asset-history-unavailable { min-height: 0; height: auto; padding: 22px 16px; }
+.financial-sources { margin: 12px 0; }
+.financial-flow-mobile { display: none; }
+@media (max-width: 760px) {
+  .theme-detail .industry-overview-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .industry-participation { gap: 12px; }
+  .industry-participation strong { font-size: 20px; }
+  .industry-treemap { height: 440px; }
+  .asset-industry-context dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .financial-flow .financial-flow-scroll { display: none; }
+  .financial-flow-mobile { display: grid; gap: 8px; }
+  .financial-mobile-stage { display: grid; gap: 10px; }
+  .financial-mobile-stage > div { position: relative; padding: 8px 0 12px; display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+  .financial-mobile-stage i { position: absolute; bottom: 0; height: 3px; background: #b3bdc145; }
+  .financial-stage-arrow { color: var(--color-text-muted); text-align: center; }
+  .financial-anatomy { min-width: 0; }
+  .asset-detail .asset-history-unavailable, .asset-history-unavailable { height: auto; min-height: 0; }
+}
+
+.industry-economics-note summary { cursor: pointer; }

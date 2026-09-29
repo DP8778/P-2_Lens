@@ -6,6 +6,9 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Plus } from "lucide-react";
 import type { Locale } from "@/i18n/getDictionary";
 import type { FundamentalsRecord } from "@/lib/finance/industry-data";
+import { AssetIndustryContext } from "./AssetIndustryContext";
+import type { IndustryView } from "@/lib/finance/industry-data";
+import type { IndustryNavigation } from "@/lib/markets/industry-navigation";
 import { FinancialAnatomy } from "./FinancialAnatomy";
 import { AssetPriceChart } from "@/components/charts/AssetPriceChart";
 import { AddAssetDialog } from "@/components/portfolio/AddAssetDialog";
@@ -25,7 +28,7 @@ const typeLabels = { stock: "Akcie", etf: "ETF", crypto: "Kryptoměna", cash: "H
 const nativeMoney = (value: number, currency: string, locale: string) =>
   `${value.toLocaleString(locale, { maximumFractionDigits: 2 })} ${currency}`;
 
-export function AssetDetailView({ assetId, locale, fundamentals }: { assetId: string; locale: Locale; fundamentals?: FundamentalsRecord }) {
+export function AssetDetailView({ assetId, locale, fundamentals, industry, industryNavigation }: { assetId: string; locale: Locale; fundamentals?: FundamentalsRecord; industry?: IndustryView; industryNavigation?: IndustryNavigation }) {
   const router = useRouter();
   const { assets, holdings, market } = usePortfolio();
   const ownedAsset = assets.find((candidate) => candidate.id === assetId);
@@ -219,6 +222,7 @@ export function AssetDetailView({ assetId, locale, fundamentals }: { assetId: st
           {quoteError && quote && <small>Aktualizace ceny se nezdařila; zobrazuji poslední dostupnou hodnotu.</small>}
         </div>
       </header>
+      {industry && industryNavigation && <AssetIndustryContext key={`${assetId}:${industryNavigation.industry}:${industryNavigation.period}:${industryNavigation.weighting}:${industryNavigation.asOf}:${industry.version}`} assetId={assetId} locale={locale} industry={industry} navigation={industryNavigation} />}
 
       <section className="asset-performance-strip" aria-label="Výkonnost aktiva">
         <dl>
@@ -256,7 +260,7 @@ export function AssetDetailView({ assetId, locale, fundamentals }: { assetId: st
             {(["1W", "1M", "3M", "1Y", "ALL"] as const).map((value) => <button key={value} aria-pressed={timeframe === value} onClick={() => setTimeframe(value)}>{value}</button>)}
           </div>
         </div>
-        {historyLoading ? <div className="asset-chart-state">Načítám historická data…</div> : historyError ? <div className="asset-chart-state">Historická data momentálně nejsou dostupná.</div> : <AssetPriceChart data={chartHistory} currency={asset.currency} locale={locale} />}
+        {historyLoading ? <div className="asset-chart-state">Načítám historická data…</div> : historyError ? <div className="asset-chart-state asset-history-unavailable" role="status">Historická data momentálně nejsou dostupná.</div> : <AssetPriceChart data={chartHistory} currency={asset.currency} locale={locale} />}
       </section>
 
       {asset.type === "stock" && <FinancialAnatomy assetId={asset.id} locale={locale} statements={fundamentals?.statements} fetchedAt={fundamentals?.fetchedAt} stale={!!fundamentals?.errors?.length} />}

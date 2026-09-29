@@ -1,3 +1,4 @@
+import userEvent from "@testing-library/user-event";
 import { render, screen } from "@testing-library/react";
 import { FinancialAnatomy } from "@/components/assets/FinancialAnatomy";
 import { buildFinancialAnatomy, type FinancialStatement } from "@/lib/finance/financial-anatomy";
@@ -41,11 +42,13 @@ test("missing, wrong-asset and inconsistent statements cannot fabricate a financ
   expect(screen.queryByText(/0 %/)).not.toBeInTheDocument();
 });
 
-test("available statements render source, revenue structure and accessible flow amounts", () => {
+test("available statements render source, revenue structure and accessible flow amounts", async () => {
   render(<FinancialAnatomy assetId="test" locale="cs-CZ" statements={[statement]} />);
   expect(screen.getByRole("img")).toHaveAccessibleName(/Od tržeb k zisku/);
+  await userEvent.click(screen.getByText(/Ověřené výkazy · zdroje/));
   expect(screen.getByRole("link", { name: "Zdroj výkazu" })).toHaveAttribute("href", statement.source);
   expect(screen.getAllByText("Test products").length).toBeGreaterThan(0);
+  await userEvent.click(screen.getByText("Podrobná historie hospodaření"));
   expect(screen.getByRole("table")).toHaveTextContent("Čistý zisk");
 });
 

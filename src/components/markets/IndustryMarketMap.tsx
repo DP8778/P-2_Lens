@@ -1,15 +1,35 @@
+"use client";
+
 import Link from "next/link";
-import type { IndustryOverview } from "@/lib/finance/industry-overview";
+import { useState } from "react";
+import { ResponsiveContainer, Treemap } from "recharts";
+import { industryMapData, type IndustryOverview } from "@/lib/finance/industry-overview";
+import { industryAssetHref, type IndustryNavigation } from "@/lib/markets/industry-navigation";
 import { percent } from "@/components/charts/chart-formatters";
 
-export function IndustryMarketMap({ overview, timeframe, locale }: { overview: IndustryOverview; timeframe: string; locale: string }) {
+export function IndustryMarketMap({ overview, timeframe, locale, navigation }: { overview: IndustryOverview; timeframe: string; locale: string; navigation?: IndustryNavigation }) {
   const en = locale === "en-US";
-  const rows = [...overview.rows].sort((a, b) => (b.marketCap ?? 0) - (a.marketCap ?? 0));
+  const map = industryMapData(overview);
+  const [active, setActive] = useState<string>();
+  const selected = map.data.find((item) => item.row.asset.id === active) ?? map.data[0];
+  const description = (item: typeof map.data[number]) => `${item.row.asset.name} (${item.name}) · ${new Intl.NumberFormat(locale, { style: "currency", currency: "USD", notation: "compact" }).format(item.value)} · ${item.row.returnPct === undefined ? (en ? "Return unavailable" : "Výnos nedostupný") : percent(item.row.returnPct, locale)} · ${item.sharePct.toLocaleString(locale, { maximumFractionDigits: 1 })} % ${en ? "of known capitalization" : "známé kapitalizace"}`;
   return <section className="industry-market-map" aria-label={en ? "Industry market map" : "Mapa odvětví"}>
-    <header><h4>{en ? "Market map" : "Mapa odvětví"} · {timeframe}</h4><span>{overview.measured}/{overview.total} {en ? "returns available" : "dostupných výnosů"}</span></header>
-    <p className="industry-data-note">{en ? "Equal-sized company tiles, ordered by market cap. Missing history is shown as a dash." : "Stejně velké dlaždice firem, seřazené podle kapitalizace. Chybějící historie je označená pomlčkou."}</p>
-    <div className="industry-map-tiles">{rows.map((row) => <Link key={row.asset.id} href={`/${locale}/assets/${encodeURIComponent(row.asset.id)}`} className={row.returnPct === undefined ? "unavailable" : row.returnPct < 0 ? "falling" : "rising"} title={row.asset.name}>
-      <strong>{row.asset.symbol}</strong><span>{row.returnPct === undefined ? "—" : percent(row.returnPct, locale)}</span><small>{row.returnPct === undefined ? (en ? "No history" : "Bez historie") : row.returnPct < 0 ? (en ? "Falling" : "Klesá") : row.returnPct > 0 ? (en ? "Rising" : "Roste") : (en ? "Unchanged" : "Beze změny")}</small>
-    </Link>)}</div>
+    <header><h4>{en ? "Market map" : "Mapa odvětví"} · {timeframe}</h4><span>{map.data.length}/{overview.total} {en ? "known market caps" : "známých kapitalizací"}</span></header>
+    <p className="industry-data-note">{en ? "Area = market capitalization. Labels show signed period returns; missing history is not zero." : "Plocha = tržní kapitalizace. Popisky uvádějí výnos období se znaménkem; chybějící historie není nula."} {map.missing > 0 && `${map.missing} ${en ? "companies without capitalization omitted; available in the table." : "firem bez kapitalizace vynecháno; najdete je v tabulce."}`}</p>
+    {map.data.length ? <><div className="industry-treemap">
+      <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 800, height: 360 }}>
+        <Treemap data={map.data} dataKey="value" nameKey="name" isAnimationActive={false} content={(node) => {
+          const item = map.data.find((entry) => entry.name === node.name);
+          if (!item || node.depth !== 1) return <g />;
+          const value = item.row.returnPct;
+          const fill = value === undefined ? "#292d31" : value < -15 ? "#573b3c" : value < -5 ? "#443334" : value < 0 ? "#383030" : value > 15 ? "#365248" : value > 5 ? "#30453f" : value > 0 ? "#2d3835" : "#34393e";
+          return <Link href={industryAssetHref(locale, item.row.asset.id, navigation)} aria-label={description(item)} onFocus={() => setActive(item.row.asset.id)} onMouseEnter={() => setActive(item.row.asset.id)} className="industry-treemap-link">
+            <title>{description(item)}</title><rect x={node.x} y={node.y} width={node.width} height={node.height} fill={fill} stroke="#141719" strokeWidth={2} />
+            {node.width > 38 && node.height > 22 && <text x={node.x + node.width / 2} y={node.y + node.height / 2 - (node.height > 44 ? 4 : -4)} textAnchor="middle" fill="#e7e9eb" fontSize={node.width > 90 ? 14 : 10}>{item.name}</text>}
+            {node.width > 58 && node.height > 44 && <text x={node.x + node.width / 2} y={node.y + node.height / 2 + 14} textAnchor="middle" fill="#bcc4c8" fontSize={11}>{value === undefined ? "—" : percent(value, locale)}</text>}
+          </Link>;
+        }} />
+      </ResponsiveContainer>
+    </div><p className="industry-map-caption" aria-live="polite">{selected && description(selected)}</p></> : <p role="status">{en ? "Market capitalization unavailable." : "Kapitalizace není dostupná."}</p>}
   </section>;
 }
