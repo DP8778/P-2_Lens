@@ -3015,3 +3015,10 @@ button.contribution-row[aria-pressed="true"] {
 }
 
 .industry-economics-note summary { cursor: pointer; }
+.industry-history-progress { padding: 20px 0; max-width: 640px; font-size: 13px; line-height: 1.6; }
+.industry-history-progress p, .industry-history-progress small { color: var(--color-text-muted); }
+.industry-history-progress progress { display: block; width: 100%; height: 5px; margin: 14px 0; appearance: none; border: 0; background: #ffffff16; }
+
+.industry-history-progress progress::-webkit-progress-bar { background: #ffffff16; }
+.industry-history-progress progress::-webkit-progress-value { background: #a5b8c5; }
+.industry-history-progress progress::-moz-progress-bar { background: #a5b8c5; }

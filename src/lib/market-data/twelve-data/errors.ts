@@ -14,7 +14,8 @@ export function normalizeTwelveDataError(httpStatus: number, body: TwelveDataErr
   if (status === 401 || status === 403)
     return new MarketDataError("AUTH", message, false, 503);
   if (status === 404) return new MarketDataError("NOT_FOUND", message, false, 404);
+  if (status >= 500 || httpStatus >= 500) return new MarketDataError("UNAVAILABLE", message, true, 502);
   if (status === 400 || /invalid|not found|symbol/i.test(message))
     return new MarketDataError("INVALID_SYMBOL", message, false, 400);
-  return new MarketDataError("UNAVAILABLE", message, httpStatus >= 500, 502);
+  return new MarketDataError("UNAVAILABLE", message, status >= 500, 502);
 }

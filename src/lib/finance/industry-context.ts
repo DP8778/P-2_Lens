@@ -1,3 +1,4 @@
+import { hasReliableIndustryCoverage } from "./industry-coverage";
 import type { IndustryView } from "./industry-data";
 import type { MarketPricePoint } from "../market-data/types";
 import type { IndustryNavigation } from "../markets/industry-navigation";
@@ -15,14 +16,15 @@ export function buildCompanyIndustryContext(assetId: string, industry: IndustryV
   if (navigation.version && navigation.version !== industry.version) return { ...base, changed: true as const };
   const range = themeHistoryRange(navigation.period, navigation.asOf ? new Date(`${navigation.asOf}T12:00:00Z`) : new Date());
   const index = buildIndustryIndex(industry.members.map((row) => row.asset), histories, range, navigation.weighting, caps);
-  const contribution = index.status === "complete" ? index.contributors.find((row) => row.asset.id === assetId) : undefined;
+  const reliable = hasReliableIndustryCoverage(index.coverage, index.total);
+  const contribution = reliable && index.status === "complete" ? index.contributors.find((row) => row.asset.id === assetId) : undefined;
   const single = buildThemePerformance([member.asset], histories, range);
   const leaders = index.status === "complete" ? index.contributors.filter((row) => row.contributionPctPoints > 0).slice(0, 3) : [];
   const laggards = index.status === "complete" ? index.contributors.filter((row) => row.contributionPctPoints < 0).slice(-3) : [];
   return { ...base, changed: false as const, coverage: index.coverage, partial: index.partial,
     returnPct: contribution?.returnPct ?? (single.status === "complete" ? single.returnPct : undefined),
     contribution: contribution?.contributionPctPoints,
-    industryReturn: index.status === "complete" ? index.returnPct : undefined,
+    industryReturn: reliable && index.status === "complete" ? index.returnPct : undefined,
     driver: contribution && leaders.includes(contribution) ? "positive" as const : contribution && laggards.includes(contribution) ? "negative" as const : undefined,
   };
 }

@@ -51,6 +51,7 @@ describe("Twelve Data normalizers", () => {
 
   test("normalizes rate limits and invalid symbols without leaking provider shape", () => {
     expect(normalizeTwelveDataError(429, { code: 429, message: "credits exhausted" })).toMatchObject({ code: "RATE_LIMIT", retryable: true, status: 429 });
+    expect(normalizeTwelveDataError(200, { code: 503, message: "symbol service temporarily unavailable" })).toMatchObject({ code: "UNAVAILABLE", retryable: true });
     expect(normalizeTwelveDataError(400, { code: 400, message: "invalid symbol" })).toMatchObject({ code: "INVALID_SYMBOL", retryable: false, status: 400 });
   });
 });

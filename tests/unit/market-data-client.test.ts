@@ -45,6 +45,9 @@ describe("browser market-data client", () => {
       status: 429,
     });
 
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 429, json: async () => ({}) } as Response);
+    await expect(searchMarketAssets("PLTR")).rejects.toMatchObject({ code: "RATE_LIMIT", retryable: true });
+
     global.fetch = jest.fn().mockRejectedValue(new TypeError("network down"));
     await expect(searchMarketAssets("PLTR")).rejects.toEqual(
       expect.objectContaining<Partial<MarketDataError>>({ code: "UNAVAILABLE", status: 503 }),

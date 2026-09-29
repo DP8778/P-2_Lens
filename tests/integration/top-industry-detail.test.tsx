@@ -1,5 +1,5 @@
 jest.mock("next/navigation", () => ({ useRouter: () => ({ push: jest.fn() }) }));
-jest.mock("@/lib/market-data/service", () => ({ loadHistory: jest.fn() }));
+jest.mock("@/lib/market-data/service", () => ({ ...jest.requireActual("@/lib/market-data/service"), loadHistory: jest.fn() }));
 jest.mock("@/components/markets/ThemeHistoryChart", () => ({ ThemeHistoryChart: () => <div data-testid="industry-chart" /> }));
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -21,9 +21,10 @@ test("the persisted universe powers all views; partial history is never presente
   });
   const bounds = jest.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ width: 800, height: 360, top: 0, left: 0, bottom: 360, right: 800, x: 0, y: 0, toJSON: () => ({}) });
   render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" industry={industry} />);
-  await screen.findByTestId("industry-chart");
+  await screen.findByText("Nedostatečné pokrytí historických dat");
+  expect(screen.queryByTestId("industry-chart")).not.toBeInTheDocument();
   expect(loadHistory).toHaveBeenCalledTimes(industry.members.length);
-  expect(screen.getByText(new RegExp(`Neúplný index: 2/${industry.members.length}`))).toBeVisible();
+  expect(screen.getByText(new RegExp(`Historie připravena pro 2 z ${industry.members.length}`))).toBeVisible();
   expect(screen.getByText("Celková kapitalizace")).toBeVisible();
   expect(screen.getByText("Souhrnné roční tržby")).toBeVisible();
   const map = screen.getByRole("region", { name: "Mapa odvětví" });
@@ -35,5 +36,5 @@ test("the persisted universe powers all views; partial history is never presente
   await userEvent.click(screen.getByRole("button", { name: "1Y" }));
   await userEvent.click(screen.getByRole("button", { name: /Váženo kapitalizací/ }));
   expect(loadHistory).toHaveBeenCalledTimes(industry.members.length);
-  expect(screen.getByText(new RegExp(`Neúplný index: 2/${industry.members.length}`))).toBeVisible();
+  expect(screen.getByText(new RegExp(`Historie připravena pro 2 z ${industry.members.length}`))).toBeVisible();
 });

@@ -26,9 +26,9 @@ async function fetchJson<T>(input: string, init?: RequestInit): Promise<T> {
   };
   if (!response.ok)
     throw new MarketDataError(
-      body.error?.code ?? "UNAVAILABLE",
+      body.error?.code ?? (response.status === 429 ? "RATE_LIMIT" : "UNAVAILABLE"),
       body.error?.message ?? "Market data nejsou dostupná.",
-      body.error?.retryable ?? response.status >= 500,
+      body.error?.retryable ?? (response.status === 429 || response.status >= 500),
       response.status,
     );
   return body;

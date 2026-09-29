@@ -1,3 +1,4 @@
+import { hasReliableIndustryCoverage } from "./industry-coverage";
 import type { IndustryIndex } from "./industry-index";
 import type { IndustryOverview } from "./industry-overview";
 
@@ -16,7 +17,7 @@ export function interpretIndustryPulse(equal: IndustryIndex, capitalization: Ind
   if (equal.status !== "complete" || capitalization.status !== "complete") return { kind, comparable };
   if (!comparable) return { kind: "different-cohorts" as const, comparable };
   const gap = capitalization.returnPct - equal.returnPct;
-  if (stale || equal.total === 0 || equal.coverage / equal.total < .8 || equal.coverage < Math.min(10, equal.total)
+  if (stale || !hasReliableIndustryCoverage(equal.coverage, equal.total)
     || overview.measured !== equal.coverage || overview.risingPercent === undefined || overview.medianReturn === undefined) return { kind, comparable, gap };
   const breadth = overview.risingPercent, median = overview.medianReturn;
   if (capitalization.returnPct > 0 && breadth < 50) kind = "narrow-positive";

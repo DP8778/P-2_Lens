@@ -9,7 +9,7 @@ import { loadHistory } from "@/lib/market-data/service";
 import { getBrowserMarketDataCache } from "@/lib/market-data/cache/market-cache";
 import type { DateRange, MarketAsset } from "@/lib/market-data/types";
 
-jest.mock("@/lib/market-data/service", () => ({ loadHistory: jest.fn() }));
+jest.mock("@/lib/market-data/service", () => ({ ...jest.requireActual("@/lib/market-data/service"), loadHistory: jest.fn() }));
 jest.mock("@/components/markets/ThemeHistoryChart", () => ({ ThemeHistoryChart: () => <div data-testid="theme-chart" /> }));
 const load = jest.mocked(loadHistory);
 const history = (asset: MarketAsset, range: DateRange) => {
@@ -24,6 +24,7 @@ test("loads the full selected universe once; 1M → 3M → 1Y and 1W are derived
   const user = userEvent.setup();
   const { rerender } = render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
   await screen.findByTestId("theme-chart");
+  await waitFor(() => expect(screen.queryByText("Načítám vývoj odvětví…")).not.toBeInTheDocument());
   expect(load.mock.calls.map(([asset]) => asset.id)).toEqual(industryCompanies(marketThemes[0]).map((asset) => asset.id));
   expect(screen.getByText("Změřeno 18/18 sledovaných firem")).toBeInTheDocument();
   await user.click(screen.getByText("Prozkoumat šíři růstu a rozdělení výnosů"));
@@ -35,6 +36,7 @@ test("loads the full selected universe once; 1M → 3M → 1Y and 1W are derived
   for (const period of ["3M", "1Y", "1W"]) {
     await user.click(screen.getByRole("button", { name: period }));
     await screen.findByTestId("theme-chart");
+  await waitFor(() => expect(screen.queryByText("Načítám vývoj odvětví…")).not.toBeInTheDocument());
     expect(screen.getByRole("button", { name: period })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText(`Výnos za ${period}`)).toBeInTheDocument();
     expect(load).toHaveBeenCalledTimes(18);
@@ -44,6 +46,7 @@ test("loads the full selected universe once; 1M → 3M → 1Y and 1W are derived
   expect(load).toHaveBeenCalledTimes(18);
   rerender(<ThemeDetail theme={marketThemes[4]} locale="cs-CZ" />);
   await screen.findByTestId("theme-chart");
+  await waitFor(() => expect(screen.queryByText("Načítám vývoj odvětví…")).not.toBeInTheDocument());
   expect(load.mock.calls.slice(18).map(([asset]) => asset.id)).toEqual(industryCompanies(marketThemes[4]).map((asset) => asset.id));
   expect(screen.getByRole("region", { name: "Historie tématu Cybersecurity" })).toBeInTheDocument();
 });
@@ -59,6 +62,7 @@ test.each(["missing", "failure"])("%s history leaves an explicitly partial indus
   });
   render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
   await screen.findByTestId("theme-chart");
+  await waitFor(() => expect(screen.queryByText("Načítám vývoj odvětví…")).not.toBeInTheDocument());
   expect(screen.getByText(/Index 100 →/)).toHaveTextContent("17/18 firem zahrnuto · částečné pokrytí");
   expect(screen.getByRole("button", { name: "1Y" })).toBeEnabled();
 });
@@ -66,22 +70,30 @@ test.each(["missing", "failure"])("%s history leaves an explicitly partial indus
 test("total history failure displays an unavailable state and retains controls", async () => {
   load.mockRejectedValue(new Error("offline"));
   render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
-  await screen.findByText(/Index není dostupný/);
+  await screen.findByText("Nedostatečné pokrytí historických dat");
   expect(screen.queryByTestId("theme-chart")).not.toBeInTheDocument();
   expect(screen.getByText("Výnos za 1M").parentElement).toHaveTextContent("—");
 });
 
-test("rapid theme switching ignores a late response for the previous theme", async () => {
+test("rapid theme switching cancels queued work and ignores late old responses", async () => {
   const resolvers: (() => void)[] = [];
-  load.mockImplementation((asset, range) => new Promise((resolve) => { resolvers.push(() => resolve(history(asset, range))); }));
+  load.mockImplementation((asset, range, _cache, signal) => new Promise((resolve, reject) => {
+    resolvers.push(() => resolve(history(asset, range)));
+    signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), { once: true });
+  }));
   const { rerender } = render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
-  await waitFor(() => expect(load).toHaveBeenCalledTimes(18));
+  await waitFor(() => expect(load).toHaveBeenCalledTimes(2));
+  const oldSignals = load.mock.calls.map((call) => call[3]);
   rerender(<ThemeDetail theme={marketThemes[4]} locale="cs-CZ" />);
-  await waitFor(() => expect(load).toHaveBeenCalledTimes(38));
-  await act(async () => resolvers.slice(0, 18).forEach((resolve) => resolve()));
-  expect(screen.getByText("Načítám historii tématu…")).toBeInTheDocument();
+  await waitFor(() => expect(load).toHaveBeenCalledTimes(4));
+  expect(oldSignals.every((signal) => signal?.aborted)).toBe(true);
+  await act(async () => resolvers.slice(0, 2).forEach((resolve) => resolve()));
+  expect(screen.getByText("Načítám vývoj odvětví…")).toBeVisible();
   expect(screen.queryByTestId("theme-chart")).not.toBeInTheDocument();
-  await act(async () => resolvers.slice(18).forEach((resolve) => resolve()));
+  load.mockImplementation(async (asset, range) => history(asset, range));
+  await act(async () => resolvers.slice(2).forEach((resolve) => resolve()));
+  await waitFor(() => expect(screen.queryByText("Načítám vývoj odvětví…")).not.toBeInTheDocument());
+  expect(load).toHaveBeenCalledTimes(22);
   expect(within(screen.getByRole("region", { name: "Historie tématu Cybersecurity" })).getByTestId("theme-chart")).toBeInTheDocument();
 });
 
@@ -93,6 +105,7 @@ test("failed refresh can display a complete cached history with an explicit stal
   });
   render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
   await screen.findByTestId("theme-chart");
+  await waitFor(() => expect(screen.queryByText("Načítám vývoj odvětví…")).not.toBeInTheDocument());
   expect(screen.getByText(/Zobrazuji dostupná data/)).toBeVisible();
   expect(screen.getByText("Změřeno 18/18 sledovaných firem")).toBeInTheDocument();
 });
@@ -111,19 +124,23 @@ test("existing history cache serves shorter periods and revisits without network
     const user = userEvent.setup();
     const { rerender } = render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
     await screen.findByTestId("theme-chart");
+  await waitFor(() => expect(screen.queryByText("Načítám vývoj odvětví…")).not.toBeInTheDocument());
     expect(global.fetch).toHaveBeenCalledTimes(18);
     for (const period of ["3M", "1Y", "1W", "1M"]) {
       await user.click(screen.getByRole("button", { name: period }));
       await screen.findByTestId("theme-chart");
+  await waitFor(() => expect(screen.queryByText("Načítám vývoj odvětví…")).not.toBeInTheDocument());
       expect(global.fetch).toHaveBeenCalledTimes(18);
       expect(load).toHaveBeenCalledTimes(18);
     }
     // Shared constituents reuse the existing history cache.
     rerender(<ThemeDetail theme={marketThemes[1]} locale="cs-CZ" />);
     await screen.findByTestId("theme-chart");
+  await waitFor(() => expect(screen.queryByText("Načítám vývoj odvětví…")).not.toBeInTheDocument());
     expect(global.fetch).toHaveBeenCalledTimes(new Set([...industryCompanies(marketThemes[0]), ...industryCompanies(marketThemes[1])].map((asset) => asset.id)).size);
     rerender(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
     await screen.findByTestId("theme-chart");
+  await waitFor(() => expect(screen.queryByText("Načítám vývoj odvětví…")).not.toBeInTheDocument());
     expect(global.fetch).toHaveBeenCalledTimes(new Set([...industryCompanies(marketThemes[0]), ...industryCompanies(marketThemes[1])].map((asset) => asset.id)).size);
   } finally { global.fetch = originalFetch; }
 });
@@ -131,13 +148,16 @@ test("existing history cache serves shorter periods and revisits without network
 test("switching period during the initial load reuses the same pending universe histories", async () => {
   const user = userEvent.setup();
   const resolvers: (() => void)[] = [];
-  load.mockImplementation((asset, range) => new Promise((resolve) => { resolvers.push(() => resolve(history(asset, range))); }));
+  load.mockImplementation((asset, range, _cache, signal) => new Promise((resolve, reject) => { resolvers.push(() => resolve(history(asset, range))); signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), { once: true }); }));
   render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
-  await waitFor(() => expect(load).toHaveBeenCalledTimes(18));
+  await waitFor(() => expect(load).toHaveBeenCalledTimes(2));
   await user.click(screen.getByRole("button", { name: "3M" }));
   await user.click(screen.getByRole("button", { name: "1Y" }));
-  expect(load).toHaveBeenCalledTimes(18);
+  expect(load).toHaveBeenCalledTimes(2);
+  load.mockImplementation(async (asset, range) => history(asset, range));
   await act(async () => resolvers.forEach((resolve) => resolve()));
+  await waitFor(() => expect(screen.queryByText("Načítám vývoj odvětví…")).not.toBeInTheDocument());
+  expect(load).toHaveBeenCalledTimes(18);
   expect(screen.getByTestId("theme-chart")).toBeInTheDocument();
   expect(screen.getByText("Výnos za 1Y")).toBeInTheDocument();
 });
@@ -150,6 +170,7 @@ test("an incomplete constituent remains unavailable across periods without refet
   });
   render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
   await screen.findByTestId("theme-chart");
+  await waitFor(() => expect(screen.queryByText("Načítám vývoj odvětví…")).not.toBeInTheDocument());
   for (const period of ["3M", "1Y", "1W"]) {
     await user.click(screen.getByRole("button", { name: period }));
     expect(screen.getByText(/Index 100 →/)).toHaveTextContent("17/18 firem zahrnuto");
@@ -162,6 +183,7 @@ test("an incomplete constituent remains unavailable across periods without refet
 test.each(["cs-CZ", "en-US"])("industry company rows navigate to Asset Detail and update periods locally for %s", async (locale) => {
   render(<ThemeDetail theme={marketThemes[0]} locale={locale} />);
   await screen.findByTestId("theme-chart");
+  await waitFor(() => expect(screen.queryByText("Načítám vývoj odvětví…")).not.toBeInTheDocument());
   await userEvent.click(screen.getByText(locale === "en-US" ? /Explore all companies/ : /Prozkoumat všechny firmy/));
   const table = screen.getByRole("region", { name: locale === "en-US" ? "Industry companies" : "Firmy v odvětví" });
   for (const asset of marketThemes[0].constituents) {
@@ -178,6 +200,7 @@ test.each(["cs-CZ", "en-US"])("industry company rows navigate to Asset Detail an
 test("weighting switches use the same loaded universe and show cap coverage", async () => {
   render(<ThemeDetail theme={marketThemes[0]} locale="cs-CZ" />);
   await screen.findByTestId("theme-chart");
+  await waitFor(() => expect(screen.queryByText("Načítám vývoj odvětví…")).not.toBeInTheDocument());
   const group = screen.getByRole("group", { name: "Vážení indexu" });
   await userEvent.click(within(group).getByRole("button", { name: /Váženo kapitalizací/ }));
   expect(screen.getByText(/Index 100 →/)).toHaveTextContent("17/18 firem zahrnuto");
