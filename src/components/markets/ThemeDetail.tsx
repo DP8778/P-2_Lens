@@ -70,38 +70,46 @@ export function ThemeDetail({ theme, locale, industry, initialNavigation, onNavi
 
       </header>
       <IndustryOverviewStrip overview={overview} locale={locale} industry={industry} />
-      <div className="industry-trend-label"><h4>Industry Pulse <small>· {industry ? "Lens Top 100" : "Lens Industry Index"}</small></h4><span>Index 100 · {english ? "Tracked universe · not an official index" : "Sledované univerzum · nejde o oficiální index"}</span></div>
-        <div className="theme-period-return"><span>Výnos za {timeframe}</span><strong className={reliability.usable && performance.status === "complete" ? performance.returnPct >= 0 ? "positive" : "negative" : ""}>{reliability.usable && performance.status === "complete" ? percent(performance.returnPct, locale) : "—"}</strong><small>{weighting === "equal" ? "Equal-weight" : "Market-cap weighted"} · {performance.coverage} / {universe.length} {english ? "companies included" : "firem zahrnuto"}{performance.partial ? (english ? " · partial coverage" : " · částečné pokrytí") : ""}</small></div>
-      <div className="industry-index-comparison" role="group" aria-label={english ? "Index weighting" : "Vážení indexu"}>
-        {(["equal", "capitalization"] as const).map((mode) => <button key={mode} aria-pressed={weighting === mode} onClick={() => setWeighting(mode)}>
-          <span>{mode === "equal" ? "Equal-weight" : english ? "Market-cap weighted" : "Váženo kapitalizací"}</span>
-          <strong>{hasReliableIndustryCoverage(indices[mode].coverage, universe.length) && indices[mode].status === "complete" ? percent(indices[mode].returnPct, locale) : "—"}</strong>
-          <small>{indices[mode].coverage}/{universe.length} {english ? "companies" : "firem"}</small>
-        </button>)}
-      </div>
-      <div className="theme-timeframes" role="group" aria-label="Období historie tématu">
-        {themeTimeframes.map((value) => <button key={value} aria-pressed={timeframe === value} onClick={() => setTimeframe(value)}>{value}</button>)}
-      </div>
-      {(loading || !reliability.usable) && <div className="industry-history-progress" role="status">
-        <strong>{loading ? (english ? "Loading industry performance…" : "Načítám vývoj odvětví…") : missingCapitalization ? (english ? "Insufficient capitalization coverage for the weighted index" : "Nedostatečné pokrytí kapitalizací pro vážený index") : (english ? "Insufficient historical coverage" : "Nedostatečné pokrytí historických dat")}</strong>
-        <p>{english ? `History ready for ${overview.measured} of ${universe.length} companies` : `Historie připravena pro ${overview.measured} z ${universe.length} firem`} · {timeframe}</p>
-        {loading && <progress value={overview.measured} max={universe.length || 1} aria-label={english ? "Price history coverage" : "Pokrytí cenové historie"} />}
-        {!reliability.usable && <p>{missingCapitalization ? (english ? "The weighted index needs more known market capitalizations. The equal-weight view is available." : "Pro vážený index chybí kapitalizace dostatečného počtu firem. Dostupný je pohled Equal-weight.") : (english ? "Lens does not yet have sufficient common history to show a reliable industry return." : "Lens zatím nemá dostatečné pokrytí společné historie. Výnos odvětví proto nezobrazuje.")}</p>}
-        {!!current?.failed && <small>{english ? `${current.failed} histories could not be refreshed.` : `${current.failed} historií se nepodařilo obnovit.`}</small>}
-      </div>}
-      {!reliability.usable || performance.status !== "complete" ? null
-          : <>
+      <section className="industry-pulse" aria-label="Industry Pulse" data-view={reliability.usable ? "ready" : loading ? "loading" : "insufficient"}>
+        <div className="industry-trend-label"><h4>Industry Pulse <small>· {reliability.usable ? (industry ? "Lens Top 100" : "Lens Industry Index") : timeframe}</small></h4>{reliability.usable && <span>Index 100 · {english ? "Tracked universe · not an official index" : "Sledované univerzum · nejde o oficiální index"}</span>}</div>
+        <div className="theme-timeframes" role="group" aria-label="Období historie tématu">
+          {themeTimeframes.map((value) => <button key={value} aria-pressed={timeframe === value} onClick={() => setTimeframe(value)}>{value}</button>)}
+        </div>
+        <div className="industry-pulse-content">
+          {reliability.usable && performance.status === "complete" ? <div className="industry-pulse-ready">
+            <div className="theme-period-return"><span>{english ? "Return over" : "Výnos za"} {timeframe}</span><strong className={performance.returnPct >= 0 ? "positive" : "negative"}>{percent(performance.returnPct, locale)}</strong><small>{weighting === "equal" ? "Equal-weight" : "Market-cap weighted"} · {performance.coverage} / {universe.length} {english ? "companies included" : "firem zahrnuto"}{performance.partial ? (english ? " · partial coverage" : " · částečné pokrytí") : ""}</small></div>
+            <div className="industry-index-comparison" role="group" aria-label={english ? "Index weighting" : "Vážení indexu"}>
+              {(["equal", "capitalization"] as const).map((mode) => <button key={mode} aria-pressed={weighting === mode} onClick={() => setWeighting(mode)}>
+                <span>{mode === "equal" ? "Equal-weight" : english ? "Market-cap weighted" : "Váženo kapitalizací"}</span>
+                <strong>{hasReliableIndustryCoverage(indices[mode].coverage, universe.length) && indices[mode].status === "complete" ? percent(indices[mode].returnPct, locale) : "—"}</strong>
+                <small>{indices[mode].coverage}/{universe.length} {english ? "companies" : "firem"}</small>
+              </button>)}
+            </div>
             {(stale || !!current?.failed) && <p className="market-pulse-notice" role="status">{loading && stale ? "Zobrazuji uloženou historii; probíhá obnova." : "Část historie se nepodařilo obnovit. Zobrazuji dostupná data včetně uložené historie."}</p>}
             {performance.partial && <p className="industry-coverage-warning" role="status">{english ? "Partial index" : "Neúplný index"}: {performance.coverage}/{universe.length} {english ? "companies included. This is not the return of the full Lens universe." : "firem zahrnuto. Nejde o výnos celého univerza Lens."}</p>}
             <ThemeHistoryChart points={comparable && indices.equal.status === "complete" ? indices.equal.points : performance.points} comparison={comparable && indices.capitalization.status === "complete" ? indices.capitalization.points : undefined} locale={locale} />
             {comparable && <p className="industry-chart-legend">— Equal-weight · ┄ Market-cap weighted</p>}
             <p className="theme-history-summary">{dateLabel(performance.points[0].date, locale)} – {dateLabel(performance.points.at(-1)!.date, locale)} · Index 100 → {performance.points.at(-1)!.value.toLocaleString(locale, { maximumFractionDigits: 2 })} · výnos {percent(performance.returnPct, locale)} · {performance.coverage}/{performance.total} {english ? "companies included" : "firem zahrnuto"}{performance.partial ? (english ? " · partial coverage" : " · částečné pokrytí") : ""}.</p>
-
-          </>}
-      {reliability.usable && <p className="industry-pulse-reading" role="status">{industryPulseCopy[pulse.kind][english ? 1 : 0]}</p>}
+            <p className="industry-pulse-reading" role="status">{industryPulseCopy[pulse.kind][english ? 1 : 0]}</p>
+          </div> : <div className="industry-history-progress" role="status">
+            <strong>{loading ? (english ? "Preparing industry performance" : "Načítáme vývoj odvětví") : missingCapitalization ? (english ? "Insufficient capitalization coverage for the weighted index" : "Nedostatečné pokrytí kapitalizací pro vážený index") : (english ? "Insufficient historical coverage" : "Nedostatečné pokrytí historických dat")}</strong>
+            {loading ? <>
+              <p className="industry-progress-count"><span>{english ? `${overview.measured} of ${universe.length} companies ready` : `${overview.measured} z ${universe.length} společností připraveno`}</span>{" "}<span>· {universe.length ? Math.round(overview.measured / universe.length * 100) : 0} %</span></p>
+              <progress role="progressbar" value={overview.measured} max={universe.length || 1} aria-valuemin={0} aria-valuemax={universe.length || 1} aria-valuenow={overview.measured} aria-label={english ? "Industry price history preparation" : "Příprava cenové historie odvětví"} />
+              <p>{english ? "The industry return will appear once sufficient coverage is available." : "Výnos odvětví zobrazíme po dosažení dostatečného pokrytí."}</p>
+            </> : <>
+              <p>{english ? `History is available for ${overview.measured} of ${universe.length} companies.` : `Historie je dostupná pro ${overview.measured} z ${universe.length} společností.`}</p>
+              <p>{missingCapitalization ? (english ? "The weighted index needs more known market capitalizations." : "Pro vážený index chybí kapitalizace dostatečného počtu firem.") : (english ? "Lens is not yet showing the industry return." : "Lens zatím výnos celého odvětví nezobrazuje.")}</p>
+            </>}
+            {missingCapitalization && <button className="industry-pulse-recovery" onClick={() => setWeighting("equal")}>{english ? "Show Equal-weight" : "Zobrazit Equal-weight"}</button>}
+          </div>}
+        </div>
+      </section>
       <section className="industry-participation" aria-label={english ? "Participation and concentration" : "Účast a koncentrace"}>
+        {reliability.usable && participationReady && <>
         <div><span>{english ? "Companies rising" : "Podíl rostoucích firem"}</span><strong>{!participationReady || overview.risingPercent === undefined ? "—" : `${overview.risingPercent.toLocaleString(locale, { maximumFractionDigits: 1 })} %`}</strong><small>{overview.measured}/{overview.total} {english ? "companies measured" : "firem změřeno"}{participationReady ? ` · ${overview.positive} ${english ? "rising" : "roste"}` : ""}</small></div>
         <div><span>{english ? "Median period return" : "Medián výnosu období"}</span><strong>{!participationReady || overview.medianReturn === undefined ? "—" : percent(overview.medianReturn, locale)}</strong><small>{overview.measured}/{overview.total} · {timeframe}</small></div>
+        </>}
         <div><span>{english ? "Top 10 concentration" : "Koncentrace Top 10"}</span><strong>{industry?.economics.top10Concentration === undefined ? "—" : `${industry.economics.top10Concentration.toLocaleString(locale, { maximumFractionDigits: 1 })} %`}</strong><small>{english ? "Share of universe capitalization" : "Podíl kapitalizace univerza"}</small></div>
       </section>
       <IndustryMarketMap overview={overview} timeframe={timeframe} locale={locale} navigation={navigation} />

@@ -24,7 +24,7 @@ test("the persisted universe powers all views; partial history is never presente
   await screen.findByText("Nedostatečné pokrytí historických dat");
   expect(screen.queryByTestId("industry-chart")).not.toBeInTheDocument();
   expect(loadHistory).toHaveBeenCalledTimes(industry.members.length);
-  expect(screen.getByText(new RegExp(`Historie připravena pro 2 z ${industry.members.length}`))).toBeVisible();
+  expect(screen.getByText(new RegExp(`Historie je dostupná pro 2 z ${industry.members.length}`))).toBeVisible();
   expect(screen.getByText("Celková kapitalizace")).toBeVisible();
   expect(screen.getByText("Souhrnné roční tržby")).toBeVisible();
   const map = screen.getByRole("region", { name: "Mapa odvětví" });
@@ -34,7 +34,9 @@ test("the persisted universe powers all views; partial history is never presente
   const table = screen.getByRole("region", { name: "Firmy v odvětví" });
   expect(within(table).getAllByRole("row")).toHaveLength(industry.members.length + 1);
   await userEvent.click(screen.getByRole("button", { name: "1Y" }));
-  await userEvent.click(screen.getByRole("button", { name: /Váženo kapitalizací/ }));
+  expect(screen.queryByRole("group", { name: "Vážení indexu" })).not.toBeInTheDocument();
+  expect(screen.queryByText("Výnos za 1Y")).not.toBeInTheDocument();
+  expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
   expect(loadHistory).toHaveBeenCalledTimes(industry.members.length);
-  expect(screen.getByText(new RegExp(`Historie připravena pro 2 z ${industry.members.length}`))).toBeVisible();
+  expect(screen.getByText(new RegExp(`Historie je dostupná pro 2 z ${industry.members.length}`))).toBeVisible();
 });

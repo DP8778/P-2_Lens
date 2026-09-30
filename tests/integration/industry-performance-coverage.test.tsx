@@ -34,10 +34,17 @@ test("4/49 hides industry analytics; 40/49 unlocks while remaining histories are
   const bounds = jest.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ width: 800, height: 360, top: 0, left: 0, bottom: 360, right: 800, x: 0, y: 0, toJSON: () => ({}) });
   try {
     render(<ThemeDetail theme={theme} industry={industry} locale="cs-CZ" />);
-    await screen.findByText(/Historie připravena pro 4 z 49 firem/);
-    expect(screen.getByText("Výnos za 1M").parentElement?.querySelector("strong")).toHaveTextContent("—");
-    expect(screen.getByText("Podíl rostoucích firem").parentElement?.querySelector("strong")).toHaveTextContent("—");
-    expect(screen.getByText("Medián výnosu období").parentElement?.querySelector("strong")).toHaveTextContent("—");
+    await screen.findByText("4 z 49 společností připraveno");
+    expect(screen.getByText("Načítáme vývoj odvětví")).toBeVisible();
+    const progress = screen.getByRole("progressbar", { name: "Příprava cenové historie odvětví" });
+    expect(progress).toHaveAttribute("aria-valuemin", "0");
+    expect(progress).toHaveAttribute("aria-valuemax", "49");
+    expect(progress).toHaveAttribute("aria-valuenow", "4");
+    expect(screen.getByText("· 8 %")).toBeVisible();
+    expect(screen.queryByRole("group", { name: "Vážení indexu" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Výnos za 1M")).not.toBeInTheDocument();
+    expect(screen.queryByText("Podíl rostoucích firem")).not.toBeInTheDocument();
+    expect(screen.queryByText("Medián výnosu období")).not.toBeInTheDocument();
     expect(screen.queryByTestId("industry-chart")).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Co táhne téma?" })).not.toBeInTheDocument();
     expect(screen.getByText("49/49 známých kapitalizací")).toBeVisible();
@@ -56,18 +63,26 @@ test("4/49 hides industry analytics; 40/49 unlocks while remaining histories are
     await userEvent.click(screen.getByRole("button", { name: "1Y" }));
     expect(load).toHaveBeenCalledTimes(6);
     // Release exactly enough completed observations to cross the shared 80% threshold.
-    await act(async () => { for (let i = 0; i < 35; i++) { while (!release[i]) await Promise.resolve(); release[i](); } });
-    await screen.findByText(/Historie připravena pro 39 z 49 firem/);
+    for (const [from, to, count, percentage] of [[0, 9, 13, 27], [9, 17, 21, 43], [17, 35, 39, 80]]) {
+      await act(async () => { for (let i = from; i < to; i++) { while (!release[i]) await Promise.resolve(); release[i](); } });
+      expect(await screen.findByText(`${count} z 49 společností připraveno`)).toBeVisible();
+      expect(progress).toHaveAttribute("aria-valuenow", String(count));
+      expect(screen.getByText(`· ${percentage} %`)).toBeVisible();
+      expect(screen.queryByRole("group", { name: "Vážení indexu" })).not.toBeInTheDocument();
+    }
     expect(screen.queryByTestId("industry-chart")).not.toBeInTheDocument();
     await act(async () => release[35]());
-    await screen.findByText(/Historie připravena pro 40 z 49 firem/);
+    await screen.findByTestId("industry-chart");
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(screen.queryByText(/společností připraveno/)).not.toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Vážení indexu" })).toBeVisible();
     expect(screen.getByTestId("industry-chart")).toBeVisible();
     expect(screen.getByText("Výnos za 1Y").parentElement?.querySelector("strong")).not.toHaveTextContent("—");
     expect(screen.getByText(/Neúplný index: 40\/49/)).toBeVisible();
-    expect(screen.getByText("Načítám vývoj odvětví…")).toBeVisible();
+    expect(screen.queryByText("Načítáme vývoj odvětví")).not.toBeInTheDocument();
     load.mockImplementation(async (asset, range) => history(asset, range));
     await act(async () => release.slice(36).forEach((resolve) => resolve()));
-    await waitFor(() => expect(screen.queryByText("Načítám vývoj odvětví…")).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Index 100 →/)).toHaveTextContent("49/49"));
     expect(screen.getByText(/Index 100 →/)).toHaveTextContent("49/49");
   } finally { bounds.mockRestore(); }
 }, 15000);
@@ -87,10 +102,10 @@ test("weighted capitalization gaps do not masquerade as missing price history", 
   load.mockImplementation(async (asset, range) => history(asset, range));
   render(<ThemeDetail theme={marketThemes[0]} industry={industry} locale="cs-CZ" initialNavigation={{ industry: "ai", period: "1M", weighting: "capitalization" }} />);
   await screen.findByText("Nedostatečné pokrytí kapitalizací pro vážený index");
-  expect(screen.getByText(/Historie připravena pro 60 z 60 firem/)).toBeVisible();
+  expect(screen.getByText(/Historie je dostupná pro 60 z 60 společností/)).toBeVisible();
   expect(screen.queryByTestId("industry-chart")).not.toBeInTheDocument();
-  expect(screen.getByText(/Dostupný je pohled Equal-weight/)).toBeVisible();
-  await userEvent.click(screen.getByRole("button", { name: /^Equal-weight/ }));
+  expect(screen.getByRole("button", { name: "Zobrazit Equal-weight" })).toBeVisible();
+  await userEvent.click(screen.getByRole("button", { name: "Zobrazit Equal-weight" }));
   expect(screen.getByTestId("industry-chart")).toBeVisible();
   expect(load).toHaveBeenCalledTimes(60);
 });

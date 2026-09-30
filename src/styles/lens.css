@@ -3022,3 +3022,22 @@ button.contribution-row[aria-pressed="true"] {
 .industry-history-progress progress::-webkit-progress-bar { background: #ffffff16; }
 .industry-history-progress progress::-webkit-progress-value { background: #a5b8c5; }
 .industry-history-progress progress::-moz-progress-bar { background: #a5b8c5; }
+
+/* One Pulse presentation; acquisition and financial eligibility stay in their services. */
+.industry-pulse { min-width: 0; }
+.industry-pulse-content { min-width: 0; }
+.industry-pulse[data-view="loading"] .industry-pulse-content { min-height: 620px; display: grid; align-items: center; }
+.industry-pulse .industry-history-progress { width: 100%; max-width: 640px; }
+.industry-history-progress > strong { display: block; font-size: 18px; font-weight: 500; }
+.industry-progress-count { display: flex; flex-wrap: wrap; gap: 4px 8px; font-variant-numeric: tabular-nums; }
+.industry-progress-count > span { white-space: nowrap; }
+.industry-pulse-recovery { padding: 8px 0; text-decoration: underline; text-underline-offset: 4px; }
+.industry-pulse-recovery:focus-visible { outline: 2px solid var(--color-text-primary); outline-offset: 4px; }
+@media (max-width: 760px) {
+  .industry-pulse[data-view="loading"] .industry-pulse-content { min-height: 0; display: block; }
+  .industry-progress-count { font-size: 12px; }
+}
+/* Content replaces content without an animation dependency, also under reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .industry-pulse, .industry-pulse * { animation: none !important; transition: none !important; }
+}
