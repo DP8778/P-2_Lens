@@ -24,8 +24,8 @@ test("clicking a company row outside its link and pressing Enter navigate to exi
   row.focus();
   await user.keyboard("{Enter}");
   expect(push).toHaveBeenCalledTimes(2);
-  await user.click(screen.getByRole("button", { name: "MarketCap · řadit" }));
-  expect(screen.getByRole("columnheader", { name: /MarketCap/ })).toHaveAttribute("aria-sort", "ascending");
-  await user.click(screen.getByRole("button", { name: "MarketCap · řadit" }));
-  expect(screen.getByRole("columnheader", { name: /MarketCap/ })).toHaveAttribute("aria-sort", "descending");
+  await user.click(screen.getByRole("button", { name: "Kapitalizace · řadit" }));
+  expect(screen.getByRole("columnheader", { name: /Kapitalizace/ })).toHaveAttribute("aria-sort", "ascending");
+  await user.click(screen.getByRole("button", { name: "Kapitalizace · řadit" }));
+  expect(screen.getByRole("columnheader", { name: /Kapitalizace/ })).toHaveAttribute("aria-sort", "descending");
 });

@@ -39,6 +39,7 @@ test("missing, wrong-asset and inconsistent statements cannot fabricate a financ
   render(<FinancialAnatomy assetId="test" locale="cs-CZ" />);
   expect(screen.getByRole("status")).toHaveTextContent("Finanční výkazy nejsou dostupné");
   expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  expect(screen.queryByLabelText("Finanční přehled")).not.toBeInTheDocument();
   expect(screen.queryByText(/0 %/)).not.toBeInTheDocument();
 });
 
@@ -58,4 +59,22 @@ test("losses remain signed and never become negative-width flows", () => {
   expect(data.latest.netIncome).toBe(-20);
   expect(data.flowAvailable).toBe(false);
   expect(data.links).toEqual([]);
+});
+
+test("financial snapshot uses verified period, comparable growth and existing margin", () => {
+  render(<FinancialAnatomy assetId="test" locale="cs-CZ" statements={[
+    { ...statement, period: "2024-12-31" },
+    { ...statement, revenue: 1200, costOfRevenue: 600 },
+  ]} />);
+  const snapshot = screen.getByLabelText("Finanční přehled");
+  expect(snapshot).toHaveTextContent("Ověřené období: 12 měsíců do 31. 12. 2025");
+  expect(snapshot).toHaveTextContent(/Tržby meziročně \+20,0\s*%/);
+  expect(snapshot).toHaveTextContent(/Provozní marže \+25,0\s*%/);
+});
+
+test("financial snapshot omits unavailable growth instead of presenting zero", () => {
+  render(<FinancialAnatomy assetId="test" locale="cs-CZ" statements={[statement]} />);
+  const snapshot = screen.getByLabelText("Finanční přehled");
+  expect(snapshot).not.toHaveTextContent("Tržby meziročně");
+  expect(snapshot).toHaveTextContent(/Provozní marže \+30,0\s*%/);
 });

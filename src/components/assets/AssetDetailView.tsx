@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Plus } from "lucide-react";
 import type { Locale } from "@/i18n/getDictionary";
+import { marketThemes } from "@/data/market-themes";
 import type { FundamentalsRecord } from "@/lib/finance/industry-data";
 import { AssetIndustryContext } from "./AssetIndustryContext";
 import type { IndustryView } from "@/lib/finance/industry-data";
-import type { IndustryNavigation } from "@/lib/markets/industry-navigation";
+import { industryBackHref, type IndustryNavigation } from "@/lib/markets/industry-navigation";
 import { FinancialAnatomy } from "./FinancialAnatomy";
 import { AssetPriceChart } from "@/components/charts/AssetPriceChart";
 import { AddAssetDialog } from "@/components/portfolio/AddAssetDialog";
@@ -30,6 +31,10 @@ const nativeMoney = (value: number, currency: string, locale: string) =>
 
 export function AssetDetailView({ assetId, locale, fundamentals, industry, industryNavigation }: { assetId: string; locale: Locale; fundamentals?: FundamentalsRecord; industry?: IndustryView; industryNavigation?: IndustryNavigation }) {
   const router = useRouter();
+  const en = locale === "en-US";
+  const context = industry && industryNavigation && industry.id === industryNavigation.industry
+    && industry.members.some((member) => member.asset.id === assetId) ? industryNavigation : undefined;
+  const themeName = marketThemes.find((theme) => theme.id === context?.industry)?.name;
   const { assets, holdings, market } = usePortfolio();
   const ownedAsset = assets.find((candidate) => candidate.id === assetId);
   const [resolvedAsset, setResolvedAsset] = useState<MarketAsset>();
@@ -43,7 +48,7 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
   const [quoteAlternative, setQuoteAlternative] = useState<{ asset: MarketAsset; quote: MarketQuote }>();
   const [alternativeLoading, setAlternativeLoading] = useState(false);
   const [fxRate, setFxRate] = useState<number>();
-  const [timeframe, setTimeframe] = useState<AssetRange>("1M");
+  const [timeframe, setTimeframe] = useState<AssetRange>(context?.period ?? "1M");
   const [annualHistory, setAnnualHistory] = useState<MarketPricePoint[]>([]);
   const [annualHistoryLoading, setAnnualHistoryLoading] = useState(false);
   const [annualHistoryError, setAnnualHistoryError] = useState(false);
@@ -186,8 +191,14 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
     [annualHistory, quote?.price],
   );
 
-  if (!asset && assetLoading) return <main className="asset-detail-page"><p className="asset-detail-state">Načítám instrument…</p></main>;
-  if (!asset && assetError) return <main className="asset-detail-page"><Link className="asset-back-link" href={`/${locale}/dashboard`}><ArrowLeft size={15} />Portfolio</Link><p className="asset-detail-state">Instrument se nepodařilo načíst.</p></main>;
+  const backNavigation = <nav className="asset-detail-navigation" aria-label={en ? "Asset navigation" : "Navigace aktiva"}>
+    {context && <Link className="asset-back-link asset-context-navigation" href={industryBackHref(locale, context)}><ArrowLeft size={15} />{en ? "Back to theme" : "Zpět na téma"}: {themeName}</Link>}
+    <Link className="asset-back-link" href={`/${locale}/dashboard`}>{!context && <ArrowLeft size={15} />}Portfolio</Link>
+    {(asset?.type === "stock" || context) && <Link className="asset-back-link" href={`/${locale}/markets`}>Markets</Link>}
+  </nav>;
+
+  if (!asset && assetLoading) return <main className="asset-detail-page">{backNavigation}<p className="asset-detail-state">Načítám instrument…</p></main>;
+  if (!asset && assetError) return <main className="asset-detail-page">{backNavigation}<p className="asset-detail-state">Instrument se nepodařilo načíst.</p></main>;
   if (!asset) return null;
 
   const quoteState = quote?.marketState === "open" && quote.freshness === "fresh" ? "Trh otevřen" : "Poslední zavírací cena";
@@ -197,7 +208,7 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
 
   return (
     <main className="asset-detail-page page-enter">
-      <nav className="asset-detail-navigation" aria-label={locale === "en-US" ? "Asset navigation" : "Navigace aktiva"}><Link className="asset-back-link" href={`/${locale}/dashboard`}><ArrowLeft size={15} />Portfolio</Link>{asset.type === "stock" && <Link className="asset-back-link" href={`/${locale}/markets`}>Markets</Link>}</nav>
+      {backNavigation}
 
       <header className="asset-detail-header">
         <div className="asset-detail-identity">
@@ -222,7 +233,7 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
           {quoteError && quote && <small>Aktualizace ceny se nezdařila; zobrazuji poslední dostupnou hodnotu.</small>}
         </div>
       </header>
-      {industry && industryNavigation && <AssetIndustryContext key={`${assetId}:${industryNavigation.industry}:${industryNavigation.period}:${industryNavigation.weighting}:${industryNavigation.asOf}:${industry.version}`} assetId={assetId} locale={locale} industry={industry} navigation={industryNavigation} />}
+      {industry && context && <AssetIndustryContext key={`${assetId}:${context.industry}:${context.period}:${context.weighting}:${context.asOf}:${context.version}:${industry.version}`} assetId={assetId} locale={locale} industry={industry} navigation={context} />}
 
       <section className="asset-performance-strip" aria-label="Výkonnost aktiva">
         <dl>

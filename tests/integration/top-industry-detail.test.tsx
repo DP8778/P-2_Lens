@@ -25,13 +25,13 @@ test("the persisted universe powers all views; partial history is never presente
   expect(screen.queryByTestId("industry-chart")).not.toBeInTheDocument();
   expect(loadHistory).toHaveBeenCalledTimes(industry.members.length);
   expect(screen.getByText(new RegExp(`Historie je dostupná pro 2 z ${industry.members.length}`))).toBeVisible();
-  expect(screen.getByText("Celková kapitalizace")).toBeVisible();
-  expect(screen.getByText("Souhrnné roční tržby")).toBeVisible();
-  const map = screen.getByRole("region", { name: "Mapa odvětví" });
+  expect(screen.getByText("Kapitalizace univerza")).toBeVisible();
+  expect(screen.getByText("Součet dostupných ročních tržeb")).toBeVisible();
+  const map = screen.getByRole("region", { name: "Mapa univerza" });
   expect(within(map).getAllByRole("link")).toHaveLength(industry.members.length);
   await userEvent.click(screen.getByText(/Prozkoumat všechny firmy/));
   bounds.mockRestore();
-  const table = screen.getByRole("region", { name: "Firmy v odvětví" });
+  const table = screen.getByRole("region", { name: "Firmy v univerzu" });
   expect(within(table).getAllByRole("row")).toHaveLength(industry.members.length + 1);
   await userEvent.click(screen.getByRole("button", { name: "1Y" }));
   expect(screen.queryByRole("group", { name: "Vážení indexu" })).not.toBeInTheDocument();

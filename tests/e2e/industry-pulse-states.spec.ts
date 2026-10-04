@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('Industry Pulse replaces progress with results while the market map remains available', async ({ page }, testInfo) => {
+test('Lens Pulse replaces progress with results while the market map remains available', async ({ page }, testInfo) => {
   // Deterministic transport fixtures only; the UI uses the real loader and coverage policy.
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -44,8 +44,8 @@ test('Industry Pulse replaces progress with results while the market map remains
   });
   await page.goto('/cs-CZ/markets?theme=semiconductors');
   await page.getByRole('button', { name: '1M', exact: true }).click();
-  const pulse = page.getByRole('region', { name: 'Industry Pulse', exact: true });
-  const progress = pulse.getByRole('progressbar', { name: 'Příprava cenové historie odvětví' });
+  const pulse = page.getByRole('region', { name: 'Lens Pulse', exact: true });
+  const progress = pulse.getByRole('progressbar', { name: 'Příprava cenové historie tématu' });
   await expect(progress).toHaveAttribute('aria-valuenow', '13');
   await expect(progress).toHaveAttribute('aria-valuemin', '0');
   await expect(progress).toHaveAttribute('aria-valuemax', '49');
@@ -55,7 +55,10 @@ test('Industry Pulse replaces progress with results while the market map remains
   await expect(page.locator('.industry-treemap a')).toHaveCount(49);
   await expect(page.locator('.industry-treemap a[aria-label*="Výnos nedostupný"]')).toHaveCount(36);
   await pulse.screenshot({ path: testInfo.outputPath('loading-13.png') });
+  // Loading has a bounded footprint instead of the old 620px blank content area.
   const loadingHeight = (await pulse.boundingBox())!.height;
+  expect(loadingHeight).toBeGreaterThan(300);
+  expect(loadingHeight).toBeLessThan(520);
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(progress).toBeVisible();
   expect((await pulse.boundingBox())!.height).toBeLessThan(450);
@@ -77,7 +80,7 @@ test('Industry Pulse replaces progress with results while the market map remains
   await expect(pulse.locator('.theme-period-return strong')).not.toHaveText('—');
   await expect(pulse.locator('.theme-history-chart')).toBeVisible();
   await expect(page.locator('.industry-treemap a')).toHaveCount(49);
-  expect(Math.abs((await pulse.boundingBox())!.height - loadingHeight)).toBeLessThan(180);
+  expect((await pulse.boundingBox())!.height).toBeLessThan(1050);
   await pulse.screenshot({ path: testInfo.outputPath('ready.png') });
   release(1000);
   await expect(page.locator('.theme-detail')).toHaveAttribute('data-performance-state', 'reliable');

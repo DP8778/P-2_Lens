@@ -35,8 +35,8 @@ test("4/49 hides industry analytics; 40/49 unlocks while remaining histories are
   try {
     render(<ThemeDetail theme={theme} industry={industry} locale="cs-CZ" />);
     await screen.findByText("4 z 49 společností připraveno");
-    expect(screen.getByText("Načítáme vývoj odvětví")).toBeVisible();
-    const progress = screen.getByRole("progressbar", { name: "Příprava cenové historie odvětví" });
+    expect(screen.getByText("Načítáme vývoj tématu")).toBeVisible();
+    const progress = screen.getByRole("progressbar", { name: "Příprava cenové historie tématu" });
     expect(progress).toHaveAttribute("aria-valuemin", "0");
     expect(progress).toHaveAttribute("aria-valuemax", "49");
     expect(progress).toHaveAttribute("aria-valuenow", "4");
@@ -48,11 +48,11 @@ test("4/49 hides industry analytics; 40/49 unlocks while remaining histories are
     expect(screen.queryByTestId("industry-chart")).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Co táhne téma?" })).not.toBeInTheDocument();
     expect(screen.getByText("49/49 známých kapitalizací")).toBeVisible();
-    const map = screen.getByRole("region", { name: "Mapa odvětví" });
+    const map = screen.getByRole("region", { name: "Mapa univerza" });
     expect(within(map).getAllByRole("link")).toHaveLength(49);
     expect(within(map).getAllByRole("link", { name: /Výnos nedostupný/ })).toHaveLength(45);
     await userEvent.click(screen.getByText(/Prozkoumat šíři růstu/));
-    const distributions = screen.getByRole("region", { name: "Přehled odvětví" });
+    const distributions = screen.getByRole("region", { name: "Struktura univerza" });
     expect(within(distributions).queryByRole("img", { name: /Roste/ })).not.toBeInTheDocument();
     expect(distributions.querySelector(".industry-histogram")).toBeNull();
     await userEvent.click(screen.getByText(/Prozkoumat všechny firmy/));
@@ -79,7 +79,7 @@ test("4/49 hides industry analytics; 40/49 unlocks while remaining histories are
     expect(screen.getByTestId("industry-chart")).toBeVisible();
     expect(screen.getByText("Výnos za 1Y").parentElement?.querySelector("strong")).not.toHaveTextContent("—");
     expect(screen.getByText(/Neúplný index: 40\/49/)).toBeVisible();
-    expect(screen.queryByText("Načítáme vývoj odvětví")).not.toBeInTheDocument();
+    expect(screen.queryByText("Načítáme vývoj tématu")).not.toBeInTheDocument();
     load.mockImplementation(async (asset, range) => history(asset, range));
     await act(async () => release.slice(36).forEach((resolve) => resolve()));
     await waitFor(() => expect(screen.getByText(/Index 100 →/)).toHaveTextContent("49/49"));

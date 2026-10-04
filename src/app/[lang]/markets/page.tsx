@@ -1,18 +1,18 @@
-import { readIndustryNavigation, type IndustrySearchParams } from "@/lib/markets/industry-navigation";
+import { connection } from "next/server";
 import { fundamentalsSource } from "@/lib/fundamentals/snapshot-source";
 import { notFound } from "next/navigation";
 import { MarketPulse } from "@/components/markets/MarketPulse";
 import { isLocale } from "@/i18n/getDictionary";
 
-export default async function MarketsPage({ params, searchParams }: { params: Promise<{ lang: string }>; searchParams: Promise<IndustrySearchParams> }) {
-  const [{ lang }, query] = await Promise.all([params, searchParams]);
-  const theme = typeof query.theme === "string" ? query.theme : undefined;
-  const navigation = readIndustryNavigation({ ...query, industry: theme });
+export default async function MarketsPage({ params }: { params: Promise<{ lang: string }> }) {
+  // Request-time rendering supplies the current URL to the client research view.
+  await connection();
+  const { lang } = await params;
   if (!isLocale(lang)) notFound();
   return (
     <div className="markets-page page-enter">
-      <header><span>Market Pulse</span><h1>Markets</h1><p>Technologická odvětví, sledované firmy a jejich vývoj v čase.</p></header>
-      <MarketPulse initialNavigation={navigation} locale={lang} variant="full" initialThemeId={theme} industries={fundamentalsSource.getIndustries()} />
+      <header><span>{lang === "en-US" ? "Lens universes" : "Univerza Lens"}</span><h1>Markets</h1><p>{lang === "en-US" ? "Technology themes, tracked companies and their development over time." : "Technologická témata, sledované firmy a jejich vývoj v čase."}</p></header>
+      <MarketPulse locale={lang} variant="full" industries={fundamentalsSource.getIndustries()} />
     </div>
   );
 }

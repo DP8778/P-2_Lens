@@ -1,135 +1,55 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 import type { Locale } from "@/i18n/getDictionary";
-import { marketThemeAssets, marketThemes, type MarketTheme } from "@/data/market-themes";
-import { getBrowserMarketDataCache } from "@/lib/market-data/cache/market-cache";
-import { loadQuotes } from "@/lib/market-data/service";
-import type { MarketQuote } from "@/lib/market-data/types";
-import { percent } from "@/components/charts/chart-formatters";
-
+import { marketThemes } from "@/data/market-themes";
 import type { IndustryView } from "@/lib/finance/industry-data";
-import { industryCompanies } from "@/data/market-industries";
-import { industryAssetHref, type IndustryNavigation } from "@/lib/markets/industry-navigation";
+import { dateLabel } from "@/components/charts/chart-formatters";
+import { industryBackHref, readIndustryNavigation, type IndustryNavigation } from "@/lib/markets/industry-navigation";
 import { ThemeDetail } from "./ThemeDetail";
 
-const defaultTheme = marketThemes[0];
+export type IndustryDiscovery = { companies: number; updatedAt: string; version: string };
+type Props = { locale: Locale; variant?: "compact" | "full"; industries?: Record<string, IndustryView>; discovery?: Record<string, IndustryDiscovery> };
 
-const price = (quote: MarketQuote, locale: string) =>
-  `${quote.price.toLocaleString(locale, { maximumFractionDigits: 2 })} ${quote.currency}`;
-
-function summarize(theme: MarketTheme, quotes: Map<string, MarketQuote>) {
-  const available = theme.constituents.flatMap((asset) => {
-    const quote = quotes.get(asset.id);
-    return quote?.changePercent === undefined ? [] : [{ asset, quote }];
-  });
-  const average = available.length
-    ? available.reduce((sum, item) => sum + item.quote.changePercent!, 0) / available.length
-    : undefined;
-  const sorted = [...available].sort((left, right) => right.quote.changePercent! - left.quote.changePercent!);
-  return {
-    average,
-    coverage: theme.constituents.filter((asset) => quotes.has(asset.id)).length,
-    rising: available.filter((item) => item.quote.changePercent! > 0).length,
-    falling: available.filter((item) => item.quote.changePercent! < 0).length,
-    measured: available.length,
-    topGainer: sorted[0],
-    topLoser: sorted.at(-1),
-  };
+/** Discovery uses snapshot metadata only: no quotes, history or compatibility-basket returns. */
+export function MarketPulse({ locale, variant = "compact", industries, discovery }: Props) {
+  const en = locale === "en-US";
+  if (variant === "full") return <MarketsExplorer locale={locale} industries={industries} />;
+  return <section className="market-pulse compact" aria-labelledby="market-pulse-title-compact">
+    <header><div><span>{en ? "Lens universes" : "Univerza Lens"}</span><h2 id="market-pulse-title-compact">{en ? "Explore themes" : "Prozkoumat témata"}</h2></div><Link href={`/${locale}/markets`}>{en ? "Open Markets →" : "Otevřít Markets →"}</Link></header>
+    <div className="market-theme-grid">{marketThemes.map(theme => {
+      const snapshot = discovery?.[theme.id];
+      return <Link className="market-theme-card" href={`/${locale}/markets?theme=${theme.id}`} key={theme.id}>
+        <span>{theme.name}</span>
+        <strong>{snapshot ? `${snapshot.companies} ${en ? "companies" : "firem"}` : en ? "Explore theme" : "Prozkoumat téma"}</strong>
+        <small>{snapshot ? `${en ? "Snapshot" : "Data k"} ${dateLabel(snapshot.updatedAt.slice(0, 10), locale)}` : en ? "Lens universe" : "Univerzum Lens"}</small>
+        <small>{en ? "Open theme →" : "Otevřít téma →"}</small>
+      </Link>;
+    })}</div>
+  </section>;
 }
 
-export function MarketPulse({ locale, variant = "compact", initialThemeId, industries, initialNavigation }: { locale: Locale; variant?: "compact" | "full"; initialThemeId?: string; industries?: Record<string, IndustryView>; initialNavigation?: IndustryNavigation }) {
-  const [quotes, setQuotes] = useState<MarketQuote[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [navigation, setNavigation] = useState<IndustryNavigation | undefined>(initialNavigation);
-  const [selectedThemeId, setSelectedThemeId] = useState(
-    marketThemes.some((theme) => theme.id === initialThemeId) ? initialThemeId! : defaultTheme.id,
-  );
-
-  const selectedTheme = marketThemes.find((theme) => theme.id === selectedThemeId) ?? defaultTheme;
-
-  useEffect(() => {
-    let cancelled = false;
-    const cache = getBrowserMarketDataCache();
-    void (async () => {
-      const cached = await Promise.all(marketThemeAssets.map((asset) => cache.getQuote(asset.id)));
-      if (cancelled) return;
-      setQuotes(cached.flatMap((record) => record ? [record.quote] : []));
-      setError(false);
-      const result = await loadQuotes(selectedTheme.constituents, cache);
-      if (!cancelled) setQuotes((current) =>
-        [...new Map([...current, ...result].map((quote) => [quote.assetId, quote])).values()],
-      );
-    })()
-      .catch(() => { if (!cancelled) setError(true); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [selectedTheme]);
-
-  const byAsset = useMemo(() => new Map(quotes.map((quote) => [quote.assetId, quote])), [quotes]);
-
-  return (
-    <section className={`market-pulse ${variant}`} aria-labelledby={`market-pulse-title-${variant}`}>
-      <header>
-        <div><span>{variant === "full" ? "Lens Industries" : "Lens Theme"}</span><h2 id={`market-pulse-title-${variant}`}>Technology</h2></div>
-        {variant === "compact" && <Link href={`/${locale}/markets`}>Zobrazit Markets →</Link>}
-      </header>
-      {error && <p className="market-pulse-notice" role="status">Část aktuálních market dat není dostupná.</p>}
-      <div className="market-theme-grid" aria-busy={loading}>
-        {marketThemes.map((theme) => {
-          const summary = summarize(theme, byAsset);
-          const pending = loading && selectedTheme.id === theme.id && !summary.coverage;
-          const partial = summary.measured < theme.constituents.length;
-          const content = variant === "full" ? <>
-            <span>{theme.name}<small className="industry-selector-count">{industries?.[theme.id]?.members.length ?? industryCompanies(theme).length} {locale === "en-US" ? "tracked companies" : "sledovaných firem"}</small></span>
-            <small>{industries ? "Lens Top 100 →" : "Industry Index →"}</small>
-          </> : (
-            <>
-              <span>{theme.name}</span>
-              <strong className={partial || summary.average === undefined ? "" : summary.average >= 0 ? "positive" : "negative"}>{pending ? "…" : partial || summary.average === undefined ? "—" : percent(summary.average, locale)}</strong>
-              <small>{pending ? "Načítám…" : summary.coverage
-                ? partial
-                  ? `Částečná data · ${summary.coverage}/${theme.constituents.length} titulů`
-                  : `${summary.coverage} / ${theme.constituents.length} titulů k dispozici · ${summary.rising} roste · ${summary.falling} klesá`
-                : "Data nejsou dostupná"}</small>
-
-            </>
-          );
-          return variant === "compact"
-            ? <Link className="market-theme-card" href={`/${locale}/markets?theme=${theme.id}`} key={theme.id}>{content}</Link>
-            : <button className="market-theme-card" aria-pressed={selectedTheme.id === theme.id} onClick={() => {
-              if (theme.id !== selectedThemeId) {
-                setLoading(true);
-                setError(false);
-                setSelectedThemeId(theme.id);
-              }
-            }} key={theme.id}>{content}</button>;
-        })}
-      </div>
-
-      {variant === "full" && <ThemeDetail onNavigationChange={setNavigation} initialNavigation={initialNavigation} theme={selectedTheme} locale={locale} industry={industries?.[selectedTheme.id]} />}
-
-      {variant === "full" && (
-        <details className="industry-basket-members"><summary>{locale === "en-US" ? "Lens calculation basket" : "Složení výpočtového koše Lens"} · {selectedTheme.constituents.length}</summary>
-        <div className="market-constituents">
-          <div><span>Lens Theme</span><h3>{selectedTheme.name}</h3><small>Equal-weight denní změna dostupných titulů · nejde o tržní index</small></div>
-          <div className="market-constituent-list">
-            {selectedTheme.constituents.map((asset) => {
-              const quote = byAsset.get(asset.id);
-              return (
-                <Link className="market-constituent-row" href={industryAssetHref(locale, asset.id, navigation)} key={asset.id} aria-label={`Detail ${asset.symbol}`}>
-                  <span><strong>{asset.symbol}</strong><small>{asset.name}</small></span>
-                  <b>{quote ? price(quote, locale) : loading ? "Načítám…" : "Cena nedostupná"}</b>
-                  <em className={quote?.changePercent === undefined ? "" : quote.changePercent >= 0 ? "positive" : "negative"}>{quote?.changePercent === undefined ? "—" : percent(quote.changePercent, locale)}</em>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-        </details>
-      )}
-    </section>
-  );
+function MarketsExplorer({ locale, industries }: Pick<Props, "locale" | "industries">) {
+  const en = locale === "en-US";
+  const search = useSearchParams();
+  // Preserve duplicate parameters as arrays so the existing validator rejects them.
+  const query = Object.fromEntries([...search.keys()].map(key => [key, search.getAll(key).length > 1 ? search.getAll(key) : search.get(key)!]));
+  const requested = readIndustryNavigation({ ...query, industry: query.theme });
+  const [today] = useState(() => new Date().toISOString().slice(0, 10));
+  const selectedTheme = marketThemes.find(theme => theme.id === requested?.industry) ?? marketThemes[0];
+  const industry = industries?.[selectedTheme.id];
+  const navigation: IndustryNavigation = { industry: selectedTheme.id, period: requested?.period ?? "1M", weighting: requested?.weighting ?? "equal", asOf: requested?.asOf ?? today, version: requested?.version ?? industry?.version };
+  // One research visit occupies one history entry. Next's native History integration
+  // updates useSearchParams without a server render, scroll reset or loader restart.
+  const navigate = (next: IndustryNavigation) => window.history.replaceState(null, "", industryBackHref(locale, next));
+  return <section className="market-pulse full" aria-labelledby="market-pulse-title-full">
+    <header><div><span>{en ? "Lens universes" : "Univerza Lens"}</span><h2 id="market-pulse-title-full">{en ? "Technology themes" : "Technologická témata"}</h2></div></header>
+    <div className="market-theme-grid">{marketThemes.map(theme => <button className="market-theme-card" aria-pressed={selectedTheme.id === theme.id} key={theme.id} onClick={() => navigate({ ...navigation, industry: theme.id, version: industries?.[theme.id]?.version })}>
+      <span>{theme.name}<small className="industry-selector-count">{industries?.[theme.id] ? `${industries[theme.id].members.length} ${en ? "tracked companies" : "sledovaných firem"}` : en ? "Membership unavailable" : "Členství není dostupné"}</small></span>
+      <small>{en ? "Lens universe →" : "Univerzum Lens →"}</small>
+    </button>)}</div>
+    {industry ? <ThemeDetail theme={selectedTheme} locale={locale} industry={industry} initialNavigation={navigation} onNavigationChange={navigate} /> : <p role="status">{en ? "Verified theme membership is unavailable." : "Ověřené členství tématu není dostupné."}</p>}
+  </section>;
 }

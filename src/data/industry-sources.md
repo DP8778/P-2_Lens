@@ -6,12 +6,14 @@ snapshot supplied by `src/lib/fundamentals/snapshot-source.ts`. See
 ranking, exclusions, update cadence and financial provenance.
 
 The directory and capitalization file below remain only as compatibility data
-for existing compact/legacy consumers and tests. They do not define production
+for legacy compatibility and tests. Dashboard discovery uses canonical snapshot
+counts and dates, without prices or history. They do not define production
 Top 100 membership or its capitalization weights.
 
 This is a Lens editorial selection of US-listed companies across different parts
 of each technology theme, not an exhaustive global industry or official index.
-The existing four-constituent Lens calculation baskets are unchanged.
+The four-constituent compatibility baskets are not displayed in the production
+Markets or Dashboard journey.
 
 Selection references reviewed 2026-09-27:
 - AI: https://www.globalxetfs.com/funds/aiq

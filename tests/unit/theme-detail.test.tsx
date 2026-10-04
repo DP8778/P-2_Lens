@@ -28,7 +28,7 @@ test("loads the full selected universe once; 1M → 3M → 1Y and 1W are derived
   expect(load.mock.calls.map(([asset]) => asset.id)).toEqual(industryCompanies(marketThemes[0]).map((asset) => asset.id));
   expect(screen.getByText("Změřeno 18/18 sledovaných firem")).toBeInTheDocument();
   await user.click(screen.getByText("Prozkoumat šíři růstu a rozdělení výnosů"));
-  expect(within(screen.getByRole("region", { name: "Šíře odvětví" })).getAllByRole("link")).toHaveLength(6);
+  expect(within(screen.getByRole("region", { name: "Šíře tématu" })).getAllByRole("link")).toHaveLength(6);
   expect(screen.getByText(/Index 100 →/)).toHaveTextContent("18/18 firem zahrnuto");
   expect(load).toHaveBeenCalledTimes(18);
   expect(load.mock.calls.every(([, range]) => JSON.stringify(range) === JSON.stringify(themeHistoryRange("1Y")))).toBe(true);
@@ -90,7 +90,7 @@ test("rapid theme switching cancels queued work and ignores late old responses",
   await waitFor(() => expect(load).toHaveBeenCalledTimes(4));
   expect(oldSignals.every((signal) => signal?.aborted)).toBe(true);
   await act(async () => resolvers.slice(0, 2).forEach((resolve) => resolve()));
-  expect(screen.getByText("Načítáme vývoj odvětví")).toBeVisible();
+  expect(screen.getByText("Načítáme vývoj tématu")).toBeVisible();
   expect(screen.queryByTestId("theme-chart")).not.toBeInTheDocument();
   load.mockImplementation(async (asset, range) => history(asset, range));
   await act(async () => resolvers.slice(2).forEach((resolve) => resolve()));
@@ -187,7 +187,7 @@ test.each(["cs-CZ", "en-US"])("industry company rows navigate to Asset Detail an
   await screen.findByTestId("theme-chart");
   await waitFor(() => expect(screen.getByText(/Index 100 →/)).toHaveTextContent(`${industryCompanies(marketThemes[0]).length}/${industryCompanies(marketThemes[0]).length}`));
   await userEvent.click(screen.getByText(locale === "en-US" ? /Explore all companies/ : /Prozkoumat všechny firmy/));
-  const table = screen.getByRole("region", { name: locale === "en-US" ? "Industry companies" : "Firmy v odvětví" });
+  const table = screen.getByRole("region", { name: locale === "en-US" ? "Universe companies" : "Firmy v univerzu" });
   for (const asset of marketThemes[0].constituents) {
     expect(within(table).getByRole("link", { name: new RegExp(asset.symbol) })).toHaveAttribute("href", `/${locale}/assets/${encodeURIComponent(asset.id)}?industry=ai&period=1M&weighting=equal&asOf=${new Date().toISOString().slice(0, 10)}`);
   }

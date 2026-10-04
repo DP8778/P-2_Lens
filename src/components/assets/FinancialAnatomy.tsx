@@ -51,6 +51,11 @@ export function FinancialAnatomy({ assetId, locale, statements, fetchedAt, stale
       <p className="financial-flow-outline">{en ? "Revenue → Gross profit → Operating income → Net income" : "Tržby → Hrubý zisk → Provozní zisk → Čistý zisk"}</p>
       <p>{en ? "Revenue structure, growth, margins and the financial flow will appear only with verified statements." : "Struktura tržeb, růst, marže a finanční tok se zobrazí pouze s ověřenými výkazy."}</p>
     </div> : <>
+      <p className="financial-snapshot" aria-label={en ? "Financial snapshot" : "Finanční přehled"}>
+        <strong>{en ? "Verified period" : "Ověřené období"}: {data.latest.durationMonths} {en ? "months to" : "měsíců do"} {new Date(`${data.latest.period}T12:00:00Z`).toLocaleDateString(locale)}.</strong>{" "}
+        {data.revenueGrowth !== undefined && <>{en ? "Revenue year on year" : "Tržby meziročně"} {percent(data.revenueGrowth, locale)}. </>}
+        {en ? "Operating margin" : "Provozní marže"} {percent(data.operatingMargin, locale)}.
+      </p>
       <details className="financial-sources"><summary>{data.latest.period} · {en ? "Verified statements · sources and freshness" : "Ověřené výkazy · zdroje a aktuálnost"}{stale ? (en ? " · stale" : " · starší data") : ""}</summary>
       {fetchedAt && <p className="industry-data-note">{en ? "Statements retrieved" : "Výkazy načteny"} · {new Date(fetchedAt).toLocaleDateString(locale)}{stale ? (en ? " · Refresh failed; last verified data" : " · Obnovení selhalo; poslední ověřená data") : ""}</p>}
       <p className="industry-data-note">{data.latest.period} · {data.latest.durationMonths} {en ? "months" : "měsíců"} · {data.latest.currency} · <a href={data.latest.source} target="_blank" rel="noreferrer">{en ? "Statement source" : "Zdroj výkazu"}</a></p>

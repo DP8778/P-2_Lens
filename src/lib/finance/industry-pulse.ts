@@ -31,7 +31,7 @@ export const industryPulseCopy: Record<IndustryPulseKind, [string, string]> = {
   insufficient: ["Pokrytí nebo aktuálnost dat zatím nestačí k jistému posouzení účasti firem.", "Coverage or freshness is insufficient to assess participation confidently."],
   "different-cohorts": ["Řady zahrnují různé firmy nebo data. Jejich rozdíl nelze vykládat jako vliv velikosti firem.", "The series cover different companies or dates. Their gap cannot be attributed to company size."],
   "narrow-positive": ["Vážený index roste, ale méně než polovina změřených firem je v plusu.", "The weighted index is positive, but fewer than half of measured companies are rising."],
-  "large-leading": ["Ve změřené části odvětví vedou toto období větší společnosti.", "Larger companies are leading this period in the measured universe."],
+  "large-leading": ["Ve změřené části univerza vedou toto období větší společnosti.", "Larger companies are leading this period in the measured universe."],
   "broad-positive": ["Růst je rozložený napříč většinou změřených firem.", "Gains are broadly distributed across the measured universe."],
   "broad-negative": ["Pokles zasahuje většinu změřených firem při obou způsobech vážení.", "Declines affect most measured companies under both weighting methods."],
   mixed: ["Účast firem je smíšená. Rozdíl vah sám o sobě nepotvrzuje plošný pohyb.", "Participation is mixed. The weighting gap alone does not establish a broad move."],
