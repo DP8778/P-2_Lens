@@ -157,7 +157,7 @@ export function DashboardView({ locale, industryDiscovery }: { locale: Locale; d
             <PortfolioHeroChart analysis={analysis} visibleAnalysis={visibleAnalysis} overview={overview} locale={locale} />
             <LensInsight analysis={analysis} locale={locale} dataSource={mode === "personal" ? "live" : "mock"} context={{ transactions, selectedRange: state.selectedRange, timeframe: state.timeframe, mode: state.mode, benchmarkId: state.benchmarkId, compareAssetId: state.compareAssetId, showBenchmark: state.showBenchmark, selectedPoint: state.selectedPoint }} />
           </div>
-          <HoldingsTable analysis={analysis} holdings={analysis.holdings} locale={locale} onAdd={() => setAdd({})} period={period} editable={mode === "personal"} />
+          <HoldingsTable analysis={analysis} holdings={analysis.holdings} locale={locale} onAdd={() => setAdd({})} period={period} editable={mode === "personal"} dataMode={mode} />
           <AnalysisInspector state={state} analysis={analysis} />
           <MarketDataInspector mode={mode} assets={analysisDataset?.assets ?? []} market={market} />
         </>

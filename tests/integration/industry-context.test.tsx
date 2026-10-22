@@ -10,12 +10,18 @@ import { getBrowserMarketDataCache } from "@/lib/market-data/cache/market-cache"
 import { industryAssetHref, industryBackHref, readIndustryNavigation, type IndustryNavigation } from "@/lib/markets/industry-navigation";
 import { loadHistory } from "@/lib/market-data/service";
 import { themeHistoryRange } from "@/lib/finance/theme-performance";
+import { knownDemoInstruments } from "@/lib/instruments/identity";
 
 const push = jest.fn();
 jest.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 jest.mock("@/components/portfolio/PortfolioProvider", () => ({ usePortfolio: () => ({ assets: fundamentalsSource.getIndustries().ai.members.map((m) => m.asset), holdings: [], market: { quotes: [], prices: [], fxRates: [] } }) }));
 jest.mock("@/components/charts/AssetPriceChart", () => ({ AssetPriceChart: () => <div>Price chart</div> }));
 jest.mock("@/components/portfolio/AddAssetDialog", () => ({ AddAssetDialog: () => null }));
+jest.mock("@/components/assets/CompanyResearch", () => ({
+  useCompanyResearch: () => ({ loading: false, refresh: jest.fn() }),
+  CompanyOverview: () => null,
+  CompanyResearchSections: () => null,
+}));
 jest.mock("@/lib/market-data/service", () => ({ loadHistory: jest.fn().mockRejectedValue(Error("offline")), loadQuotePreview: jest.fn().mockResolvedValue(undefined), loadFxQuote: jest.fn().mockResolvedValue(undefined) }));
 const industry = fundamentalsSource.getIndustries().ai;
 const asset = industry.members[0].asset;
@@ -67,9 +73,49 @@ test("direct Asset Detail has no industry context and a compact unavailable pric
   const unavailable = await screen.findByText("Historická data momentálně nejsou dostupná.");
   expect(unavailable).toHaveClass("asset-history-unavailable");
   expect(screen.queryByLabelText("Kontext tématu")).not.toBeInTheDocument();
-  expect(within(screen.getByLabelText("Období grafu")).getByRole("button", { name: "1M" })).toHaveAttribute("aria-pressed", "true");
+  expect(within(screen.getByLabelText("Období grafu")).getByRole("button", { name: "1Y" })).toHaveAttribute("aria-pressed", "true");
   expect(within(screen.getByRole("navigation", { name: "Navigace aktiva" })).getAllByRole("link")[0]).toHaveTextContent("Portfolio");
   await waitFor(() => expect(loadHistory).toHaveBeenCalledTimes(1));
+});
+
+test.each(knownDemoInstruments)("demo $demoAssetId keeps its identity, graph, position and sourced statements", async ({ demoAssetId, instrument }) => {
+  const fundamentals = fundamentalsSource.getCompany(instrument.id);
+  render(<AssetDetailView
+    assetId={instrument.id}
+    initialAsset={instrument}
+    entry={{ source: "demo", positionAssetId: demoAssetId }}
+    fundamentals={fundamentals}
+    marketConfigured={false}
+    locale="cs-CZ"
+  />);
+
+  expect(screen.getByRole("heading", { name: instrument.name, level: 1 })).toBeVisible();
+  expect(screen.getByText(/Demo cena · nejde o tržní data/)).toBeVisible();
+  expect(screen.getByRole("note")).toHaveTextContent("lens-demo-2026.09-v2");
+  expect(screen.getByText("Price chart")).toBeVisible();
+  expect(screen.getByRole("heading", { name: "Jak z tržeb vzniká zisk?" })).toBeVisible();
+  expect(screen.getByText(/Ověřené období/)).toBeVisible();
+  expect(screen.getByRole("heading", { name: "Demo pozice" })).toBeVisible();
+  expect(screen.getByText("Současná hodnota").nextElementSibling).not.toHaveTextContent("—");
+  expect(loadHistory).not.toHaveBeenCalled();
+});
+
+test("known company keeps identity and financial statements when prices are unavailable", async () => {
+  const instrument = knownDemoInstruments[1].instrument;
+  render(<AssetDetailView
+    assetId={instrument.id}
+    initialAsset={instrument}
+    fundamentals={fundamentalsSource.getCompany(instrument.id)}
+    marketConfigured={false}
+    locale="cs-CZ"
+  />);
+
+  expect(screen.getByRole("heading", { name: instrument.name, level: 1 })).toBeVisible();
+  expect(await screen.findByText(`Cena pro ${instrument.exchange} není dostupná.`)).toBeVisible();
+  expect(await screen.findByText("Historická data momentálně nejsou dostupná.")).toBeVisible();
+  expect(within(screen.getByRole("region", { name: "Co firma dělá a jak vydělává?" })).getByText(/Compute & Networking/)).not.toHaveTextContent("+89,6 %");
+  expect(screen.getByRole("heading", { name: "Jak z tržeb vzniká zisk?" })).toBeVisible();
+  expect(screen.queryByText("Finanční výkazy nejsou dostupné")).not.toBeInTheDocument();
 });
 
 test("company opens in the research period and primary back preserves the exact theme state", async () => {
@@ -95,7 +141,7 @@ test("membership mismatch keeps direct Asset Detail defaults instead of applying
   render(<AssetDetailView assetId={asset.id} locale="cs-CZ" industry={industry} industryNavigation={{ ...navigation, industry: "cybersecurity" }} />);
   expect(screen.queryByLabelText("Kontext tématu")).not.toBeInTheDocument();
   expect(screen.queryByRole("link", { name: /Zpět na téma/ })).not.toBeInTheDocument();
-  expect(within(screen.getByLabelText("Období grafu")).getByRole("button", { name: "1M" })).toHaveAttribute("aria-pressed", "true");
+  expect(within(screen.getByLabelText("Období grafu")).getByRole("button", { name: "1Y" })).toHaveAttribute("aria-pressed", "true");
   await waitFor(() => expect(loadHistory).toHaveBeenCalledTimes(1));
 });
 

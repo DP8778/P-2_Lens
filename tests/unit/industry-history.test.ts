@@ -53,6 +53,16 @@ test("full cache makes zero requests; mixed cache requests only missing assets",
   expect(fetchHistory).not.toHaveBeenCalled();
 });
 
+test("disabled provider exposes cached observations and starts no network requests", async () => {
+  const cache = new MemoryMarketDataCache();
+  await seed(cache, assets[0], true);
+  const result = await loadIndustryHistories({ assets, range, cache, networkEnabled: false });
+  expect(result).toMatchObject({ ready: 1, failed: assets.length, loading: 0, done: true });
+  expect(result.histories.get(assets[0].id)).toHaveLength(2);
+  expect(result.stale.has(assets[0].id)).toBe(true);
+  expect(fetchHistory).not.toHaveBeenCalled();
+});
+
 test("permanent missing symbol fails once, keeps other companies, never creates zero returns", async () => {
   const cache = new MemoryMarketDataCache();
   fetchHistory.mockImplementation(async (asset) => { if (asset.id === assets[0].id) throw new MarketDataError("NO_HISTORY", "missing", false, 404); return response(asset); });

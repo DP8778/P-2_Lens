@@ -4,6 +4,7 @@ import { marketAssetSchema } from "@/lib/market-data/validation";
 import { validStatement } from "@/lib/finance/fundamentals-normalizers";
 import { industryEconomics } from "@/lib/finance/industry-data";
 import type { FundamentalsSource } from "./source";
+import { canonicalInstrumentId } from "@/lib/instruments/identity";
 
 const statementSchema = z.object({
   assetId: z.string(), period: z.iso.date(), currency: z.string().regex(/^[A-Z]{3}$/), durationMonths: z.literal(12), source: z.url(), segmentSource: z.url().optional(),
@@ -19,10 +20,15 @@ export function createSnapshotSource(input: unknown): FundamentalsSource {
   const data = snapshotSchema.parse(input);
   const members = Object.values(data.industries).flatMap((industry) => industry.members);
   return {
+    getInstrument(assetId) {
+      const canonicalId = canonicalInstrumentId(assetId);
+      return members.find((row) => row.asset.id === canonicalId)?.asset;
+    },
     getCompany(assetId) {
-      const member = members.find((row) => row.asset.id === assetId);
+      const canonicalId = canonicalInstrumentId(assetId);
+      const member = members.find((row) => row.asset.id === canonicalId);
       const record = member && data.fundamentals[member.asset.symbol];
-      return record ? { ...record, statements: record.statements.filter((statement) => statement.assetId === assetId) } : undefined;
+      return record ? { ...record, statements: record.statements.filter((statement) => statement.assetId === canonicalId) } : undefined;
     },
     getIndustries() {
       return Object.fromEntries(Object.entries(data.industries).map(([id, industry]) => [id, {

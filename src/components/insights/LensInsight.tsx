@@ -114,8 +114,27 @@ export function LensInsight({
     };
   }, [cached, context, dataSource, key]);
 
-  const insight = remote?.key === key ? remote.data : (cached ?? deterministic);
+  const delivery = remote?.key === key ? remote.data : (cached ?? {
+    insight: deterministic,
+    meta: { wording: "application" as const, enhancement: "not_requested" as const },
+  });
+  const insight = delivery.insight;
   const loading = dataSource === "mock" && remote?.key !== key && !cached && failedKey !== key;
+  const deliveryLabel = loading
+    ? "Základní vysvětlení aplikace je aktivní · zkouším rozšířenou formulaci…"
+    : failedKey === key
+      ? "Základní vysvětlení aplikace · služba rozšířené formulace není dostupná."
+      : dataSource === "live"
+        ? "Základní vysvětlení aplikace · AI formulace se v osobním režimu nespouští."
+        : delivery.meta.wording === "ai"
+          ? "AI formulace nad ověřenými výpočty"
+          : delivery.meta.enhancement === "not_configured"
+            ? "Základní vysvětlení aplikace · rozšířená formulace není nakonfigurovaná."
+            : delivery.meta.enhancement === "rate_limited"
+              ? "Základní vysvětlení aplikace · limit rozšířené formulace byl dosažen."
+              : delivery.meta.enhancement === "service_error"
+                ? "Základní vysvětlení aplikace · služba rozšířené formulace selhala."
+                : "Základní vysvětlení aplikace";
   const act = (item: InsightEvidence) => {
     if (!item.action) return;
     if (item.action.type === "selectAsset") {
@@ -218,7 +237,7 @@ export function LensInsight({
       </details>
 
       <footer>
-        <span>{loading ? "Aktualizuji formulaci…" : failedKey === key ? "Rozšířená formulace není dostupná; ověřený výklad zůstává aktivní." : "Demo analytics · nejde o investiční doporučení"}</span>
+        <span>{deliveryLabel} · nejde o investiční doporučení</span>
       </footer>
     </aside>
   );

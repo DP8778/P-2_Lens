@@ -19,6 +19,7 @@ export async function loadFxQuote(
   base: string,
   quote: string,
   cache: MarketDataCache = getBrowserMarketDataCache(),
+  networkEnabled = true,
 ) {
   if (base === quote)
     return { base, quote, rate: 1, timestamp: new Date().toISOString(), freshness: "fresh" as const, source: "cache" as const };
@@ -29,6 +30,10 @@ export async function loadFxQuote(
     const cached = await cache.getFxQuote(base, quote);
     if (cached && Date.now() - Date.parse(cached.updatedAt) <= marketDataConfig.fxFreshMs)
       return cached.quote;
+    if (!networkEnabled) {
+      if (cached) return { ...cached.quote, freshness: "stale" as const, source: "cache" as const };
+      throw new MarketDataError("UNAVAILABLE", "Market data provider není nakonfigurován.", false, 503);
+    }
     try {
       const result = await fetchFxRate(base, quote);
       await cache.putFxQuote({ key, quote: result, updatedAt: new Date().toISOString() });
@@ -46,10 +51,15 @@ export async function loadQuotePreview(
   asset: MarketAsset,
   signal?: AbortSignal,
   cache: MarketDataCache = getBrowserMarketDataCache(),
+  networkEnabled = true,
 ) {
   const cached = await cache.getQuote(asset.id);
   if (cached && Date.now() - Date.parse(cached.updatedAt) <= marketDataConfig.quoteFreshMs)
     return cached.quote;
+  if (!networkEnabled) {
+    if (cached) return { ...cached.quote, freshness: "stale" as const, source: "cache" as const };
+    throw new MarketDataError("UNAVAILABLE", "Market data provider není nakonfigurován.", false, 503);
+  }
   try {
     const quote = (await fetchMarketQuotes([asset], signal))[0];
     if (!quote) throw new Error("Quote is unavailable.");
@@ -98,21 +108,21 @@ export function historyRefreshRanges(cached: HistoryCacheRecord | undefined, ran
   return merged;
 }
 
-type LoadedHistory = { asset: MarketAsset; range: DateRange; points: import("./types").MarketPricePoint[]; source: "network" | "cache" };
+type LoadedHistory = { asset: MarketAsset; range: DateRange; points: import("./types").MarketPricePoint[]; source: "network" | "cache"; updatedAt?: string };
 type HistoryRequest = { controller: AbortController; promise: Promise<LoadedHistory>; consumers: number };
 const historyRequests = new WeakMap<MarketDataCache, Map<string, HistoryRequest>>();
 
 /** Single flight per cache/asset/range; cancel transport only after the last reader leaves. */
-export function loadHistory(asset: MarketAsset, range: DateRange, cache: MarketDataCache = getBrowserMarketDataCache(), signal?: AbortSignal): Promise<LoadedHistory> {
+export function loadHistory(asset: MarketAsset, range: DateRange, cache: MarketDataCache = getBrowserMarketDataCache(), signal?: AbortSignal, networkEnabled = true): Promise<LoadedHistory> {
   if (signal?.aborted) return Promise.reject(new DOMException("Aborted", "AbortError"));
   let requests = historyRequests.get(cache);
   if (!requests) { requests = new Map(); historyRequests.set(cache, requests); }
-  const key = `${asset.id}:${range.interval}:${range.from}:${range.to}`;
+  const key = `${asset.id}:${range.interval}:${range.from}:${range.to}:${networkEnabled ? "network" : "cache-only"}`;
   let request = requests.get(key);
   if (!request) {
     const controller = new AbortController();
     const entry: HistoryRequest = { controller, consumers: 0, promise: undefined! };
-    entry.promise = refreshHistory(asset, range, cache, controller.signal).finally(() => {
+    entry.promise = refreshHistory(asset, range, cache, controller.signal, networkEnabled).finally(() => {
       if (requests.get(key) === entry) requests.delete(key);
     });
     requests.set(key, entry);
@@ -142,12 +152,17 @@ export function loadHistory(asset: MarketAsset, range: DateRange, cache: MarketD
   });
 }
 
-async function refreshHistory(asset: MarketAsset, range: DateRange, cache: MarketDataCache, signal: AbortSignal): Promise<LoadedHistory> {
+async function refreshHistory(asset: MarketAsset, range: DateRange, cache: MarketDataCache, signal: AbortSignal, networkEnabled: boolean): Promise<LoadedHistory> {
   let cached = await cache.getHistory(asset.id);
   signal.throwIfAborted();
   const missing = historyRefreshRanges(cached, range);
   let points = cached?.points ?? [];
   let source: "network" | "cache" = "cache";
+  if (!networkEnabled && missing.length) {
+    const available = points.filter((point) => point.date >= range.from && point.date <= range.to);
+    if (!available.length) throw new MarketDataError("UNAVAILABLE", "Market data provider není nakonfigurován.", false, 503);
+    return { asset, range, points: available, source: "cache", updatedAt: cached?.updatedAt };
+  }
   for (const [index, part] of missing.entries()) {
     signal.throwIfAborted();
     const response = await fetchMarketHistory(asset, part.from, part.to, signal);
@@ -165,7 +180,8 @@ async function refreshHistory(asset: MarketAsset, range: DateRange, cache: Marke
     });
     // Persist each successful extension even if a later part fails.
   }
-  return { asset, range, points: points.filter((point) => point.date >= range.from && point.date <= range.to), source };
+  const finalRecord = await cache.getHistory(asset.id).catch(() => undefined);
+  return { asset, range, points: points.filter((point) => point.date >= range.from && point.date <= range.to), source, updatedAt: finalRecord?.updatedAt ?? cached?.updatedAt };
 }
 
 export async function loadFxHistory(

@@ -44,7 +44,8 @@ export function FinancialAnatomy({ assetId, locale, statements, fetchedAt, stale
   const data = buildFinancialAnatomy(assetId, statements);
   const name = (id: string) => labels[id][en ? 1 : 0];
   return <section className="financial-anatomy" aria-labelledby="financial-anatomy-title">
-    <header><span>Financial Anatomy</span><h2 id="financial-anatomy-title">{en ? "How does this company make money?" : "Jak firma vydělává a kam peníze směřují?"}</h2></header>
+    <header><span>Financial Anatomy</span><h2 id="financial-anatomy-title">{en ? "How does revenue become profit?" : "Jak z tržeb vzniká zisk?"}</h2></header>
+    <p className="research-section-intro">{en ? "This chart breaks down the income statement: verified revenue is reconciled through costs to operating and net income. It is not a cash-flow statement and remains separate from the share price." : "Graf rozkládá výsledovku: ověřené tržby propojuje přes náklady s provozním a čistým ziskem. Nejde o cash-flow a výkazy zůstávají oddělené od ceny akcie."}</p>
     {data.status === "unavailable" ? <div className="financial-unavailable" role="status">
       <h3>{en ? "Financial statements are unavailable" : "Finanční výkazy nejsou dostupné"}</h3>
       <p>{en ? "Lens has no verified revenue segments, income statement or financial history for this company. Price history cannot substitute for these figures." : "Lens pro tuto firmu nemá ověřené segmenty tržeb, výsledovku ani historii hospodaření. Cenová historie tyto údaje nenahrazuje."}</p>

@@ -1,9 +1,11 @@
 import { marketThemes } from "@/data/market-themes";
 import { themeTimeframes, type ThemeTimeframe } from "@/lib/finance/theme-performance";
 import type { IndustryWeighting } from "@/lib/finance/industry-index";
+import { knownDemoInstrument } from "@/lib/instruments/identity";
 
 export type IndustryNavigation = { industry: string; period: ThemeTimeframe; weighting: IndustryWeighting; asOf?: string; version?: string };
 export type IndustrySearchParams = Record<string, string | string[] | undefined>;
+export type AssetEntryContext = { source: "demo"; positionAssetId: string } | { source: "market" };
 /** Only identifiers and view state cross the URL boundary. Financial values are ignored. */
 export function readIndustryNavigation(query: IndustrySearchParams): IndustryNavigation | undefined {
   if (typeof query.industry !== "string" || !marketThemes.some((theme) => theme.id === query.industry)) return undefined;
@@ -27,4 +29,14 @@ export function industryAssetHref(locale: string, assetId: string, context?: Ind
 }
 export function industryBackHref(locale: string, context: IndustryNavigation) {
   return `/${locale}/markets?${contextParams(context, "theme")}`;
+}
+
+/** The URL carries only validated provenance and identity, never prices or position values. */
+export function readAssetEntryContext(query: IndustrySearchParams, canonicalAssetId: string): AssetEntryContext {
+  if (query.source === "demo" && typeof query.position === "string") {
+    const known = knownDemoInstrument(query.position);
+    if (known?.demoAssetId === query.position && known.instrument.id === canonicalAssetId)
+      return { source: "demo", positionAssetId: known.demoAssetId };
+  }
+  return { source: "market" };
 }

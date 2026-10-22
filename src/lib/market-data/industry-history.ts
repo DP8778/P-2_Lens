@@ -52,8 +52,9 @@ function delay(ms: number, signal: AbortSignal) {
 
 /** Cache-first acquisition; ready counts nonempty histories, not analytical eligibility.
  * The finance layer independently checks coverage for the selected period. */
-export async function loadIndustryHistories({ assets, range, cache = getBrowserMarketDataCache(), signal = new AbortController().signal, onProgress }: {
+export async function loadIndustryHistories({ assets, range, cache = getBrowserMarketDataCache(), signal = new AbortController().signal, networkEnabled = true, onProgress }: {
   assets: MarketAsset[]; range: DateRange; cache?: MarketDataCache; signal?: AbortSignal;
+  networkEnabled?: boolean;
   onProgress?: (progress: IndustryHistoryProgress) => void;
 }): Promise<IndustryHistoryProgress> {
   const unique = [...new Map(assets.map((asset) => [asset.id, asset])).values()];
@@ -80,6 +81,12 @@ export async function loadIndustryHistories({ assets, range, cache = getBrowserM
     if (needsRefresh) pending.push(asset);
   }
   emit();
+  if (!networkEnabled) {
+    pending.forEach((asset) => failures.add(asset.id));
+    done = true;
+    emit();
+    return snapshot();
+  }
   await Promise.allSettled(pending.map((asset) => enqueue(async () => {
     loading++; emit();
     try {

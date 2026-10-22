@@ -22,6 +22,7 @@ export function ContributionView({ analysis, locale }: { analysis: PortfolioAnal
   };
   return (
     <div className="contribution-view">
+      <p className="contribution-explainer">Příspěvek ukazuje, o kolik procentních bodů aktivum posunulo vypočtený výnos portfolia. Kombinuje výnos, velikost a dobu držení pozice; nedokládá vnější příčinu pohybu ceny.</p>
       <div className="contribution-summary" aria-label="Souhrn příspěvků">
         <span>Výnos portfolia <strong>{percent(analysis.metrics.returnPct, locale)}</strong></span>
         <span>Největší přínos <strong>{analysis.contribution.topContributor?.symbol ?? "—"}</strong></span>

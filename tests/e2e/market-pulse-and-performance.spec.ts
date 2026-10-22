@@ -31,7 +31,7 @@ test("direct PLTR detail keeps annual price metrics and Financial Anatomy", asyn
   for (const label of ["1W", "1M", "1Y", "52W high", "52W low"]) await expect(performance).toContainText(label);
   await expect(performance).not.toContainText("—");
   await expect(page.getByTestId("asset-price-chart")).toBeVisible();
-  await expect(page.getByLabel("Období grafu").getByRole("button", { name: "1M", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByLabel("Období grafu").getByRole("button", { name: "1Y", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".asset-industry-context")).toHaveCount(0);
   await expect(page.locator(".financial-anatomy")).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("direct-pltr.png"), fullPage: false });

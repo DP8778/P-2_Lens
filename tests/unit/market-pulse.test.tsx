@@ -28,7 +28,7 @@ test("Dashboard discovers canonical snapshot universes without compatibility ret
 });
 
 test("full Markets uses canonical membership and removes the four-stock basket and quotes", () => {
-  render(<MarketPulse locale="cs-CZ" variant="full" industries={industries} />);
+  render(<MarketPulse locale="cs-CZ" variant="full" industries={industries} marketConfigured />);
   expect(screen.getByRole("button", { name: /^AI 60 sledovaných firem/ })).toHaveAttribute("aria-pressed", "true");
   expect(screen.queryByText(/Složení výpočtového koše/)).not.toBeInTheDocument();
   expect(screen.queryByText(/Cena nedostupná|Data nejsou dostupná/)).not.toBeInTheDocument();
@@ -37,7 +37,7 @@ test("full Markets uses canonical membership and removes the four-stock basket a
 
 test("theme, period and weighting replace URL state; re-render and fresh mount reconstruct it", async () => {
   const user = userEvent.setup();
-  const props = { locale: "cs-CZ" as const, variant: "full" as const, industries };
+  const props = { locale: "cs-CZ" as const, variant: "full" as const, industries, marketConfigured: true };
   const { rerender, unmount } = render(<MarketPulse {...props} />);
   const entries = window.history.length;
   await user.click(screen.getByRole("button", { name: /^Semiconductors 49/ }));
@@ -62,7 +62,7 @@ test("theme, period and weighting replace URL state; re-render and fresh mount r
 
 test("view changes preserve explicit asOf and valid snapshot version", async () => {
   window.history.replaceState(null, "", `/cs-CZ/markets?theme=semiconductors&period=1Y&weighting=equal&asOf=2026-09-25&version=${industries.semiconductors.version}`);
-  render(<MarketPulse locale="cs-CZ" variant="full" industries={industries} />);
+  render(<MarketPulse locale="cs-CZ" variant="full" industries={industries} marketConfigured />);
   await userEvent.click(screen.getByRole("button", { name: "3M" }));
   expect(new URLSearchParams(location.search).get("asOf")).toBe("2026-09-25");
   expect(new URLSearchParams(location.search).get("version")).toBe(industries.semiconductors.version);
@@ -77,7 +77,7 @@ test.each([
 });
 
 test("missing canonical membership is disclosed rather than replaced by the compatibility universe", () => {
-  render(<MarketPulse locale="cs-CZ" variant="full" />);
+  render(<MarketPulse locale="cs-CZ" variant="full" marketConfigured />);
   expect(screen.getByText("Ověřené členství tématu není dostupné.")).toBeVisible();
   expect(screen.queryByTestId("detail")).not.toBeInTheDocument();
   expect(screen.queryByText("18 sledovaných firem")).not.toBeInTheDocument();
@@ -86,10 +86,10 @@ test("missing canonical membership is disclosed rather than replaced by the comp
 
 test("clearing the query restores defaults rather than retaining a previous research state", () => {
   window.history.replaceState(null, "", "/cs-CZ/markets?theme=semiconductors&period=3M&weighting=market-cap");
-  const { rerender } = render(<MarketPulse locale="cs-CZ" variant="full" industries={industries} />);
+  const { rerender } = render(<MarketPulse locale="cs-CZ" variant="full" industries={industries} marketConfigured />);
   expect(screen.getByRole("button", { name: /^Semiconductors 49/ })).toHaveAttribute("aria-pressed", "true");
   window.history.replaceState(null, "", "/cs-CZ/markets");
-  rerender(<MarketPulse locale="cs-CZ" variant="full" industries={industries} />);
+  rerender(<MarketPulse locale="cs-CZ" variant="full" industries={industries} marketConfigured />);
   expect(screen.getByRole("button", { name: /^AI 60/ })).toHaveAttribute("aria-pressed", "true");
   expect(JSON.parse(within(screen.getByTestId("detail")).getByRole("status").textContent!)).toMatchObject({ industry: "ai", period: "1M", weighting: "equal" });
 });

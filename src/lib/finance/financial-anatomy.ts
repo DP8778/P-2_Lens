@@ -41,6 +41,9 @@ export function buildFinancialAnatomy(assetId: string, statements: FinancialStat
   const segments = latest.segments?.length && latest.segments.every((item) => item.name.trim() && finite(item.revenue) && item.revenue >= 0)
     && segmentSum <= latest.revenue ? [...latest.segments] : [];
   if (segments.length && segmentSum < latest.revenue) segments.push({ name: "Unallocated revenue", revenue: latest.revenue - segmentSum });
+  const primaryRevenueSegment = segments
+    .filter((segment) => segment.name !== "Unallocated revenue")
+    .sort((a, b) => b.revenue - a.revenue)[0];
   const expenseEntries = Object.entries(latest.expenses ?? {});
   const expenseSum = expenseEntries.reduce((sum, [, value]) => sum + value!, 0);
   const expenses = expenseEntries.length && expenseEntries.every(([, value]) => finite(value) && value >= 0) && expenseSum <= latest.operatingExpenses
@@ -72,6 +75,7 @@ export function buildFinancialAnatomy(assetId: string, statements: FinancialStat
   }));
   return { nodeValues, status: "available" as const, latest, history, segments, expenses, flowAvailable,
     links: links.filter((link) => link.value > 0),
+    primaryRevenueSource: primaryRevenueSegment ? { ...primaryRevenueSegment, sharePct: primaryRevenueSegment.revenue / latest.revenue * 100 } : undefined,
     revenueGrowth: prior ? (latest.revenue / prior.revenue - 1) * 100 : undefined,
     grossMargin: latest.grossProfit / latest.revenue * 100,
     operatingMargin: latest.operatingIncome / latest.revenue * 100 };

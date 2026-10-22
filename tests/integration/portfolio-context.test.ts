@@ -22,22 +22,23 @@ const request = (body: unknown) =>
 
 test("odvozuje vysvětlení z validovaného analytického kontextu", async () => {
   const basic = await (await request(context)).json();
-  expect(basic.mode).toBe("deterministic");
-  expect(basic.scopeLabel).toContain("2026");
-  expect(basic.evidence.length).toBeGreaterThan(0);
+  expect(basic.meta).toEqual({ wording: "application", enhancement: "not_requested" });
+  expect(basic.insight.mode).toBe("deterministic");
+  expect(basic.insight.scopeLabel).toContain("2026");
+  expect(basic.insight.evidence.length).toBeGreaterThan(0);
   const compared = await (await request({ ...context, compareAssetId: "btc" })).json();
-  expect(compared.headline).toContain("BTC");
+  expect(compared.insight.headline).toContain("BTC");
   const selected = await (await request({ ...context, selectedPoint: timeline[700] })).json();
-  expect(selected.evidence.some((item: { id: string }) => item.id === "selected-point-value")).toBe(
+  expect(selected.insight.evidence.some((item: { id: string }) => item.id === "selected-point-value")).toBe(
     true,
   );
   const downside = await (await request({ ...context, mode: "drawdown" })).json();
-  expect(downside.summary).toContain("pokles");
+  expect(downside.insight.summary).toContain("pokles");
   const custom = await (
     await request({ ...context, selectedRange: [timeline[710], timeline[720]] })
   ).json();
-  expect(custom.scopeLabel).toContain("2026");
-  expect(custom.scopeLabel).not.toBe(basic.scopeLabel);
+  expect(custom.insight.scopeLabel).toContain("2026");
+  expect(custom.insight.scopeLabel).not.toBe(basic.insight.scopeLabel);
 });
 
 test("odmítá PII, neznámá aktiva a body mimo období", async () => {

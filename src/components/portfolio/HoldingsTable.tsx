@@ -5,6 +5,7 @@ import type { HoldingMetric, PortfolioAnalysis } from "@/lib/finance/portfolio-e
 import { assetTypeLabels } from "@/data/mock/catalog";
 import { money, percent, points, allocation } from "@/components/charts/chart-formatters";
 import { ConcentrationPanel } from "./ConcentrationPanel";
+import { portfolioAssetHref } from "@/lib/instruments/identity";
 
 type SortMetric = "value" | "allocation" | "pnl" | "return" | "contribution";
 const sortLabels: Record<SortMetric, string> = {
@@ -22,6 +23,7 @@ export function HoldingsTable({
   onAdd,
   period,
   editable = true,
+  dataMode = "personal",
 }: {
   analysis: PortfolioAnalysis;
   holdings: HoldingMetric[];
@@ -29,6 +31,7 @@ export function HoldingsTable({
   onAdd: () => void;
   period: string;
   editable?: boolean;
+  dataMode?: "demo" | "personal";
 }) {
   const [query, setQuery] = useState("");
   const [type, setType] = useState("all");
@@ -168,7 +171,7 @@ export function HoldingsTable({
             {filtered.map((holding) => (
               <tr key={holding.assetId}>
                 <td>
-                  <Link className="holding-asset" href={`/${locale}/assets/${encodeURIComponent(holding.assetId)}`} aria-label={`Detail ${holding.asset.symbol}`}>
+                  <Link className="holding-asset" href={portfolioAssetHref(locale, holding.assetId, dataMode === "demo")} aria-label={`Detail ${holding.asset.symbol}`}>
                     <span className={`asset-monogram ${holding.asset.type}`}>{holding.asset.symbol.slice(0, 2)}</span>
                     <span>
                       <strong>{holding.asset.symbol}<ArrowUpRight size={12} /></strong>

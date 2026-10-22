@@ -57,6 +57,7 @@ export function IndustryCompanies({ overview, timeframe, locale, capDate = capit
   const sortBy = (key: string) => setSort(`${key}:${sortColumn === key && sortDirection === "asc" ? "desc" : "asc"}`);
   return <section className="industry-companies" aria-label={en ? "Universe companies" : "Firmy v univerzu"}>
     <header><h4>{en ? "Universe companies" : "Firmy v univerzu"}</h4><span>{rows.length} / {overview.total}</span></header>
+    <p className="research-section-intro">{en ? "Move from the theme to individual companies to understand their business, finances and current developments." : "Z pohledu na téma můžete přejít k jednotlivým firmám a porozumět jejich podnikání, hospodaření a aktuálním událostem."}</p>
     <div className="industry-table-controls">
       <label>{en ? "Find a company" : "Hledat firmu"}<input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={en ? "Name or ticker" : "Název nebo ticker"} /></label>
       <label>{en ? "Company size" : "Velikost firmy"}<select value={size} onChange={(event) => setSize(event.target.value)}><option value="all">{en ? "All sizes" : "Všechny velikosti"}</option>{["Large", "Mid", "Small"].map((value) => <option key={value}>{value}</option>)}<option value="Unknown">{en ? "Unknown" : "Neznámá"}</option></select></label>

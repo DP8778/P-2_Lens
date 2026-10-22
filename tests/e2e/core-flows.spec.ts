@@ -13,8 +13,10 @@ test("opens the portfolio, switches modes, compares and selects a chart point", 
   await expect(page.locator(".portfolio-drivers")).toHaveCount(0);
   await page.screenshot({ path: "test-results/lens-desktop.png", fullPage: true });
   const before = await page.locator(".summary-return").innerText();
-  await page.getByRole("button", { name: "1Y", exact: true }).click();
+  await expect(page.getByRole("button", { name: "1Y", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "1M", exact: true }).click();
   await expect(page.locator(".summary-return")).not.toHaveText(before);
+  await page.getByRole("button", { name: "1Y", exact: true }).click();
   await page.getByRole("button", { name: "Příspěvky", exact: true }).click();
   await expect(page.getByRole("img", { name: "Příspěvky aktiv k výnosu" })).toBeVisible();
   await expect(page.getByRole("slider", { name: "Začátek období" })).toHaveCount(0);
@@ -154,7 +156,9 @@ test("touch layout stays within the viewport and keeps data usable offline", asy
   await page.setViewportSize({ width: 390, height: 844 });
   await page.route("**/api/portfolio/context", (route) => route.abort());
   await page.goto("/cs-CZ/dashboard");
-  await expect(page.locator(".lens-insight footer")).toContainText("ověřený výklad zůstává aktivní");
+  await expect(page.locator(".lens-insight footer")).toContainText("Základní vysvětlení aplikace");
+  await expect(page.getByRole("link", { name: "Portfolio", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Markets", exact: true })).toBeVisible();
   await expect(page.locator(".insight-evidence")).toBeVisible();
   await expect(page.locator(".insight-evidence > summary")).toHaveAttribute(
     "aria-expanded",
