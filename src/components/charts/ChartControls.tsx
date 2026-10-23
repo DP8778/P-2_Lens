@@ -3,6 +3,8 @@ import { assetCatalog } from "@/data/mock/catalog";
 import type { Timeframe } from "@/types/finance";
 import type { ChartDisplay, ChartMode } from "@/lib/finance/portfolio-engine";
 import { chartModes } from "./chart-options";
+import type { Asset } from "@/lib/finance/domain";
+import { ComparePicker } from "./ComparePicker";
 export interface ChartSettings {
   mode: ChartMode;
   display: ChartDisplay;
@@ -18,12 +20,16 @@ export function ChartControls({
   timeframe,
   onTimeframe,
   onExport,
+  compareAssets = assetCatalog,
+  allowNasdaqBenchmark = true,
 }: {
   settings: ChartSettings;
   onChange: (next: ChartSettings) => void;
   timeframe: Timeframe | "CUSTOM";
   onTimeframe: (value: Timeframe) => void;
   onExport: () => void;
+  compareAssets?: Asset[];
+  allowNasdaqBenchmark?: boolean;
 }) {
   return (
     <div className="chart-controls">
@@ -56,25 +62,8 @@ export function ChartControls({
                   value={s.benchmark}
                   onChange={(e) => onChange({ ...s, benchmark: e.target.value as "spy" | "qqq" })}
                 >
-                  <option value="spy">SPY · S&P 500</option>
-                  <option value="qqq">QQQ · Nasdaq 100</option>
-                </select>
-              </label>
-              <label>
-                Porovnat aktivum
-                <select
-                  aria-label="Porovnat aktivum"
-                  value={s.compare}
-                  onChange={(e) => onChange({ ...s, compare: e.target.value })}
-                >
-                  <option value="">Bez porovnání</option>
-                  {assetCatalog
-                    .filter((a) => a.type !== "cash")
-                    .map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.symbol} · {a.name}
-                      </option>
-                    ))}
+                  <option value="spy">S&P 500 benchmark</option>
+                  {allowNasdaqBenchmark && <option value="qqq">Nasdaq 100 benchmark</option>}
                 </select>
               </label>
               <label className="check-control">
@@ -107,23 +96,13 @@ export function ChartControls({
           {timeframe === "CUSTOM" && <span className="tertiary">Vlastní</span>}
         </div>
         <div className="chart-view-controls">
-          <label className="quick-compare">
-            <span>Porovnat</span>
-            <select
-              aria-label="Rychlé porovnání aktiva"
-              value={s.compare}
-              onChange={(event) => onChange({ ...s, compare: event.target.value })}
-            >
-              <option value="">Žádné aktivum</option>
-              {assetCatalog
-                .filter((asset) => asset.type !== "cash")
-                .map((asset) => (
-                  <option key={asset.id} value={asset.id}>
-                    {asset.symbol}
-                  </option>
-                ))}
-            </select>
-          </label>
+          <ComparePicker
+            assets={compareAssets}
+            selected={s.compare}
+            benchmarkSelected={s.showBenchmark}
+            onSelect={(compare) => onChange({ ...s, compare })}
+            onSelectBenchmark={() => onChange({ ...s, compare: "", showBenchmark: true })}
+          />
           {s.compare || s.showBenchmark ? (
             <span className="comparison-scale" title="Srovnávací řady začínají na hodnotě 100">
               Index 100

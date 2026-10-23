@@ -1,7 +1,6 @@
 "use client";
 import { useId, useMemo, useRef, useState } from "react";
 import type { PortfolioAnalysis } from "@/lib/finance/portfolio-engine";
-import { timeline } from "@/lib/finance/portfolio-engine";
 import { useAnalysisContext } from "@/components/portfolio/AnalysisProvider";
 import { usePortfolio } from "@/components/portfolio/PortfolioProvider";
 import {
@@ -35,7 +34,7 @@ export function PortfolioHeroChart({
   locale: string;
 }) {
   const { state, dispatch } = useAnalysisContext();
-  const { transactions } = usePortfolio();
+  const { transactions, mode } = usePortfolio();
   const [hover, setHover] = useState<number | null>(null);
   const [rangeMode, setRangeMode] = useState(false);
   const [rangeStart, setRangeStart] = useState<number | null>(null);
@@ -43,7 +42,12 @@ export function PortfolioHeroChart({
   const [selectedEventId, setSelectedEventId] = useState<string>();
   const svgRef = useRef<SVGSVGElement>(null);
   const gradient = useId().replaceAll(":", "");
-  const data = state.mode === "performance" ? visibleAnalysis.points : analysis.points;
+  const plotGradient = `${gradient}-plot`;
+  const plotAura = `${gradient}-aura`;
+  const plotTexture = `${gradient}-texture`;
+  const lineGradient = `${gradient}-line`;
+  const lineGlow = `${gradient}-glow`;
+  const data = state.mode === "contribution" ? analysis.points : visibleAnalysis.points;
   const settings: ChartSettings = {
     mode: state.mode,
     display: state.display,
@@ -53,7 +57,8 @@ export function PortfolioHeroChart({
     annotations: state.annotations,
     navigator: state.navigator,
   };
-  const range = mapSelectedRangeToIndices(state.viewportRange, timeline);
+  const overviewDates = overview.points.map((point) => point.timestamp);
+  const range = mapSelectedRangeToIndices(state.viewportRange, overviewDates);
   const selected = mapDateToPointIndex(data, state.selectedPoint);
   const onSelect = (index: number | null) =>
     dispatch({ type: "point", value: index === null ? null : (data[index]?.timestamp ?? null) });
@@ -71,7 +76,7 @@ export function PortfolioHeroChart({
       },
     });
   const onRange = (next: [number, number]) =>
-    dispatch({ type: "viewport", value: [timeline[next[0]], timeline[next[1]]] });
+    dispatch({ type: "viewport", value: [overviewDates[next[0]], overviewDates[next[1]]] });
   const g = useMemo(
     () =>
       chartGeometry(
@@ -113,6 +118,8 @@ export function PortfolioHeroChart({
         timeframe={state.timeframe}
         onTimeframe={(value) => dispatch({ type: "timeframe", value })}
         onExport={exportChart}
+        compareAssets={analysis.holdings.map((holding) => holding.asset)}
+        allowNasdaqBenchmark={mode === "demo"}
       />
       <ChartLegend
         analysis={analysis}
@@ -231,8 +238,35 @@ export function PortfolioHeroChart({
           >
             <title>{isDrawdown ? "Pokles od maxima" : "Vývoj portfolia"}</title>
             <desc>{summary}</desc>
-            <rect width={o.width} height={o.height} fill="#0d0e11" />
             <defs>
+              <linearGradient id={plotGradient} x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#14161b" />
+                <stop offset="48%" stopColor="#0d0f13" />
+                <stop offset="100%" stopColor="#090a0d" />
+              </linearGradient>
+              <radialGradient id={plotAura} cx="62%" cy="20%" r="78%">
+                <stop offset="0%" stopColor="#c7c3ee" stopOpacity=".085" />
+                <stop offset="42%" stopColor="#8e91a7" stopOpacity=".025" />
+                <stop offset="100%" stopColor="#050608" stopOpacity="0" />
+              </radialGradient>
+              <filter id={plotTexture} x="0" y="0" width="100%" height="100%">
+                <feTurbulence
+                  type="fractalNoise"
+                  baseFrequency=".72"
+                  numOctaves="3"
+                  seed="17"
+                  stitchTiles="stitch"
+                />
+                <feColorMatrix type="saturate" values="0" />
+              </filter>
+              <linearGradient id={lineGradient} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor={isDrawdown ? "#c9a5aa" : "#c7cbd3"} />
+                <stop offset="54%" stopColor={isDrawdown ? "#ddb8bd" : "#f3f1eb"} />
+                <stop offset="100%" stopColor={isDrawdown ? "#c9a5aa" : "#d8d5f2"} />
+              </linearGradient>
+              <filter id={lineGlow} x="-10%" y="-25%" width="120%" height="150%">
+                <feGaussianBlur stdDeviation="4.5" />
+              </filter>
               <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="0%"
@@ -242,6 +276,16 @@ export function PortfolioHeroChart({
                 <stop offset="100%" stopColor="#dce0e8" stopOpacity="0" />
               </linearGradient>
             </defs>
+            <rect width={o.width} height={o.height} fill={`url(#${plotGradient})`} />
+            <rect width={o.width} height={o.height} fill={`url(#${plotAura})`} />
+            <rect
+              width={o.width}
+              height={o.height}
+              fill="#d9dce5"
+              opacity=".035"
+              filter={`url(#${plotTexture})`}
+              pointerEvents="none"
+            />
             {rangeMode && rangeStart !== null && rangeHover !== null && (
               <rect
                 className="range-selection-overlay"
@@ -318,8 +362,21 @@ export function PortfolioHeroChart({
             <path
               d={g.line(g.key)}
               fill="none"
-              stroke={isDrawdown ? "#c9a5aa" : o.line}
-              strokeWidth="2"
+              stroke={isDrawdown ? "#c9a5aa" : "#d8d5f2"}
+              strokeWidth="7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity=".22"
+              filter={`url(#${lineGlow})`}
+              vectorEffect="non-scaling-stroke"
+              pointerEvents="none"
+            />
+            <path
+              d={g.line(g.key)}
+              fill="none"
+              stroke={`url(#${lineGradient})`}
+              strokeWidth="2.15"
+              strokeLinecap="round"
               strokeLinejoin="round"
               vectorEffect="non-scaling-stroke"
             />
@@ -564,7 +621,7 @@ export function PortfolioHeroChart({
             )}
           </p>
         </div>
-        {settings.annotations && <ChartAnnotations events={events} onSelect={onSelect} />}
+        {settings.annotations && <ChartAnnotations events={events} onSelect={onSelect} assets={analysis.holdings.map((holding) => holding.asset)} />}
       </div>
       {state.selectedRange && (
         <div className="analysis-range-chip" role="status">
@@ -596,7 +653,7 @@ export function PortfolioHeroChart({
           <span>Po přidání transakce zde uvidíte vývoj portfolia.</span>
         </div>
       )}
-      {settings.navigator && (
+      {settings.navigator && settings.mode !== "contribution" && overview.points.length > 1 && (
         <ChartNavigator data={overview.points} range={range} onChange={onRange} />
       )}
       <details className="chart-data-table">

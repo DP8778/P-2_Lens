@@ -8,7 +8,11 @@ import { allocation, percent, points } from "./chart-formatters";
 export function ContributionView({ analysis, locale }: { analysis: PortfolioAnalysis; locale: string }) {
   const { state, dispatch } = useAnalysisContext();
   const [focused, setFocused] = useState<ContributionItem>();
+  const [showAll, setShowAll] = useState(false);
   const rows = analysis.contribution.items;
+  const ranked = showAll || rows.length <= 10
+    ? rows
+    : [...rows.filter((item) => item.contributionPctPoints >= 0).sort((a, b) => b.contributionPctPoints - a.contributionPctPoints).slice(0, 5), ...rows.filter((item) => item.contributionPctPoints < 0).sort((a, b) => a.contributionPctPoints - b.contributionPctPoints).slice(0, 5)];
   const active = focused ?? rows.find((item) => item.assetId === state.compareAssetId);
   const max = Math.max(...rows.map((item) => Math.abs(item.contributionPctPoints)), 0.001);
   const select = (item: ContributionItem) => {
@@ -18,6 +22,7 @@ export function ContributionView({ analysis, locale }: { analysis: PortfolioAnal
   };
   return (
     <div className="contribution-view">
+      <p className="contribution-explainer">Příspěvek ukazuje, o kolik procentních bodů aktivum posunulo vypočtený výnos portfolia. Kombinuje výnos, velikost a dobu držení pozice; nedokládá vnější příčinu pohybu ceny.</p>
       <div className="contribution-summary" aria-label="Souhrn příspěvků">
         <span>Výnos portfolia <strong>{percent(analysis.metrics.returnPct, locale)}</strong></span>
         <span>Největší přínos <strong>{analysis.contribution.topContributor?.symbol ?? "—"}</strong></span>
@@ -25,7 +30,7 @@ export function ContributionView({ analysis, locale }: { analysis: PortfolioAnal
       </div>
       <div className="contribution-bars" role="img" aria-label="Příspěvky aktiv k výnosu">
         <span className="contribution-zero" aria-hidden />
-        {rows.map((item) => {
+        {ranked.map((item) => {
           const width = `${(Math.abs(item.contributionPctPoints) / max) * 48}%`;
           const negative = item.contributionPctPoints < 0;
           return (
@@ -55,6 +60,7 @@ export function ContributionView({ analysis, locale }: { analysis: PortfolioAnal
             <b>{points(analysis.contribution.residual, locale)}</b>
           </div>
         )}
+        {rows.length > 10 && <button className="contribution-disclosure" aria-expanded={showAll} onClick={() => setShowAll((value) => !value)}>{showAll ? "Zobrazit hlavní příspěvky" : `Zobrazit všech ${rows.length} pozic`}</button>}
       </div>
       {active && (
         <div className="contribution-detail" role="status">

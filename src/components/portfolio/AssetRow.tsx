@@ -21,7 +21,7 @@ export function AssetRow({
   return (
     <tr className="group border-b border-[var(--color-border-default)] last:border-0 hover:bg-black/[.025]">
       <td className="py-4 pl-4">
-        <Link href={`/${locale}/assets/${asset.symbol}`} className="flex items-center gap-3">
+        <Link href={`/${locale}/assets/${encodeURIComponent(asset.id)}`} className="flex items-center gap-3">
           <span className="grid h-9 w-9 place-items-center rounded-full border border-[var(--color-border-default)] bg-[var(--color-bg-elevated)] text-xs font-bold">
             {asset.symbol.slice(0, 2)}
           </span>
@@ -58,7 +58,7 @@ export function AssetRow({
       <td className="pr-4 text-right">
         <Link
           aria-label={`Otevřít ${asset.symbol}`}
-          href={`/${locale}/assets/${asset.symbol}`}
+          href={`/${locale}/assets/${encodeURIComponent(asset.id)}`}
           className="inline-grid h-9 w-9 place-items-center rounded-lg opacity-40 transition group-hover:opacity-100"
         >
           <ArrowUpRight size={17} />

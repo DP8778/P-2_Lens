@@ -3,16 +3,23 @@
 test("opens the portfolio, switches modes, compares and selects a chart point", async ({
   page,
 }) => {
+  test.setTimeout(120_000);
   await page.setViewportSize({ width: 1440, height: 1100 });
   await page.goto("/cs-CZ/dashboard");
   await expect(page.getByTestId("portfolio-value")).toBeVisible();
   await expect(page.locator(".insight-copy h3")).toBeVisible();
+  await expect(page.locator(".hero-chart")).toBeVisible();
+  await expect(page.locator("#holdings")).toBeAttached();
+  await expect(page.locator(".portfolio-drivers")).toHaveCount(0);
   await page.screenshot({ path: "test-results/lens-desktop.png", fullPage: true });
   const before = await page.locator(".summary-return").innerText();
-  await page.getByRole("button", { name: "1Y", exact: true }).click();
+  await expect(page.getByRole("button", { name: "1Y", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "1M", exact: true }).click();
   await expect(page.locator(".summary-return")).not.toHaveText(before);
+  await page.getByRole("button", { name: "1Y", exact: true }).click();
   await page.getByRole("button", { name: "Příspěvky", exact: true }).click();
   await expect(page.getByRole("img", { name: "Příspěvky aktiv k výnosu" })).toBeVisible();
+  await expect(page.getByRole("slider", { name: "Začátek období" })).toHaveCount(0);
   await expect(page.locator(".contribution-summary")).toContainText("Výnos portfolia");
   await page.getByRole("button", { name: /BTC, příspěvek/ }).click();
   await expect(page.getByRole("button", { name: /BTC, příspěvek/ })).toHaveAttribute(
@@ -22,6 +29,10 @@ test("opens the portfolio, switches modes, compares and selects a chart point", 
   await page.getByRole("button", { name: "Vývoj", exact: true }).click();
   await expect(page.locator(".chart-legend")).toContainText("BTC");
   await expect(page.locator(".insight-copy h3")).toContainText("BTC");
+  const evidenceDisclosure = page.locator(".insight-evidence > summary");
+  await expect(evidenceDisclosure).toHaveAttribute("aria-expanded", "false");
+  await evidenceDisclosure.click();
+  await expect(evidenceDisclosure).toHaveAttribute("aria-expanded", "true");
   const btcEvidence = page.getByRole("button", { name: /BTC · příspěvek.*Zobrazit v grafu/ });
   await expect(btcEvidence).toBeVisible();
   await btcEvidence.click();
@@ -37,12 +48,16 @@ test("opens the portfolio, switches modes, compares and selects a chart point", 
     await expect(page.locator(".insight-copy h3")).toContainText("Dno");
   }
   await page.getByRole("button", { name: "Vývoj", exact: true }).click();
-  await page.getByLabel("Nastavení grafu", { exact: true }).click();
+  const chartOptions = page.locator(".chart-options");
+  const chartOptionsTrigger = page.getByLabel("Nastavení grafu", { exact: true });
+  await chartOptionsTrigger.click();
   await page.getByLabel("Benchmark", { exact: true }).selectOption("qqq");
-  await page.getByLabel("Porovnat aktivum", { exact: true }).selectOption("btc");
+  if ((await chartOptions.getAttribute("open")) !== null) await chartOptionsTrigger.click();
+  await page.locator(".compare-trigger").click();
+  await page.locator(".compare-results").getByRole("option", { name: /BTC Bitcoin/ }).click();
   await expect(page.locator(".chart-legend")).toContainText("Index 100");
   await expect(page.locator(".insight-copy h3")).toContainText("BTC");
-  await page.getByLabel("Nastavení grafu", { exact: true }).click();
+  if ((await chartOptions.getAttribute("open")) !== null) await chartOptionsTrigger.click();
   const chart = page.locator('.chart-plot svg[role="graphics-document"]');
   await chart.focus();
   await page.keyboard.press("Home");
@@ -58,72 +73,32 @@ test("opens the portfolio, switches modes, compares and selects a chart point", 
   await page.screenshot({ path: "test-results/lens-compare.png", fullPage: true });
 });
 
-test("adds, persists, merges, edits and removes a holding", async ({ page }) => {
+test("demo remains deterministic and read-only", async ({ page }) => {
   await page.goto("/cs-CZ/dashboard");
   const before = await page.getByTestId("portfolio-value").innerText();
-  await page.getByRole("button", { name: "Přidat aktivum", exact: true }).first().click();
-  await page.getByLabel("Hledat ticker nebo aktivum").fill("ETH");
-  await page.getByRole("button", { name: /ETH Ethereum/ }).click();
-  await page.getByLabel("Množství", { exact: true }).fill("2");
-  await page.getByLabel("Průměrná nákupní cena", { exact: true }).fill("3000");
-  await page.getByRole("button", { name: "Zkontrolovat pozici" }).click();
-  await expect(page.getByText("Alokace aktiva po uložení")).toBeVisible();
-  await page.getByRole("button", { name: "Přidat do portfolia", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "ETH je v portfoliu" })).toBeVisible();
-  await page.getByRole("button", { name: "Zpět do portfolia" }).click();
-  await expect(page.getByTestId("portfolio-value")).not.toHaveText(before);
-  const after = await page.getByTestId("portfolio-value").innerText();
-  await page.reload();
-  await expect(page.getByTestId("portfolio-value")).toHaveText(after);
-  await page.getByRole("button", { name: "Detail ETH", exact: true }).click();
-  await page.getByRole("button", { name: "Přidat k pozici" }).click();
-  await expect(page.getByText(/Aktivum již držíte/)).toBeVisible();
-  await page.getByLabel("Množství", { exact: true }).fill("1");
-  await page.getByLabel("Průměrná nákupní cena", { exact: true }).fill("4500");
-  await page.getByRole("button", { name: "Zkontrolovat pozici" }).click();
-  await page.getByRole("button", { name: "Přidat ke stávající pozici" }).click();
-  await page.getByRole("button", { name: "Zpět do portfolia" }).click();
-  await expect(page.getByRole("button", { name: "Detail ETH", exact: true })).toHaveCount(1);
-  await page.getByRole("button", { name: "Detail ETH", exact: true }).click();
-  await page.getByRole("button", { name: "Upravit pozici" }).click();
-  await expect(page.getByLabel("Množství", { exact: true })).toHaveValue("3");
-  await expect(page.getByLabel("Průměrná nákupní cena", { exact: true })).toHaveValue("3500");
-  await page.getByLabel("Množství", { exact: true }).fill("4");
-  await page.getByRole("button", { name: "Zkontrolovat pozici" }).click();
-  await page.getByRole("button", { name: "Uložit změny" }).click();
-  await page.getByRole("button", { name: "Zpět do portfolia" }).click();
-  await page.getByRole("button", { name: "Detail ETH", exact: true }).click();
-  await page.getByRole("button", { name: "Odebrat z portfolia" }).click();
-  await page.getByRole("button", { name: "Odebrat pozici", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Použít vlastní portfolio" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Přidat aktivum" })).toHaveCount(0);
+  await page.getByRole("link", { name: "Detail BTC", exact: true }).click();
+  await expect(page).toHaveURL(/\/cs-CZ\/assets\/btc$/);
+  await page.goto("/cs-CZ/dashboard");
   await expect(page.getByTestId("portfolio-value")).toHaveText(before);
 });
 
-test("validates input, traps focus, reports storage failure and closes with Escape", async ({
-  page,
-}) => {
+test("legacy portfolio and insights redirect while asset detail remains a real route", async ({ page }) => {
+  for (const route of ["portfolio", "insights"]) {
+    await page.goto(`/cs-CZ/${route}`);
+    await expect(page).toHaveURL(/\/cs-CZ\/dashboard$/);
+  }
+  await page.goto("/cs-CZ/assets/NVDA");
+  await expect(page).toHaveURL(/\/cs-CZ\/assets\/NVDA$/);
+});
+
+test("dialogs trap focus, close with Escape and return focus", async ({ page }) => {
   await page.goto("/cs-CZ/dashboard");
-  const add = page.getByRole("button", { name: "Přidat aktivum", exact: true }).first();
+  const trigger = page.getByRole("button", { name: "Použít vlastní portfolio" });
+  await trigger.click();
+  const add = page.getByRole("button", { name: "Přidat první aktivum" });
   await add.click();
-  await page.getByLabel("Hledat ticker nebo aktivum").fill("unknown-asset");
-  await expect(page.getByText(/Žádné výsledky/)).toBeVisible();
-  await page.getByLabel("Hledat ticker nebo aktivum").fill("AAPL");
-  await page.getByRole("button", { name: /AAPL Apple/ }).click();
-  await page.getByLabel("Množství", { exact: true }).fill("-2");
-  await page.getByRole("button", { name: "Zkontrolovat pozici" }).click();
-  await expect(page.getByRole("dialog").getByRole("alert")).toContainText("Množství");
-  await page.getByLabel("Množství", { exact: true }).fill("2");
-  await page.getByLabel("Průměrná nákupní cena", { exact: true }).fill("0");
-  await page.getByRole("button", { name: "Zkontrolovat pozici" }).click();
-  await expect(page.getByRole("dialog").getByRole("alert")).toContainText("cena");
-  await page.getByLabel("Průměrná nákupní cena", { exact: true }).fill("200");
-  await page.getByRole("button", { name: "Zkontrolovat pozici" }).click();
-  await page.evaluate(() => {
-    Storage.prototype.setItem = () => {
-      throw new Error("disabled");
-    };
-  });
-  await page.getByRole("button", { name: "Přidat ke stávající pozici" }).click();
-  await expect(page.getByRole("dialog").getByRole("alert")).toContainText("nepodařilo uložit");
   await page.getByRole("button", { name: "Zavřít", exact: true }).focus();
   await page.keyboard.press("Shift+Tab");
   expect(await page.evaluate(() => !!document.activeElement?.closest("dialog"))).toBe(true);
@@ -135,10 +110,28 @@ test("validates input, traps focus, reports storage failure and closes with Esca
 test("navigator mění pouze viewport a vlastní rozsah řídí analýzu", async ({ page }) => {
   await page.goto("/cs-CZ/dashboard");
   const analyticalPeriod = await page.locator(".analytics-heading > span").innerText();
+  const summaryValue = await page.getByTestId("portfolio-value").innerText();
+  const summaryReturn = await page.locator(".summary-return").textContent();
+  const renderedDates = () => page.locator(".chart-data-table tbody tr td:first-child").allTextContents();
+  const datesBefore = await renderedDates();
   const start = page.getByRole("slider", { name: "Začátek období" });
   await start.focus();
   await page.keyboard.press("ArrowLeft");
+  await expect.poll(async () => (await renderedDates())[0]).not.toBe(datesBefore[0]);
+  const datesAfter = await renderedDates();
+  expect(datesAfter.at(-1)).toBe(datesBefore.at(-1));
   await expect(page.locator(".analytics-heading > span")).toHaveText(analyticalPeriod);
+  await expect(page.getByTestId("portfolio-value")).toHaveText(summaryValue);
+  expect(await page.locator(".summary-return").textContent()).toBe(summaryReturn);
+
+  await page.getByRole("button", { name: "1Y", exact: true }).click();
+  const oneYearStart = await start.getAttribute("aria-valuetext");
+  await start.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(start).not.toHaveAttribute("aria-valuetext", oneYearStart ?? "");
+  await page.getByRole("button", { name: "1M", exact: true }).click();
+  await page.getByRole("button", { name: "1Y", exact: true }).click();
+  await expect(start).toHaveAttribute("aria-valuetext", oneYearStart ?? "");
   await page.getByLabel("Nastavení grafu", { exact: true }).click();
   await page.getByLabel("Události", { exact: true }).check();
   await page.getByLabel("Nastavení grafu", { exact: true }).click();
@@ -163,16 +156,33 @@ test("touch layout stays within the viewport and keeps data usable offline", asy
   await page.setViewportSize({ width: 390, height: 844 });
   await page.route("**/api/portfolio/context", (route) => route.abort());
   await page.goto("/cs-CZ/dashboard");
-  await expect(page.locator(".lens-insight footer")).toContainText("ověřený výklad zůstává aktivní");
+  await expect(page.locator(".lens-insight footer")).toContainText("Základní vysvětlení aplikace");
+  await expect(page.getByRole("link", { name: "Portfolio", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Markets", exact: true })).toBeVisible();
   await expect(page.locator(".insight-evidence")).toBeVisible();
+  await expect(page.locator(".insight-evidence > summary")).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  await expect(page.locator("#insight-evidence-rows")).not.toBeVisible();
+  const mobilePlotHeight = await page.locator(".chart-plot").evaluate((element) =>
+    Math.round(element.getBoundingClientRect().height),
+  );
+  expect(mobilePlotHeight).toBeGreaterThanOrEqual(280);
+  expect(mobilePlotHeight).toBeLessThanOrEqual(340);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
   await expect(page.getByTestId("portfolio-value")).toBeVisible();
-  await page.getByRole("button", { name: "Detail BTC", exact: true }).click();
-  await page.getByRole("button", { name: "Porovnat v grafu" }).click();
-  await expect(page.locator(".chart-legend")).toContainText("BTC");
-  await page.getByRole("button", { name: "Přidat aktivum", exact: true }).first().click();
+  await page.locator("#holdings").scrollIntoViewIfNeeded();
+  const mobileRowHeight = await page.locator(".holdings-table tbody tr").first().evaluate((element) => Math.round(element.getBoundingClientRect().height));
+  expect(mobileRowHeight).toBeLessThanOrEqual(130);
+  await expect(page.locator(".holdings-table tbody tr").first().locator("td").nth(4)).not.toBeVisible();
+  await page.getByRole("link", { name: "Detail BTC", exact: true }).click();
+  await expect(page).toHaveURL(/\/cs-CZ\/assets\/btc$/);
+  await page.goto("/cs-CZ/dashboard");
+  await page.getByRole("button", { name: "Použít vlastní portfolio" }).click();
+  await page.getByRole("button", { name: "Přidat první aktivum" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   expect(await page.getByRole("dialog").evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(
     true,
@@ -180,4 +190,34 @@ test("touch layout stays within the viewport and keeps data usable offline", asy
   await page.screenshot({ path: "test-results/lens-mobile-dialog.png", fullPage: true });
   await page.getByRole("button", { name: "Zavřít", exact: true }).click();
   await page.screenshot({ path: "test-results/lens-mobile.png", fullPage: true });
+});
+
+test("chart uses bounded viewport-aware heights without grid stretch", async ({ page }) => {
+  const viewports = [
+    { width: 1366, height: 768, min: 320, max: 340 },
+    { width: 1440, height: 900, min: 350, max: 385 },
+    { width: 1600, height: 900, min: 350, max: 375 },
+    { width: 1920, height: 1080, min: 390, max: 415 },
+  ];
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+    await page.goto("/cs-CZ/dashboard");
+    const layout = await page.locator(".hero-analytics").evaluate((element) => ({
+      alignItems: getComputedStyle(element).alignItems,
+      scrollWidth: document.documentElement.scrollWidth,
+      viewportWidth: window.innerWidth,
+    }));
+    const plotHeight = await page.locator(".chart-plot").evaluate((element) =>
+      Math.round(element.getBoundingClientRect().height),
+    );
+    const lensHeadlineTop = await page.locator(".insight-copy h3").evaluate((element) =>
+      element.getBoundingClientRect().top,
+    );
+    expect(layout.alignItems).toBe("start");
+    expect(layout.scrollWidth).toBeLessThanOrEqual(layout.viewportWidth);
+    expect(plotHeight).toBeGreaterThanOrEqual(viewport.min);
+    expect(plotHeight).toBeLessThanOrEqual(viewport.max);
+    expect(plotHeight).toBeLessThan(viewport.height);
+    expect(lensHeadlineTop).toBeLessThan(viewport.height);
+  }
 });

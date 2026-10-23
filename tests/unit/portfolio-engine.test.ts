@@ -13,12 +13,15 @@ import {
   getPortfolioSeries,
   getPortfolioValue,
   initialTransactions,
+  mockFx,
   normalizeSeriesToBase100,
   timeline,
   timeframeRange,
   transactionsSchema,
   type Transaction,
 } from "@/lib/finance/portfolio-engine";
+import { demoPriceFor, portfolioDataset } from "@/data/mock/portfolioDataset";
+import { toLensFacts } from "@/lib/finance/lens-facts";
 import type { Timeframe } from "@/types/finance";
 
 const transactions: Transaction[] = [
@@ -263,5 +266,70 @@ describe("jednotná finanční doména", () => {
     expect(transactionsSchema.safeParse([...transactions, { ...transactions[1] }]).success).toBe(
       false,
     );
+  });
+
+  test("recovery dataset drží finanční invarianty a známý charakter", () => {
+    const current = buildAnalysis(initialTransactions, timeframeRange("1M"));
+    const year = buildAnalysis(initialTransactions, timeframeRange("1Y"));
+    const cash = current.holdings.find((holding) => holding.assetId === "cash");
+    const allocationSum = current.allocation.reduce((sum, item) => sum + item.percentage, 0);
+    expect(cash?.marketValue ?? -1).toBeGreaterThanOrEqual(0);
+    expect(current.metrics.endValue).toBeGreaterThan(0);
+    expect(allocationSum).toBeCloseTo(100, 8);
+    expect(current.concentration.largestPosition?.allocationPct ?? 101).toBeLessThanOrEqual(100);
+    expect(current.concentration.top3Share).toBeLessThanOrEqual(100);
+    for (const holding of current.holdings) {
+      const expectedValue =
+        holding.quantity * demoPriceFor(holding.assetId, 730) * mockFx[holding.asset.currency];
+      expect(holding.marketValue).toBeCloseTo(expectedValue, 6);
+      expect(Number.isFinite(holding.pnl)).toBe(true);
+      expect(Number.isFinite(holding.returnPct)).toBe(true);
+    }
+    initialTransactions.forEach((transaction, index) => {
+      const cashAtTransaction = buildHoldings(
+        initialTransactions.slice(0, index + 1),
+        transaction.occurredAt,
+      ).find((holding) => holding.assetId === "cash");
+      expect(cashAtTransaction?.quantity ?? 0).toBeGreaterThanOrEqual(0);
+    });
+    const facts = toLensFacts(current, "1M", {
+      mode: "performance",
+      benchmarkVisible: true,
+    });
+    expect(JSON.stringify({ current, year, facts })).not.toMatch(/NaN|Infinity/);
+    const last = current.points.at(-1)!;
+    const previous = current.points.at(-2)!;
+    expect(last.portfolioValue).toBeGreaterThan(0);
+    expect(Math.abs(last.portfolioReturnPct - previous.portfolioReturnPct)).toBeLessThan(5);
+    expect(portfolioDataset.version).toBe("lens-demo-2026.09-v2");
+    expect(current.metrics.endValue).toBeCloseTo(3_663_261, -4);
+    expect(current.concentration.cashShare).toBeGreaterThan(13);
+    expect(current.concentration.cashShare).toBeLessThan(14);
+    expect(current.concentration.largestPosition?.allocationPct).toBeGreaterThan(24);
+    expect(current.concentration.largestPosition?.allocationPct).toBeLessThan(26);
+    expect(current.metrics.returnPct).toBeGreaterThan(4.2);
+    expect(current.metrics.returnPct).toBeLessThan(4.5);
+    expect(current.metrics.benchmarkReturnPct).toBeCloseTo(3.7, 1);
+    expect(current.metrics.benchmarkDeltaPct).toBeGreaterThan(0.5);
+    expect(current.metrics.benchmarkDeltaPct).toBeLessThan(0.8);
+    expect(current.metrics.maxDrawdownPct).toBeCloseTo(0, 1);
+    expect(current.contribution.topContributor?.assetId).toBe("nvda");
+    expect(current.contribution.topContributor?.contributionPctPoints).toBeGreaterThan(1);
+    expect(current.contribution.topContributor?.contributionPctPoints).toBeLessThan(1.3);
+    expect(year.metrics.returnPct).toBeGreaterThan(11.3);
+    expect(year.metrics.returnPct).toBeLessThan(11.8);
+    expect(year.metrics.benchmarkReturnPct).toBeCloseTo(10.7, 1);
+    expect(year.metrics.benchmarkDeltaPct).toBeGreaterThan(0.7);
+    expect(year.metrics.benchmarkDeltaPct).toBeLessThan(1.1);
+    expect(year.metrics.maxDrawdownPct).toBeGreaterThan(-7.3);
+    expect(year.metrics.maxDrawdownPct).toBeLessThan(-6.4);
+    expect(year.contribution.topContributor?.assetId).toBe("btc");
+    expect(year.contribution.topContributor?.contributionPctPoints).toBeGreaterThan(3.9);
+    expect(year.contribution.topContributor?.contributionPctPoints).toBeLessThan(4.7);
+    const apple = year.contribution.items.find((item) => item.assetId === "aapl")!;
+    expect(apple.contributionPctPoints).toBeGreaterThan(-0.4);
+    expect(apple.contributionPctPoints).toBeLessThan(0);
+    expect(year.contribution.residual).toBeGreaterThan(0.2);
+    expect(year.contribution.residual).toBeLessThan(1);
   });
 });

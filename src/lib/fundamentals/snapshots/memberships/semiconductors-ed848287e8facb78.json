@@ -1,0 +1,838 @@
+{
+  "id": "semiconductors",
+  "members": [
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:NVDA",
+        "provider": "twelvedata",
+        "providerSymbol": "NVDA",
+        "symbol": "NVDA",
+        "name": "NVIDIA Corporation",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 5430000000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:TSM",
+        "provider": "twelvedata",
+        "providerSymbol": "TSM",
+        "symbol": "TSM",
+        "name": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 2020000000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:AVGO",
+        "provider": "twelvedata",
+        "providerSymbol": "AVGO",
+        "symbol": "AVGO",
+        "name": "Broadcom Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 1680000000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:MU",
+        "provider": "twelvedata",
+        "providerSymbol": "MU",
+        "symbol": "MU",
+        "name": "Micron Technology, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 1220000000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:AMD",
+        "provider": "twelvedata",
+        "providerSymbol": "AMD",
+        "symbol": "AMD",
+        "name": "Advanced Micro Devices, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 1030000000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:INTC",
+        "provider": "twelvedata",
+        "providerSymbol": "INTC",
+        "symbol": "INTC",
+        "name": "Intel Corporation",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 646310000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:TXN",
+        "provider": "twelvedata",
+        "providerSymbol": "TXN",
+        "symbol": "TXN",
+        "name": "Texas Instruments Incorporated",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 253950000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:MRVL",
+        "provider": "twelvedata",
+        "providerSymbol": "MRVL",
+        "symbol": "MRVL",
+        "name": "Marvell Technology, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 229700000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:QCOM",
+        "provider": "twelvedata",
+        "providerSymbol": "QCOM",
+        "symbol": "QCOM",
+        "name": "QUALCOMM Incorporated",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 215720000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:ADI",
+        "provider": "twelvedata",
+        "providerSymbol": "ADI",
+        "symbol": "ADI",
+        "name": "Analog Devices, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 190720000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:MPWR",
+        "provider": "twelvedata",
+        "providerSymbol": "MPWR",
+        "symbol": "MPWR",
+        "name": "Monolithic Power Systems, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 67200000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:ALAB",
+        "provider": "twelvedata",
+        "providerSymbol": "ALAB",
+        "symbol": "ALAB",
+        "name": "Astera Labs, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 63260000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:UMC",
+        "provider": "twelvedata",
+        "providerSymbol": "UMC",
+        "symbol": "UMC",
+        "name": "United Microelectronics Corporation",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 60830000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:NXPI",
+        "provider": "twelvedata",
+        "providerSymbol": "NXPI",
+        "symbol": "NXPI",
+        "name": "NXP Semiconductors N.V.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 60040000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:CBRS",
+        "provider": "twelvedata",
+        "providerSymbol": "CBRS",
+        "symbol": "CBRS",
+        "name": "Cerebras Systems Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 49120000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:STM",
+        "provider": "twelvedata",
+        "providerSymbol": "STM",
+        "symbol": "STM",
+        "name": "STMicroelectronics N.V.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 45860000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:MCHP",
+        "provider": "twelvedata",
+        "providerSymbol": "MCHP",
+        "symbol": "MCHP",
+        "name": "Microchip Technology Incorporated",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 42730000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:CRDO",
+        "provider": "twelvedata",
+        "providerSymbol": "CRDO",
+        "symbol": "CRDO",
+        "name": "Credo Technology Group Holding Ltd",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 39650000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:ON",
+        "provider": "twelvedata",
+        "providerSymbol": "ON",
+        "symbol": "ON",
+        "name": "ON Semiconductor Corporation",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 30050000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:GFS",
+        "provider": "twelvedata",
+        "providerSymbol": "GFS",
+        "symbol": "GFS",
+        "name": "GLOBALFOUNDRIES Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 26890000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:TSEM",
+        "provider": "twelvedata",
+        "providerSymbol": "TSEM",
+        "symbol": "TSEM",
+        "name": "Tower Semiconductor Ltd.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 26050000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:MTSI",
+        "provider": "twelvedata",
+        "providerSymbol": "MTSI",
+        "symbol": "MTSI",
+        "name": "MACOM Technology Solutions Holdings, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 21810000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGM:SITM",
+        "provider": "twelvedata",
+        "providerSymbol": "SITM",
+        "symbol": "SITM",
+        "name": "SiTime Corporation",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGM",
+        "currency": "USD"
+      },
+      "marketCap": 19920000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:LSCC",
+        "provider": "twelvedata",
+        "providerSymbol": "LSCC",
+        "symbol": "LSCC",
+        "name": "Lattice Semiconductor Corporation",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 18190000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:SMTC",
+        "provider": "twelvedata",
+        "providerSymbol": "SMTC",
+        "symbol": "SMTC",
+        "name": "Semtech Corporation",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 17010000000.000002,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:SWKS",
+        "provider": "twelvedata",
+        "providerSymbol": "SWKS",
+        "symbol": "SWKS",
+        "name": "Skyworks Solutions, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 13440000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:RMBS",
+        "provider": "twelvedata",
+        "providerSymbol": "RMBS",
+        "symbol": "RMBS",
+        "name": "Rambus Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 11410000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:QRVO",
+        "provider": "twelvedata",
+        "providerSymbol": "QRVO",
+        "symbol": "QRVO",
+        "name": "Qorvo, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 10410000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:MXL",
+        "provider": "twelvedata",
+        "providerSymbol": "MXL",
+        "symbol": "MXL",
+        "name": "MaxLinear, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 8510000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:SLAB",
+        "provider": "twelvedata",
+        "providerSymbol": "SLAB",
+        "symbol": "SLAB",
+        "name": "Silicon Laboratories Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 7380000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:ALGM",
+        "provider": "twelvedata",
+        "providerSymbol": "ALGM",
+        "symbol": "ALGM",
+        "name": "Allegro MicroSystems, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 6850000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:CRUS",
+        "provider": "twelvedata",
+        "providerSymbol": "CRUS",
+        "symbol": "CRUS",
+        "name": "Cirrus Logic, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 6010000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:PI",
+        "provider": "twelvedata",
+        "providerSymbol": "PI",
+        "symbol": "PI",
+        "name": "Impinj, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 5450000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:VSH",
+        "provider": "twelvedata",
+        "providerSymbol": "VSH",
+        "symbol": "VSH",
+        "name": "Vishay Intertechnology, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 4990000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:DIOD",
+        "provider": "twelvedata",
+        "providerSymbol": "DIOD",
+        "symbol": "DIOD",
+        "name": "Diodes Incorporated",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 4410000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:SYNA",
+        "provider": "twelvedata",
+        "providerSymbol": "SYNA",
+        "symbol": "SYNA",
+        "name": "Synaptics Incorporated",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 4019999999.9999995,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGM:NVTS",
+        "provider": "twelvedata",
+        "providerSymbol": "NVTS",
+        "symbol": "NVTS",
+        "name": "Navitas Semiconductor Corporation",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGM",
+        "currency": "USD"
+      },
+      "marketCap": 3190000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:POWI",
+        "provider": "twelvedata",
+        "providerSymbol": "POWI",
+        "symbol": "POWI",
+        "name": "Power Integrations, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 2920000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:LASR",
+        "provider": "twelvedata",
+        "providerSymbol": "LASR",
+        "symbol": "LASR",
+        "name": "nLIGHT, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 2330000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:AMBQ",
+        "provider": "twelvedata",
+        "providerSymbol": "AMBQ",
+        "symbol": "AMBQ",
+        "name": "Ambiq Micro, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 1690000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:WOLF",
+        "provider": "twelvedata",
+        "providerSymbol": "WOLF",
+        "symbol": "WOLF",
+        "name": "Wolfspeed, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 1460000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNCM:POET",
+        "provider": "twelvedata",
+        "providerSymbol": "POET",
+        "symbol": "POET",
+        "name": "POET Technologies Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNCM",
+        "currency": "USD"
+      },
+      "marketCap": 1340000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGM:AIP",
+        "provider": "twelvedata",
+        "providerSymbol": "AIP",
+        "symbol": "AIP",
+        "name": "Arteris, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGM",
+        "currency": "USD"
+      },
+      "marketCap": 1170000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:CEVA",
+        "provider": "twelvedata",
+        "providerSymbol": "CEVA",
+        "symbol": "CEVA",
+        "name": "CEVA, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 1020000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:AOSL",
+        "provider": "twelvedata",
+        "providerSymbol": "AOSL",
+        "symbol": "AOSL",
+        "name": "Alpha and Omega Semiconductor Limited",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 845140000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNCM:INDI",
+        "provider": "twelvedata",
+        "providerSymbol": "INDI",
+        "symbol": "INDI",
+        "name": "indie Semiconductor, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNCM",
+        "currency": "USD"
+      },
+      "marketCap": 700060000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:LAES",
+        "provider": "twelvedata",
+        "providerSymbol": "LAES",
+        "symbol": "LAES",
+        "name": "SEALSQ Corp",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 542680000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNCM:NVEC",
+        "provider": "twelvedata",
+        "providerSymbol": "NVEC",
+        "symbol": "NVEC",
+        "name": "NVE Corporation",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNCM",
+        "currency": "USD"
+      },
+      "marketCap": 527880000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGM:MRAM",
+        "provider": "twelvedata",
+        "providerSymbol": "MRAM",
+        "symbol": "MRAM",
+        "name": "Everspin Technologies, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGM",
+        "currency": "USD"
+      },
+      "marketCap": 449740000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    }
+  ],
+  "excluded": [
+    {
+      "symbol": "SKHY",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "ARM",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "ASX",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "SIMO",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "HIMX",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "IMOS",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "ALMU",
+      "reason": "No valid USD market capitalization"
+    },
+    {
+      "symbol": "GSIT",
+      "reason": "No valid USD market capitalization"
+    },
+    {
+      "symbol": "GCTS",
+      "reason": "No valid USD market capitalization"
+    },
+    {
+      "symbol": "VLN",
+      "reason": "No valid USD market capitalization"
+    },
+    {
+      "symbol": "QUIK",
+      "reason": "No valid USD market capitalization"
+    },
+    {
+      "symbol": "MX",
+      "reason": "No valid USD market capitalization"
+    },
+    {
+      "symbol": "IPWR",
+      "reason": "No valid USD market capitalization"
+    },
+    {
+      "symbol": "NA",
+      "reason": "No valid USD market capitalization"
+    },
+    {
+      "symbol": "WKEY",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "SQNS",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "PXLW",
+      "reason": "No valid USD market capitalization"
+    },
+    {
+      "symbol": "LEDS",
+      "reason": "No valid USD market capitalization"
+    },
+    {
+      "symbol": "FABC",
+      "reason": "No valid USD market capitalization"
+    },
+    {
+      "symbol": "MOBX",
+      "reason": "No valid USD market capitalization"
+    },
+    {
+      "symbol": "PRSO",
+      "reason": "No valid USD market capitalization"
+    }
+  ],
+  "candidateCount": 70,
+  "version": "ed848287e8facb78",
+  "updatedAt": "2026-09-28T02:50:56.197Z",
+  "rebalancedAt": "2026-09-28T02:28:22.501Z",
+  "sources": [
+    "https://stockanalysis.com/stocks/industry/semiconductors/",
+    "https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt",
+    "https://www.nasdaqtrader.com/dynamic/SymDir/otherlisted.txt"
+  ],
+  "sourceDates": {
+    "https://stockanalysis.com/stocks/industry/semiconductors/": "2026-09-28"
+  }
+}

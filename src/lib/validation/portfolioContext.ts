@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { transactionsSchema } from "@/lib/finance/portfolio-engine";
 import { assetCatalog } from "@/data/mock/catalog";
-import { insightResponseSchema, type InsightResponse } from "./insightSchemas";
+import { insightResponseSchema } from "./insightSchemas";
 export const portfolioContextSchema = z
   .object({
     transactions: transactionsSchema,
@@ -25,5 +25,12 @@ export const portfolioContextSchema = z
       (input.selectedPoint >= input.selectedRange[0] && input.selectedPoint <= input.selectedRange[1]),
   );
 export type PortfolioContext = z.infer<typeof portfolioContextSchema>;
-export const contextInsightSchema = insightResponseSchema;
-export type ContextInsight = InsightResponse;
+export const insightDeliverySchema = z.object({
+  insight: insightResponseSchema,
+  meta: z.object({
+    wording: z.enum(["application", "ai"]),
+    enhancement: z.enum(["not_requested", "ready", "not_configured", "rate_limited", "service_error"]),
+  }).strict(),
+}).strict();
+export const contextInsightSchema = insightDeliverySchema;
+export type ContextInsight = z.infer<typeof insightDeliverySchema>;

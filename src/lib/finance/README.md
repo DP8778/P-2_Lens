@@ -15,6 +15,9 @@ funkcemi v `portfolio-engine.ts`.
   snižuje agregovanou průměrnou nákladovou bázi poměrně.
 - Vklady a výběry jsou externí cash flow. Časová řada výnosu je denně řetězená a tok daného dne
   odečítá před výpočtem výnosu, takže samotný vklad nevypadá jako investiční zisk.
+- Osobní portfolio je poziční evidence, nikoli broker cash account: každý nákup dostane
+  performance-neutral externí vklad a každý prodej odpovídající externí výběr. Implicitní
+  hotovost proto zůstává nulová; samostatně zadané externí cash flow zůstává explicitní.
 - Absolutní P/L období je změna hodnoty po odečtení čistých externích toků. Drawdown se počítá z
   časově očištěného indexu, jehož první bod je 100.
 - Contribution odpovídá na otázku, které pozice ovlivnily výsledek portfolia. Pro každý den se

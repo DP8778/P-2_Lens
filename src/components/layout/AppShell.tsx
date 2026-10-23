@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Settings, ArrowUpRight } from "lucide-react";
+import { Settings } from "lucide-react";
 import type { Dictionary, Locale } from "@/i18n/getDictionary";
 import { Logo } from "./Logo";
 import { PortfolioProvider } from "@/components/portfolio/PortfolioProvider";
 import { AnalysisProvider } from "@/components/portfolio/AnalysisProvider";
+import { GlobalAssetSearch } from "./GlobalAssetSearch";
 export function AppShell({
   children,
   locale,
@@ -17,7 +18,7 @@ export function AppShell({
   const pathname = usePathname();
   if (pathname.endsWith("/login")) return <>{children}</>;
   return (
-    <PortfolioProvider>
+    <PortfolioProvider hydrateMarket={!/\/markets\/?$/.test(pathname)}>
       <AnalysisProvider>
         <div className="app-shell">
           <a className="skip-link" href="#main-content">
@@ -30,30 +31,17 @@ export function AppShell({
                 href={`/${locale}/dashboard`}
                 aria-current={pathname.endsWith("dashboard") ? "page" : undefined}
               >
-                Přehled
-              </Link>
-              <Link
-                href={`/${locale}/portfolio#holdings`}
-                aria-current={pathname.endsWith("portfolio") ? "page" : undefined}
-              >
                 Portfolio
               </Link>
-              <Link
-                href={`/${locale}/insights#lens-insight`}
-                aria-current={pathname.endsWith("insights") ? "page" : undefined}
-              >
-                Souvislosti
-                <ArrowUpRight size={12} />
+              <Link href={`/${locale}/markets`} aria-current={pathname.endsWith("markets") ? "page" : undefined}>
+                Markets
               </Link>
             </nav>
+            <GlobalAssetSearch locale={locale} />
             <div className="nav-account">
-              <span className="local-status">Lokální portfolio</span>
               <Link className="icon-control" href={`/${locale}/settings`} aria-label="Nastavení">
                 <Settings size={18} />
               </Link>
-              <span className="user-avatar" aria-label="Demo investor">
-                DI
-              </span>
             </div>
           </header>
           <main id="main-content">{children}</main>

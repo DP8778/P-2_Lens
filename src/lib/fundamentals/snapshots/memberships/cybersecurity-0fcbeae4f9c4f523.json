@@ -1,0 +1,396 @@
+{
+  "id": "cybersecurity",
+  "members": [
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:PANW",
+        "provider": "twelvedata",
+        "providerSymbol": "PANW",
+        "symbol": "PANW",
+        "name": "Palo Alto Networks, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 306540000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:CRWD",
+        "provider": "twelvedata",
+        "providerSymbol": "CRWD",
+        "symbol": "CRWD",
+        "name": "CrowdStrike Holdings, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 258720000000.00003,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:FTNT",
+        "provider": "twelvedata",
+        "providerSymbol": "FTNT",
+        "symbol": "FTNT",
+        "name": "Fortinet, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 127270000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:OKTA",
+        "provider": "twelvedata",
+        "providerSymbol": "OKTA",
+        "symbol": "OKTA",
+        "name": "Okta, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 34119999999.999996,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:ZS",
+        "provider": "twelvedata",
+        "providerSymbol": "ZS",
+        "symbol": "ZS",
+        "name": "Zscaler, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 31480000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:RBRK",
+        "provider": "twelvedata",
+        "providerSymbol": "RBRK",
+        "symbol": "RBRK",
+        "name": "Rubrik, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 22710000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:AKAM",
+        "provider": "twelvedata",
+        "providerSymbol": "AKAM",
+        "symbol": "AKAM",
+        "name": "Akamai Technologies, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 16379999999.999998,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:CHKP",
+        "provider": "twelvedata",
+        "providerSymbol": "CHKP",
+        "symbol": "CHKP",
+        "name": "Check Point Software Technologies Ltd.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 13400000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:GEN",
+        "provider": "twelvedata",
+        "providerSymbol": "GEN",
+        "symbol": "GEN",
+        "name": "Gen Digital Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 12940000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:SAIL",
+        "provider": "twelvedata",
+        "providerSymbol": "SAIL",
+        "symbol": "SAIL",
+        "name": "SailPoint, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 11780000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:S",
+        "provider": "twelvedata",
+        "providerSymbol": "S",
+        "symbol": "S",
+        "name": "SentinelOne, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 7790000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:NTSK",
+        "provider": "twelvedata",
+        "providerSymbol": "NTSK",
+        "symbol": "NTSK",
+        "name": "Netskope, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 7220000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:CVLT",
+        "provider": "twelvedata",
+        "providerSymbol": "CVLT",
+        "symbol": "CVLT",
+        "name": "Commvault Systems, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 6030000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:QLYS",
+        "provider": "twelvedata",
+        "providerSymbol": "QLYS",
+        "symbol": "QLYS",
+        "name": "Qualys, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 5970000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:VRNS",
+        "provider": "twelvedata",
+        "providerSymbol": "VRNS",
+        "symbol": "VRNS",
+        "name": "Varonis Systems, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 5310000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:TENB",
+        "provider": "twelvedata",
+        "providerSymbol": "TENB",
+        "symbol": "TENB",
+        "name": "Tenable Holdings, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 3690000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:ATEN",
+        "provider": "twelvedata",
+        "providerSymbol": "ATEN",
+        "symbol": "ATEN",
+        "name": "A10 Networks, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 1870000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:RDWR",
+        "provider": "twelvedata",
+        "providerSymbol": "RDWR",
+        "symbol": "RDWR",
+        "name": "Radware Ltd.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 1240000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGM:RPD",
+        "provider": "twelvedata",
+        "providerSymbol": "RPD",
+        "symbol": "RPD",
+        "name": "Rapid7, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGM",
+        "currency": "USD"
+      },
+      "marketCap": 783200000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNCM:OSPN",
+        "provider": "twelvedata",
+        "providerSymbol": "OSPN",
+        "symbol": "OSPN",
+        "name": "OneSpan Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNCM",
+        "currency": "USD"
+      },
+      "marketCap": 656340000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNCM:ARQQ",
+        "provider": "twelvedata",
+        "providerSymbol": "ARQQ",
+        "symbol": "ARQQ",
+        "name": "Arqit Quantum Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNCM",
+        "currency": "USD"
+      },
+      "marketCap": 407890000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNCM:GRRR",
+        "provider": "twelvedata",
+        "providerSymbol": "GRRR",
+        "symbol": "GRRR",
+        "name": "Gorilla Technology Group Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNCM",
+        "currency": "USD"
+      },
+      "marketCap": 385410000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGM:TLS",
+        "provider": "twelvedata",
+        "providerSymbol": "TLS",
+        "symbol": "TLS",
+        "name": "Telos Corporation",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGM",
+        "currency": "USD"
+      },
+      "marketCap": 301940000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    }
+  ],
+  "excluded": [
+    {
+      "symbol": "NQZ6 Index",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "4704 JP",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "053800 KS",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "NCC LN",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "2326 JP",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "3692 JP",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "4258 JP",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "4475 JP",
+      "reason": "No verified supported common-stock listing"
+    }
+  ],
+  "candidateCount": 31,
+  "version": "0fcbeae4f9c4f523",
+  "updatedAt": "2026-09-28T02:50:56.197Z",
+  "rebalancedAt": "2026-09-28T02:28:22.501Z",
+  "sources": [
+    "https://assets.globalxetfs.com/funds/holdings/bug_full-holdings_20260925.csv",
+    "https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt",
+    "https://www.nasdaqtrader.com/dynamic/SymDir/otherlisted.txt"
+  ],
+  "sourceDates": {
+    "https://assets.globalxetfs.com/funds/holdings/bug_full-holdings_20260925.csv": "09/25/2026"
+  }
+}

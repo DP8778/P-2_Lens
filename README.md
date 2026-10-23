@@ -47,6 +47,7 @@ Aplikace poběží na `http://localhost:3000` a přesměruje na české demo př
 | `npm run typecheck`                       | TypeScript bez emitování         |
 | `npm test` / `npm run test:watch`         | Jest testy                       |
 | `npm run test:e2e`                        | Produkční build + Playwright E2E |
+| `npm run test:market-live`                | Volitelný smoke test reálného Twelve Data API |
 | `npm run storybook`                       | Storybook na portu 6006          |
 | `npm run build-storybook`                 | Statický Storybook build         |
 | `npm run format` / `npm run format:check` | Prettier                         |
@@ -56,9 +57,20 @@ Aplikace poběží na `http://localhost:3000` a přesměruje na české demo př
 ```dotenv
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-5-mini
+TWELVE_DATA_API_KEY=
 ```
 
-Obě proměnné jsou pouze server-side. Nikdy nepoužívejte prefix `NEXT_PUBLIC_` pro API klíč a necommitujte `.env.local`.
+API klíče jsou pouze server-side. Nikdy nepoužívejte prefix `NEXT_PUBLIC_` a necommitujte `.env.local`.
+
+### Live market data
+
+1. Vytvořte `.env.local` z `.env.example`.
+2. Doplňte `TWELVE_DATA_API_KEY` z Twelve Data dashboardu.
+3. Spusťte `npm run dev`, otevřete dashboard a v přepínači portfolia zvolte **Moje portfolio**.
+4. Bez klíče zůstává Demo portfolio plně funkční; osobní režim zobrazí řízený unavailable stav.
+
+Osobní transakce zůstávají v localStorage. Normalizovaná historie cen a FX je odděleně v IndexedDB.
+Detail architektury, freshness, cache a finančních omezení je v `src/lib/market-data/README.md`.
 
 ## Architecture
 
@@ -66,6 +78,7 @@ Obě proměnné jsou pouze server-side. Nikdy nepoužívejte prefix `NEXT_PUBLIC
 - `src/components`: malý design system, layout a doménové komponenty.
 - `src/data/mock`: stabilní portfolio, ceny a časové řady bez `Math.random()`.
 - `src/lib/finance`: čisté deterministické výpočty.
+- `src/lib/market-data`: provider abstraction, server-only Twelve Data, normalizace a browser cache.
 - `src/lib/ai`: bezpečná redukce payloadu, fallback a limiter.
 - `src/lib/repositories`: rozhraní `MarketDataProvider` a mock implementace.
 - `src/i18n`: český a anglický slovník; formátování zůstává oddělené.
@@ -74,21 +87,27 @@ Obě proměnné jsou pouze server-side. Nikdy nepoužívejte prefix `NEXT_PUBLIC
 
 - `/cs-CZ/login` — demo autentizace
 - `/cs-CZ/dashboard` — hlavní analytický přehled
-- `/cs-CZ/portfolio` — filtrování a řazení pozic
-- `/cs-CZ/assets/[symbol]` — detail BTC, NVDA, SPY, AAPL, NVO nebo USD
-- `/cs-CZ/insights` — lokální mock historie
+- `/cs-CZ/portfolio`, `/cs-CZ/insights`, `/cs-CZ/assets/[symbol]` — kompatibilní redirect na dashboard
 - `/cs-CZ/settings` — locale, měna, vysvětlení, soukromí a vzhled
 - stejné routy pod `/en-US`
 - `GET /api/market/bitcoin`
+- `GET /api/market/search`, `POST /api/market/quotes`
+- `GET /api/market/history`, `GET /api/market/fx`, `GET /api/market/status`
 - `POST /api/ai/portfolio-insight`
 
 ## Financial calculation layer
 
 `calculateReturn`, `calculateContribution`, `calculateAllocation`, `calculateMaxDrawdown` a `buildPortfolioMetrics` jsou čisté funkce a mají unit testy. API pro insight přijímá pouze jejich výstup zmenšený na Zod-validovaný kontrakt. Model nic nepřepočítává.
 
-## Mock market data
+## Market data
 
-`MockMarketDataProvider` vrací stabilní BTC quote a časovou řadu. Instrumenty používají známé tickery pouze jako demo označení; ceny nejsou aktuální. Pozdější `LiveMarketDataProvider` může implementovat stejné rozhraní bez změny chartů.
+`Demo portfolio` používá výhradně stabilní `lens-demo-2026.09-v2`. `Moje portfolio` používá
+serverový `TwelveDataProvider`; běžné Playwright testy používají deterministické route mocks.
+Obě implementace plní stejný normalizovaný kontrakt a charty ani Lens Insight provider neznají.
+
+`npm run test:market-live` spustí samostatný lokální Next server a skutečně ověří search,
+quote, historii a USD/CZK proti Twelve Data. Bez `TWELVE_DATA_API_KEY` se bezpečně přeskočí,
+takže offline CI klíč nevyžaduje.
 
 ## AI architecture
 
@@ -126,9 +145,10 @@ Jest ověřuje finance, formátování, AI schemas, fallback, základní kompone
 
 ## Production gaps
 
-- Portfolio i historie jsou mock; chybí skutečné broker napojení.
+- Neexistuje broker import; osobní transakce se zadávají ručně a zůstávají lokální.
+- Dividend total return a automatická úprava pre-split quantities nejsou v této fázi implementované.
 - Přihlášení je pouze demo bez identity a session.
-- Ceny nejsou živá tržní data.
+- Demo ceny nejsou živá tržní data; osobní portfolio je použije pouze s nakonfigurovaným Twelve Data.
 - AI historie se trvale neukládá.
 - Limiter je pouze in-memory a není vhodný pro distribuované nasazení.
 - Produkt neposkytuje finanční poradenství.
@@ -156,3 +176,22 @@ git init
 git add .
 git commit -m "feat: scaffold p-2 lens portfolio intelligence dashboard"
 ```
+
+
+## Lens Top 100 a reálné výkazy
+
+`npm run data:refresh` obnoví tematické kandidáty, ověřené US listingy,
+kapitalizace a roční výkazy. Členství vybírá až 100 firem podle kapitalizace;
+nevytváří chybějící firmy ani fundamentální hodnoty. Ukládá zdroje, datum,
+obsahovou verzi a historii členství. Při selhání zdroje zachová poslední platná data.
+
+FundamentalsSource dodává existujícímu Financial Anatomy skutečné roční výkazy
+Stock Analysis; PLTR je navíc ověřen proti primárnímu SEC iXBRL včetně
+Government/Commercial a samostatných provozních nákladů. Cenové API a portfolio
+zůstávají oddělené. Podrobná metodika, omezení pokrytí a pravidla publikace jsou v
+[src/lib/fundamentals/README.md](src/lib/fundamentals/README.md).
+
+Workflow `Refresh Lens industry data` umožňuje ruční i pravidelné obnovení.
+Plánovač GitHubu začne fungovat až po zařazení workflow do výchozí větve; nový
+snapshot se v produkci projeví po nasazení. Nejde o scraping při každém otevření
+stránky a import nespotřebovává kredity cenového poskytovatele.

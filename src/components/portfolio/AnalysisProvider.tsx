@@ -50,9 +50,9 @@ export type AnalysisAction =
       >;
     };
 
-const indices = timeframeRange("1M");
+const indices = timeframeRange("1Y");
 const initialState: AnalysisState = {
-  timeframe: "1M",
+  timeframe: "1Y",
   mode: "performance",
   display: "percent",
   benchmarkId: "spy",

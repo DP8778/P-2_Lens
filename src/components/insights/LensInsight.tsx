@@ -30,24 +30,28 @@ export function LensInsight({
   analysis,
   context,
   locale,
+  dataSource = "mock",
 }: {
   analysis: PortfolioAnalysis;
   context: PortfolioContext;
   locale: string;
+  dataSource?: "mock" | "live";
 }) {
   const { dispatch } = useAnalysisContext();
   const requestVersion = useRef(0);
   const activeKey = useRef("");
   const [remote, setRemote] = useState<{ key: string; data: ContextInsight }>();
   const [failedKey, setFailedKey] = useState<string>();
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
   const timeframe: TimeRange = context.timeframe === "CUSTOM" ? "ALL" : context.timeframe;
   const facts = useMemo(
     () =>
       toLensFacts(analysis, timeframe, {
         mode: context.mode,
         benchmarkVisible: context.showBenchmark,
+        dataSource,
       }),
-    [analysis, timeframe, context.mode, context.showBenchmark],
+    [analysis, timeframe, context.mode, context.showBenchmark, dataSource],
   );
   const verifiedContext = useMemo(
     () => buildInsightContext(analysis, context, facts),
@@ -76,7 +80,7 @@ export function LensInsight({
 
   useEffect(() => {
     activeKey.current = key;
-    if (cached) {
+    if (cached || dataSource === "live") {
       return;
     }
     const version = ++requestVersion.current;
@@ -108,10 +112,29 @@ export function LensInsight({
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [cached, context, key]);
+  }, [cached, context, dataSource, key]);
 
-  const insight = remote?.key === key ? remote.data : (cached ?? deterministic);
-  const loading = remote?.key !== key && !cached && failedKey !== key;
+  const delivery = remote?.key === key ? remote.data : (cached ?? {
+    insight: deterministic,
+    meta: { wording: "application" as const, enhancement: "not_requested" as const },
+  });
+  const insight = delivery.insight;
+  const loading = dataSource === "mock" && remote?.key !== key && !cached && failedKey !== key;
+  const deliveryLabel = loading
+    ? "Základní vysvětlení aplikace je aktivní · zkouším rozšířenou formulaci…"
+    : failedKey === key
+      ? "Základní vysvětlení aplikace · služba rozšířené formulace není dostupná."
+      : dataSource === "live"
+        ? "Základní vysvětlení aplikace · AI formulace se v osobním režimu nespouští."
+        : delivery.meta.wording === "ai"
+          ? "AI formulace nad ověřenými výpočty"
+          : delivery.meta.enhancement === "not_configured"
+            ? "Základní vysvětlení aplikace · rozšířená formulace není nakonfigurovaná."
+            : delivery.meta.enhancement === "rate_limited"
+              ? "Základní vysvětlení aplikace · limit rozšířené formulace byl dosažen."
+              : delivery.meta.enhancement === "service_error"
+                ? "Základní vysvětlení aplikace · služba rozšířené formulace selhala."
+                : "Základní vysvětlení aplikace";
   const act = (item: InsightEvidence) => {
     if (!item.action) return;
     if (item.action.type === "selectAsset") {
@@ -150,9 +173,9 @@ export function LensInsight({
 
       {!!insight.drivers.length && (
         <section className="insight-claims" aria-labelledby="insight-drivers-title">
-          <h3 id="insight-drivers-title">Co výsledek ovlivnilo</h3>
+          <h3 id="insight-drivers-title">Klíčový faktor</h3>
           <ul>
-            {insight.drivers.map((driver) => (
+            {insight.drivers.slice(0, 2).map((driver) => (
               <li key={`${driver.text}-${driver.evidenceIds.join("-")}`}>{driver.text}</li>
             ))}
           </ul>
@@ -161,18 +184,28 @@ export function LensInsight({
 
       {!!insight.riskNotes.length && (
         <section className="insight-claims" aria-labelledby="insight-risk-title">
-          <h3 id="insight-risk-title">Co sledovat v datech</h3>
+          <h3 id="insight-risk-title">Ke sledování</h3>
           <ul>
-            {insight.riskNotes.map((note) => (
+            {insight.riskNotes.slice(0, Math.max(0, 3 - Math.min(2, insight.drivers.length))).map((note) => (
               <li key={`${note.text}-${note.evidenceIds.join("-")}`}>{note.text}</li>
             ))}
           </ul>
         </section>
       )}
 
-      <section className="insight-evidence" aria-labelledby="insight-evidence-title">
-        <h3 id="insight-evidence-title">Evidence</h3>
-        <div>
+      <details
+        className="insight-evidence"
+        open={evidenceOpen}
+        onToggle={(event) => setEvidenceOpen(event.currentTarget.open)}
+      >
+        <summary
+          id="insight-evidence-title"
+          aria-expanded={evidenceOpen}
+          aria-controls="insight-evidence-rows"
+        >
+          <span>Evidence ({insight.evidence.length})</span>
+        </summary>
+        <div id="insight-evidence-rows">
           {insight.evidence.map((item) => {
             const content = (
               <>
@@ -189,7 +222,7 @@ export function LensInsight({
             );
           })}
         </div>
-      </section>
+      </details>
 
       <details className="insight-why">
         <summary>Proč právě tento insight?</summary>
@@ -204,7 +237,7 @@ export function LensInsight({
       </details>
 
       <footer>
-        <span>{loading ? "Aktualizuji formulaci…" : failedKey === key ? "Rozšířená formulace není dostupná; ověřený výklad zůstává aktivní." : "Demo analytics · nejde o investiční doporučení"}</span>
+        <span>{deliveryLabel} · nejde o investiční doporučení</span>
       </footer>
     </aside>
   );

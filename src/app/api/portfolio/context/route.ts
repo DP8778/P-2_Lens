@@ -40,19 +40,32 @@ export async function POST(request: Request) {
   });
   const verifiedContext = buildInsightContext(analysis, input, facts);
   let insight = buildDeterministicInsight(verifiedContext);
+  let meta: { wording: "application" | "ai"; enhancement: "not_requested" | "ready" | "not_configured" | "rate_limited" | "service_error" } = {
+    wording: "application",
+    enhancement: "not_requested",
+  };
   if (input.explain) {
-    const response = await generateInsight(
-      new Request(new URL("/api/ai/portfolio-insight", request.url), {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-forwarded-for": request.headers.get("x-forwarded-for") ?? "local",
-        },
-        body: JSON.stringify(verifiedContext),
-      }),
-    );
-    const output = await response.json();
-    if (output.mode === "ai") insight = output.insight;
+    try {
+      const response = await generateInsight(
+        new Request(new URL("/api/ai/portfolio-insight", request.url), {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-forwarded-for": request.headers.get("x-forwarded-for") ?? "local",
+          },
+          body: JSON.stringify(verifiedContext),
+        }),
+      );
+      const output = await response.json() as { mode?: unknown; insight?: unknown };
+      if (output.mode === "ai") {
+        insight = contextInsightSchema.shape.insight.parse(output.insight);
+        meta = { wording: "ai", enhancement: "ready" };
+      } else if (output.mode === "demo") meta.enhancement = "not_configured";
+      else if (output.mode === "rate_limited" || response.status === 429) meta.enhancement = "rate_limited";
+      else meta.enhancement = "service_error";
+    } catch {
+      meta.enhancement = "service_error";
+    }
   }
-  return Response.json(contextInsightSchema.parse(insight));
+  return Response.json(contextInsightSchema.parse({ insight, meta }));
 }

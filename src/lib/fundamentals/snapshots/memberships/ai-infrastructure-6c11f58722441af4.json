@@ -1,0 +1,655 @@
+{
+  "id": "ai-infrastructure",
+  "members": [
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:NVDA",
+        "provider": "twelvedata",
+        "providerSymbol": "NVDA",
+        "symbol": "NVDA",
+        "name": "NVIDIA Corporation",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 5430000000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:TSM",
+        "provider": "twelvedata",
+        "providerSymbol": "TSM",
+        "symbol": "TSM",
+        "name": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 2020000000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:AVGO",
+        "provider": "twelvedata",
+        "providerSymbol": "AVGO",
+        "symbol": "AVGO",
+        "name": "Broadcom Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 1680000000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:MU",
+        "provider": "twelvedata",
+        "providerSymbol": "MU",
+        "symbol": "MU",
+        "name": "Micron Technology, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 1220000000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:AMD",
+        "provider": "twelvedata",
+        "providerSymbol": "AMD",
+        "symbol": "AMD",
+        "name": "Advanced Micro Devices, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 1030000000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:ASML",
+        "provider": "twelvedata",
+        "providerSymbol": "ASML",
+        "symbol": "ASML",
+        "name": "ASML Holding N.V.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 666390000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:INTC",
+        "provider": "twelvedata",
+        "providerSymbol": "INTC",
+        "symbol": "INTC",
+        "name": "Intel Corporation",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 646310000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:CSCO",
+        "provider": "twelvedata",
+        "providerSymbol": "CSCO",
+        "symbol": "CSCO",
+        "name": "Cisco Systems, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 420670000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:ANET",
+        "provider": "twelvedata",
+        "providerSymbol": "ANET",
+        "symbol": "ANET",
+        "name": "Arista Networks, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 260510000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:MRVL",
+        "provider": "twelvedata",
+        "providerSymbol": "MRVL",
+        "symbol": "MRVL",
+        "name": "Marvell Technology, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 229700000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:QCOM",
+        "provider": "twelvedata",
+        "providerSymbol": "QCOM",
+        "symbol": "QCOM",
+        "name": "QUALCOMM Incorporated",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 215720000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:EQIX",
+        "provider": "twelvedata",
+        "providerSymbol": "EQIX",
+        "symbol": "EQIX",
+        "name": "Equinix, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 99470000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/real-estate/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:VRT",
+        "provider": "twelvedata",
+        "providerSymbol": "VRT",
+        "symbol": "VRT",
+        "name": "Vertiv Holdings Co",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 97510000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/industrials/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:CDNS",
+        "provider": "twelvedata",
+        "providerSymbol": "CDNS",
+        "symbol": "CDNS",
+        "name": "Cadence Design Systems, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 89810000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:HPE",
+        "provider": "twelvedata",
+        "providerSymbol": "HPE",
+        "symbol": "HPE",
+        "name": "Hewlett Packard Enterprise Company",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 83550000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:SNPS",
+        "provider": "twelvedata",
+        "providerSymbol": "SNPS",
+        "symbol": "SNPS",
+        "name": "Synopsys, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 81590000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:AMT",
+        "provider": "twelvedata",
+        "providerSymbol": "AMT",
+        "symbol": "AMT",
+        "name": "American Tower Corporation",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 78760000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/real-estate/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:DLR",
+        "provider": "twelvedata",
+        "providerSymbol": "DLR",
+        "symbol": "DLR",
+        "name": "Digital Realty Trust, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 67450000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/real-estate/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:MPWR",
+        "provider": "twelvedata",
+        "providerSymbol": "MPWR",
+        "symbol": "MPWR",
+        "name": "Monolithic Power Systems, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 67200000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:NBIS",
+        "provider": "twelvedata",
+        "providerSymbol": "NBIS",
+        "symbol": "NBIS",
+        "name": "Nebius Group N.V.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 65050000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/communication-services/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:ALAB",
+        "provider": "twelvedata",
+        "providerSymbol": "ALAB",
+        "symbol": "ALAB",
+        "name": "Astera Labs, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 63260000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:CRWV",
+        "provider": "twelvedata",
+        "providerSymbol": "CRWV",
+        "symbol": "CRWV",
+        "name": "CoreWeave, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 48310000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:MCHP",
+        "provider": "twelvedata",
+        "providerSymbol": "MCHP",
+        "symbol": "MCHP",
+        "name": "Microchip Technology Incorporated",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 42730000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:CRDO",
+        "provider": "twelvedata",
+        "providerSymbol": "CRDO",
+        "symbol": "CRDO",
+        "name": "Credo Technology Group Holding Ltd",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 39650000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:NTAP",
+        "provider": "twelvedata",
+        "providerSymbol": "NTAP",
+        "symbol": "NTAP",
+        "name": "NetApp, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 39510000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:CCI",
+        "provider": "twelvedata",
+        "providerSymbol": "CCI",
+        "symbol": "CCI",
+        "name": "Crown Castle Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 28860000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/real-estate/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:SMCI",
+        "provider": "twelvedata",
+        "providerSymbol": "SMCI",
+        "symbol": "SMCI",
+        "name": "Super Micro Computer, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 28420000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNYS:IONQ",
+        "provider": "twelvedata",
+        "providerSymbol": "IONQ",
+        "symbol": "IONQ",
+        "name": "IonQ, Inc.",
+        "type": "stock",
+        "exchange": "NYSE",
+        "micCode": "XNYS",
+        "currency": "USD"
+      },
+      "marketCap": 18070000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:SBAC",
+        "provider": "twelvedata",
+        "providerSymbol": "SBAC",
+        "symbol": "SBAC",
+        "name": "SBA Communications Corporation",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 17630000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/real-estate/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:RMBS",
+        "provider": "twelvedata",
+        "providerSymbol": "RMBS",
+        "symbol": "RMBS",
+        "name": "Rambus Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 11410000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:APLD",
+        "provider": "twelvedata",
+        "providerSymbol": "APLD",
+        "symbol": "APLD",
+        "name": "Applied Digital Corporation",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 7650000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:QBTS",
+        "provider": "twelvedata",
+        "providerSymbol": "QBTS",
+        "symbol": "QBTS",
+        "name": "D-Wave Quantum Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 6480000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNCM:RGTI",
+        "provider": "twelvedata",
+        "providerSymbol": "RGTI",
+        "symbol": "RGTI",
+        "name": "Rigetti Computing, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNCM",
+        "currency": "USD"
+      },
+      "marketCap": 5560000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:AMBA",
+        "provider": "twelvedata",
+        "providerSymbol": "AMBA",
+        "symbol": "AMBA",
+        "name": "Ambarella, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 3210000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNGS:UNIT",
+        "provider": "twelvedata",
+        "providerSymbol": "UNIT",
+        "symbol": "UNIT",
+        "name": "Uniti Group Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGS",
+        "currency": "USD"
+      },
+      "marketCap": 2160000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/real-estate/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNCM:QUBT",
+        "provider": "twelvedata",
+        "providerSymbol": "QUBT",
+        "symbol": "QUBT",
+        "name": "Quantum Computing Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNCM",
+        "currency": "USD"
+      },
+      "marketCap": 2029999999.9999998,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNCM:POET",
+        "provider": "twelvedata",
+        "providerSymbol": "POET",
+        "symbol": "POET",
+        "name": "POET Technologies Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNCM",
+        "currency": "USD"
+      },
+      "marketCap": 1340000000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    },
+    {
+      "asset": {
+        "id": "twelvedata:XNCM:WYFI",
+        "provider": "twelvedata",
+        "providerSymbol": "WYFI",
+        "symbol": "WYFI",
+        "name": "WhiteFiber, Inc.",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNCM",
+        "currency": "USD"
+      },
+      "marketCap": 762200000,
+      "marketCapSource": "https://stockanalysis.com/stocks/sector/technology/"
+    }
+  ],
+  "excluded": [
+    {
+      "symbol": "GDS",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "KDCREIT SP",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "NXT AU",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "VNET",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "788 HK",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "2330 TT",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "000660 KS",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "1686 HK",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "3706 TT",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "AL2SI FP",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "2454 TT",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "ARM",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "2345 TT",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "2382 TT",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "6669 TT",
+      "reason": "No verified supported common-stock listing"
+    },
+    {
+      "symbol": "3661 TT",
+      "reason": "No verified supported common-stock listing"
+    }
+  ],
+  "candidateCount": 54,
+  "version": "6c11f58722441af4",
+  "updatedAt": "2026-09-28T02:50:56.197Z",
+  "rebalancedAt": "2026-09-28T02:28:22.501Z",
+  "sources": [
+    "https://assets.globalxetfs.com/funds/holdings/dtcr_full-holdings_20260925.csv",
+    "https://assets.globalxetfs.com/funds/holdings/chpx_full-holdings_20260925.csv",
+    "https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt",
+    "https://www.nasdaqtrader.com/dynamic/SymDir/otherlisted.txt"
+  ],
+  "sourceDates": {
+    "https://assets.globalxetfs.com/funds/holdings/dtcr_full-holdings_20260925.csv": "09/25/2026",
+    "https://assets.globalxetfs.com/funds/holdings/chpx_full-holdings_20260925.csv": "09/25/2026"
+  }
+}

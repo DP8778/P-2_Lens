@@ -11,3 +11,5 @@ npm-debug.log*
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+
+/.cache/lens-source-data

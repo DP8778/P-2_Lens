@@ -122,14 +122,35 @@ export const demoAssets: DemoAsset[] = [
   },
 ] as const;
 
+const demoAnchors: Record<string, { year: number; month: number; shock: number }> = {
+  btc: { year: 0.259, month: 0.055, shock: 0.9 },
+  eth: { year: 0.2, month: 0.04, shock: 1 },
+  aapl: { year: -0.012, month: 0, shock: 0.55 },
+  nvda: { year: 0.18, month: 0.075, shock: 1.15 },
+  msft: { year: 0.105, month: 0.11, shock: 0.7 },
+  spy: { year: 0.107, month: 0.037, shock: 0.65 },
+  qqq: { year: 0.13, month: 0.044, shock: 0.8 },
+};
+
 function demoClose(asset: DemoAsset, day: number) {
   if (asset.type === "cash") return 1;
-  const distance = day - 730;
-  const phase = demoAssets.indexOf(asset) * 0.7;
-  const wave = (value: number) =>
-    Math.sin(((value - 730) * Math.PI) / 15 + phase) * asset.demoVolatility +
-    Math.sin(((value - 730) * Math.PI) / 5 + phase) * asset.demoVolatility * 0.25;
-  return asset.demoPrice * Math.exp(distance * asset.demoDrift + wave(day) - wave(730));
+  const anchor = demoAnchors[asset.id];
+  const yearStart = asset.demoPrice / (1 + anchor.year);
+  const monthStart = asset.demoPrice / (1 + anchor.month);
+  const logInterpolate = (from: number, to: number, progress: number) =>
+    from * Math.exp(Math.log(to / from) * progress);
+  let base: number;
+  if (day <= 365) {
+    base = yearStart * Math.exp((Math.log1p(anchor.year) * (day - 365)) / 365);
+  } else if (day <= 700) {
+    base = logInterpolate(yearStart, monthStart, (day - 365) / 335);
+  } else {
+    base = logInterpolate(monthStart, asset.demoPrice, (day - 700) / 30);
+  }
+  // A bounded, shared market setback creates a realistic 1Y drawdown while all
+  // anchor values (including the monotonic final month) remain exact.
+  const setback = day > 365 && day < 700 ? Math.exp(-Math.pow((day - 520) / 34, 2)) : 0;
+  return base * (1 - 0.134 * anchor.shock * setback);
 }
 
 export const demoTimeline = Array.from({ length: 731 }, (_, index) =>
@@ -159,7 +180,7 @@ export const demoTransactions: Transaction[] = [
     id: "tx-deposit",
     type: "deposit",
     occurredAt: "2024-09-07",
-    amount: 3_250_000,
+    amount: 3_083_883,
     currency: "CZK",
     fee: 0,
   },
@@ -168,7 +189,7 @@ export const demoTransactions: Transaction[] = [
     type: "buy",
     occurredAt: "2024-09-09",
     assetId: "spy",
-    quantity: 58,
+    quantity: 65,
     unitPrice: 510.8,
     currency: "USD",
     fee: 12,
@@ -178,7 +199,7 @@ export const demoTransactions: Transaction[] = [
     type: "buy",
     occurredAt: "2024-10-04",
     assetId: "aapl",
-    quantity: 92,
+    quantity: 95,
     unitPrice: 191.4,
     currency: "USD",
     fee: 10,
@@ -188,7 +209,7 @@ export const demoTransactions: Transaction[] = [
     type: "buy",
     occurredAt: "2024-11-18",
     assetId: "btc",
-    quantity: 0.14,
+    quantity: 0.2,
     unitPrice: 78_200,
     currency: "USD",
     fee: 18,
@@ -208,7 +229,7 @@ export const demoTransactions: Transaction[] = [
     type: "buy",
     occurredAt: "2025-03-11",
     assetId: "msft",
-    quantity: 18,
+    quantity: 25,
     unitPrice: 391,
     currency: "USD",
     fee: 8,
@@ -218,7 +239,7 @@ export const demoTransactions: Transaction[] = [
     type: "buy",
     occurredAt: "2025-06-20",
     assetId: "msft",
-    quantity: 7,
+    quantity: 10,
     unitPrice: 442,
     currency: "USD",
     fee: 15,
@@ -228,7 +249,7 @@ export const demoTransactions: Transaction[] = [
     type: "buy",
     occurredAt: "2025-08-08",
     assetId: "btc",
-    quantity: 0.084,
+    quantity: 0.1,
     unitPrice: 101_000,
     currency: "USD",
     fee: 9,
@@ -238,8 +259,8 @@ export const demoTransactions: Transaction[] = [
     type: "buy",
     occurredAt: "2026-02-12",
     assetId: "nvda",
-    quantity: 55,
-    unitPrice: 139,
+    quantity: 60,
+    unitPrice: 127.8,
     currency: "USD",
     fee: 8,
   },
@@ -248,7 +269,7 @@ export const demoTransactions: Transaction[] = [
     type: "sell",
     occurredAt: "2026-05-06",
     assetId: "nvda",
-    quantity: 15,
+    quantity: 10,
     unitPrice: 158,
     currency: "USD",
     fee: 7,
@@ -279,7 +300,7 @@ export const demoBenchmarks: Benchmark[] = [
 ];
 
 export const portfolioDataset: PortfolioDataset = {
-  version: "lens-demo-2026.09-v1",
+  version: "lens-demo-2026.09-v2",
   asOf: MOCK_AS_OF,
   baseCurrency: "CZK",
   assets: demoAssets,
