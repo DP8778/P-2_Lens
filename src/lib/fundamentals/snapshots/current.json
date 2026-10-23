@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "version": "157c5a1cb443951c",
-  "updatedAt": "2026-09-28T02:50:56.197Z",
+  "version": "47c4e3e00bd17dc9",
+  "updatedAt": "2026-10-23T00:00:00.000Z",
   "industries": {
     "ai": {
       "id": "ai",
@@ -5212,51 +5212,67 @@
     },
     "AMD": {
       "symbol": "AMD",
-      "provider": "stock-analysis",
-      "fetchedAt": "2026-09-28T02:50:56.197Z",
+      "provider": "amd-sec-ixbrl + stock-analysis",
+      "fetchedAt": "2026-10-23T00:00:00.000Z",
       "statements": [
         {
           "assetId": "twelvedata:XNGS:AMD",
           "period": "2025-12-27",
           "currency": "USD",
           "durationMonths": 12,
-          "source": "https://stockanalysis.com/stocks/amd/financials/income-statement/",
+          "source": "https://ir.amd.com/financial-information/sec-filings/content/0000002488-26-000018/amd-20251227.htm",
           "revenue": 34639000000,
-          "costOfRevenue": 16456000000,
-          "grossProfit": 18183000000,
-          "operatingExpenses": 14442000000,
-          "operatingIncome": 3741000000,
+          "costOfRevenue": 17487000000,
+          "grossProfit": 17152000000,
+          "operatingExpenses": 13458000000,
+          "operatingIncome": 3694000000,
           "netIncome": 4335000000,
           "expenses": {
             "researchDevelopment": 8091000000
-          }
+          },
+          "segments": [
+            { "name": "Data Center", "revenue": 16635000000 },
+            { "name": "Client and Gaming", "revenue": 14550000000 },
+            { "name": "Embedded", "revenue": 3454000000 }
+          ],
+          "segmentSource": "https://ir.amd.com/financial-information/sec-filings/content/0000002488-26-000018/amd-20251227.htm",
+          "sourceScale": 1000000,
+          "segmentBasis": "reported"
         },
         {
           "assetId": "twelvedata:XNGS:AMD",
           "period": "2024-12-28",
           "currency": "USD",
           "durationMonths": 12,
-          "source": "https://stockanalysis.com/stocks/amd/financials/income-statement/",
+          "source": "https://ir.amd.com/financial-information/sec-filings/content/0000002488-26-000018/amd-20251227.htm",
           "revenue": 25785000000,
-          "costOfRevenue": 12114000000,
-          "grossProfit": 13671000000,
-          "operatingExpenses": 11585000000,
-          "operatingIncome": 2086000000,
+          "costOfRevenue": 13060000000,
+          "grossProfit": 12725000000,
+          "operatingExpenses": 10825000000,
+          "operatingIncome": 1900000000,
           "netIncome": 1641000000,
           "expenses": {
             "researchDevelopment": 6456000000
-          }
+          },
+          "segments": [
+            { "name": "Data Center", "revenue": 12579000000 },
+            { "name": "Client and Gaming", "revenue": 9649000000 },
+            { "name": "Embedded", "revenue": 3557000000 }
+          ],
+          "segmentSource": "https://ir.amd.com/financial-information/sec-filings/content/0000002488-26-000018/amd-20251227.htm",
+          "sourceScale": 1000000,
+          "segmentBasis": "retrospectively-adjusted"
         },
         {
           "assetId": "twelvedata:XNGS:AMD",
           "period": "2023-12-30",
           "currency": "USD",
           "durationMonths": 12,
-          "source": "https://stockanalysis.com/stocks/amd/financials/income-statement/",
+          "source": "https://ir.amd.com/financial-information/sec-filings/content/0000002488-26-000018/amd-20251227.htm",
           "revenue": 22680000000,
-          "costOfRevenue": 11278000000,
-          "grossProfit": 11402000000,
-          "operatingExpenses": 11001000000,
+          "costOfRevenue": 12220000000,
+          "grossProfit": 10460000000,
+          "operatingExpenses": 10059000000,
           "operatingIncome": 401000000,
           "netIncome": 854000000,
           "expenses": {
@@ -5268,19 +5284,17 @@
               "revenue": 6496000000
             },
             {
-              "name": "Client",
-              "revenue": 4651000000
-            },
-            {
-              "name": "Gaming",
-              "revenue": 6212000000
+              "name": "Client and Gaming",
+              "revenue": 10863000000
             },
             {
               "name": "Embedded",
               "revenue": 5321000000
             }
           ],
-          "segmentSource": "https://stockanalysis.com/stocks/amd/financials/"
+          "segmentSource": "https://ir.amd.com/financial-information/sec-filings/content/0000002488-26-000018/amd-20251227.htm",
+          "sourceScale": 1000000,
+          "segmentBasis": "retrospectively-adjusted"
         },
         {
           "assetId": "twelvedata:XNGS:AMD",

@@ -81,6 +81,14 @@ No provider credits are spent by this fundamentals/universe publisher.
   Commercial segments take precedence. Earlier annual years come from Stock
   Analysis. Future years can still flow through the general annual adapter;
   additional primary-source filings can be registered without changing the UI.
+- AMD's 2025 Form 10-K is a registered primary-source enhancement for FY2023–FY2025.
+  It supplies the three-segment structure introduced in FY2025 and AMD's
+  retrospectively adjusted FY2024/FY2023 comparison. Amounts published in
+  millions are normalized to native USD units. The secondary feed excluded
+  acquisition-related amortization from its cost presentation (for example,
+  FY2025 gross profit USD 18.183bn and operating income USD 3.741bn), while the
+  filing's GAAP statement reports USD 17.152bn and USD 3.694bn. Lens therefore
+  replaces the whole AMD period with the primary filing instead of mixing bases.
 
 Every statement retains its source; segments retain their own source. Non-USD
 reports and incomplete/non-reconciling statements remain unavailable. This is

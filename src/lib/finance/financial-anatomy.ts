@@ -6,6 +6,10 @@ export interface FinancialStatement {
   durationMonths: number;
   source: string;
   segmentSource?: string;
+  /** Source amounts are normalized to native currency units; this records the source table scale. */
+  sourceScale?: number;
+  /** Whether the segment presentation is current-period reported or retrospectively adjusted. */
+  segmentBasis?: "reported" | "retrospectively-adjusted";
   revenue: number;
   costOfRevenue: number;
   grossProfit: number;
@@ -20,7 +24,7 @@ const finite = (value: unknown): value is number => typeof value === "number" &&
 const close = (a: number, b: number) => Math.abs(a - b) <= Math.max(1, Math.abs(a), Math.abs(b)) * 0.005;
 
 /** Reject inconsistent units/identities instead of constructing a misleading money flow. */
-export function buildFinancialAnatomy(assetId: string, statements: FinancialStatement[] = []) {
+export function buildFinancialAnatomy(assetId: string, statements: FinancialStatement[] = [], options: { includeRevenueSegments?: boolean } = {}) {
   const periods = statements.filter((s) => s.assetId === assetId && /^https:\/\//.test(s.source)
     && /^\d{4}-\d{2}-\d{2}$/.test(s.period) && Number.isFinite(Date.parse(s.period))
     && /^[A-Z]{3}$/.test(s.currency) && [3, 6, 9, 12].includes(s.durationMonths)
@@ -37,9 +41,10 @@ export function buildFinancialAnatomy(assetId: string, statements: FinancialStat
     const days = (Date.parse(latest.period) - Date.parse(s.period)) / 86_400_000;
     return days >= 350 && days <= 380;
   });
-  const segmentSum = latest.segments?.reduce((sum, item) => sum + item.revenue, 0) ?? 0;
-  const segments = latest.segments?.length && latest.segments.every((item) => item.name.trim() && finite(item.revenue) && item.revenue >= 0)
-    && segmentSum <= latest.revenue ? [...latest.segments] : [];
+  const reportedSegments = options.includeRevenueSegments === false ? undefined : latest.segments;
+  const segmentSum = reportedSegments?.reduce((sum, item) => sum + item.revenue, 0) ?? 0;
+  const segments = reportedSegments?.length && reportedSegments.every((item) => item.name.trim() && finite(item.revenue) && item.revenue >= 0)
+    && segmentSum <= latest.revenue ? [...reportedSegments] : [];
   if (segments.length && segmentSum < latest.revenue) segments.push({ name: "Unallocated revenue", revenue: latest.revenue - segmentSum });
   const primaryRevenueSegment = segments
     .filter((segment) => segment.name !== "Unallocated revenue")

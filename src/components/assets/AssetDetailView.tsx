@@ -11,8 +11,9 @@ import { AssetIndustryContext } from "./AssetIndustryContext";
 import type { IndustryView } from "@/lib/finance/industry-data";
 import { industryBackHref, type IndustryNavigation } from "@/lib/markets/industry-navigation";
 import type { AssetEntryContext } from "@/lib/markets/industry-navigation";
-import { CompanyOverview, CompanyResearchSections, useCompanyResearch } from "./CompanyResearch";
+import { CompanyResearchSections, useCompanyResearch } from "./CompanyResearch";
 import { CompanyPrimer } from "./CompanyPrimer";
+import { CompanyRevenueMix } from "./CompanyRevenueMix";
 import { FinancialAnatomy } from "./FinancialAnatomy";
 import { AssetPriceChart } from "@/components/charts/AssetPriceChart";
 import { AddAssetDialog } from "@/components/portfolio/AddAssetDialog";
@@ -27,6 +28,7 @@ import { calculateAssetPerformance } from "@/lib/market-data/asset-performance";
 import { allocation, money, percent } from "@/components/charts/chart-formatters";
 import { MOCK_AS_OF, portfolioDataset } from "@/data/mock/portfolioDataset";
 import { companyProfileFor } from "@/data/company-profiles";
+import { buildRevenueBreakdown } from "@/lib/finance/revenue-breakdown";
 
 type AssetRange = "1W" | "1M" | "3M" | "1Y" | "ALL";
 const rangeDays: Record<Exclude<AssetRange, "ALL">, number> = { "1W": 7, "1M": 30, "3M": 90, "1Y": 365 };
@@ -239,6 +241,9 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
     () => calculateAssetPerformance(displayedAnnualHistory, displayedQuote?.price, demoEntry ? MOCK_AS_OF : localDateISO()),
     [displayedAnnualHistory, demoEntry, displayedQuote?.price],
   );
+  const profile = companyProfileFor(assetId);
+  const revenueBreakdown = buildRevenueBreakdown(assetId, fundamentals?.statements);
+  const showRevenueMix = profile?.featuredRevenueMix && revenueBreakdown.status === "available";
 
   const backNavigation = <nav className="asset-detail-navigation" aria-label={en ? "Asset navigation" : "Navigace aktiva"}>
     {context && <Link className="asset-back-link asset-context-navigation" href={industryBackHref(locale, context)}><ArrowLeft size={15} />{en ? "Back to theme" : "Zpět na téma"}: {themeName}</Link>}
@@ -284,8 +289,9 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
           {quoteError && displayedQuote && <small>Aktualizace ceny se nezdařila; zobrazuji poslední dostupnou hodnotu.</small>}
         </div>
       </header>
-      {asset.type === "stock" && <CompanyPrimer assetId={asset.id} locale={locale} fundamentals={fundamentals} profile={companyProfileFor(asset.id)} />}
-      {asset.type === "stock" && <CompanyOverview research={research} locale={locale} />}
+      {asset.type === "stock" && (showRevenueMix && revenueBreakdown.status === "available"
+        ? <CompanyRevenueMix periods={revenueBreakdown.periods} locale={locale} profile={profile} companyLabel={asset.symbol} />
+        : <CompanyPrimer assetId={asset.id} locale={locale} fundamentals={fundamentals} profile={profile} />)}
       {industry && context && <AssetIndustryContext key={`${assetId}:${context.industry}:${context.period}:${context.weighting}:${context.asOf}:${context.version}:${industry.version}`} assetId={assetId} locale={locale} industry={industry} navigation={context} />}
 
       {asset.type === "stock" && <p className="research-section-intro">{en ? "The price chart shows how the market values the stock. Business fundamentals and the sourced developments below help explain what may be behind that move." : "Cenový graf ukazuje tržní vývoj akcie. Podnikání a jeho změny pomáhají pochopit výkazy a zdrojované události níže."}</p>}
@@ -330,7 +336,7 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
         {displayedHistoryProvenance && <p className="asset-history-provenance">{displayedHistoryProvenance.source === "demo" ? (en ? "Demo history" : "Demo historie") : displayedHistoryProvenance.source === "cache" ? (en ? "Saved Twelve Data history" : "Uložená historie Twelve Data") : (en ? "Twelve Data history" : "Historie Twelve Data")} · {en ? "data through" : "data do"} {new Date(`${displayedHistoryProvenance.asOf.slice(0, 10)}T12:00:00Z`).toLocaleDateString(locale)}</p>}
       </section>
 
-      {asset.type === "stock" && <FinancialAnatomy assetId={asset.id} locale={locale} statements={fundamentals?.statements} fetchedAt={fundamentals?.fetchedAt} stale={!!fundamentals?.errors?.length} />}
+      {asset.type === "stock" && <FinancialAnatomy assetId={asset.id} locale={locale} statements={fundamentals?.statements} fetchedAt={fundamentals?.fetchedAt} stale={!!fundamentals?.errors?.length} showRevenueStructure={!showRevenueMix} />}
 
       {asset.type === "stock" && <CompanyResearchSections research={research} locale={locale} />}
 

@@ -3,6 +3,7 @@ export type CompanyProfile = {
   description: { "cs-CZ": string; "en-US": string };
   sourceLabel: string;
   sourceUrl: string;
+  featuredRevenueMix?: boolean;
 };
 
 /** Short issuer descriptions reviewed against the linked primary company reports. */
@@ -15,6 +16,16 @@ const profiles: readonly CompanyProfile[] = [
     },
     sourceLabel: "Apple · Annual Reports on Form 10-K",
     sourceUrl: "https://investor.apple.com/investor-relations/default.aspx",
+  },
+  {
+    assetId: "twelvedata:XNGS:AMD",
+    description: {
+      "cs-CZ": "AMD navrhuje výpočetní produkty pro datová centra, osobní počítače, herní zařízení a vestavěné systémy; tržby vykazuje ve třech segmentech Data Center, Client and Gaming a Embedded.",
+      "en-US": "AMD designs computing products for data centers, personal computers, gaming devices and embedded systems, reporting revenue in Data Center, Client and Gaming, and Embedded.",
+    },
+    sourceLabel: "AMD · Form 10-K 2025",
+    sourceUrl: "https://ir.amd.com/financial-information/sec-filings/content/0000002488-26-000018/amd-20251227.htm",
+    featuredRevenueMix: true,
   },
   {
     assetId: "twelvedata:XNGS:NVDA",

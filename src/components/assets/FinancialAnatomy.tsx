@@ -19,7 +19,8 @@ function FinancialFlow({ data, locale }: { data: Anatomy; locale: string }) {
   const en = locale === "en-US";
   const amount = (value: number) => new Intl.NumberFormat(locale, { style: "currency", currency: data.latest.currency, notation: "compact", maximumFractionDigits: 2 }).format(value);
   const name = (id: string) => id.startsWith("segment-") ? data.segments[Number(id.split("-")[1])].name : labels[id]?.[en ? 1 : 0] ?? id;
-  const stages = [data.segments.map((_, i) => `segment-${i}`), ["revenue"], ["costOfRevenue", "grossProfit"], ["operatingExpenses", "operatingIncome", "netAdditions"], [...data.expenses.map((item) => item.name), "netDeductions", "netIncome"]];
+  const stages = [data.segments.map((_, i) => `segment-${i}`), ["revenue"], ["costOfRevenue", "grossProfit"], ["operatingExpenses", "operatingIncome", "netAdditions"], [...data.expenses.map((item) => item.name), "netDeductions", "netIncome"]]
+    .filter((stage) => stage.some((id) => data.links.some((link) => link.from === id || link.to === id)));
   const nodes = stages.flatMap((stage, column) => stage.filter((id) => data.links.some((link) => link.from === id || link.to === id)).map((id, row, columnNodes) => ({ id, x: 14 + column * 230, y: 40 + (row + 0.5) * 260 / columnNodes.length })));
   const position = new Map(nodes.map((node) => [node.id, node]));
   return <figure className="financial-flow">
@@ -27,7 +28,8 @@ function FinancialFlow({ data, locale }: { data: Anatomy; locale: string }) {
       <svg viewBox="0 0 1150 360" role="img" aria-label={en ? "Revenue to profit. Exact amounts follow in the text summary." : "Od tržeb k zisku. Přesné částky jsou v textovém přehledu pod grafem."}>
         {data.links.map((link) => {
           const from = position.get(link.from)!, to = position.get(link.to)!;
-          return <path key={`${link.from}-${link.to}`} d={`M ${from.x + 6} ${from.y} C ${from.x + 110} ${from.y}, ${to.x - 110} ${to.y}, ${to.x} ${to.y}`} stroke="currentColor" strokeOpacity="0.12" strokeWidth={Math.max(1, link.value / data.latest.revenue * 28)} fill="none"><title>{name(link.from)} → {name(link.to)}: {amount(link.value)}</title></path>;
+          const title = `${name(link.from)} → ${name(link.to)}: ${amount(link.value)}`;
+          return <g key={`${link.from}-${link.to}`}><title>{title}</title><path d={`M ${from.x + 6} ${from.y} C ${from.x + 110} ${from.y}, ${to.x - 110} ${to.y}, ${to.x} ${to.y}`} stroke="currentColor" strokeOpacity="0.12" strokeWidth={Math.max(1, link.value / data.latest.revenue * 28)} fill="none" /></g>;
         })}
         {nodes.map((node) => <g key={node.id}><rect x={node.x} y={node.y - 15} width="4" height="30" rx="2" fill="currentColor" opacity="0.6" /><text x={node.x + 10} y={node.y - 20} fill="currentColor" fontSize="11">{name(node.id)}</text><text x={node.x + 10} y={node.y + 4} fill="currentColor" fontSize="12">{amount(data.nodeValues[node.id])}</text></g>)}
       </svg>
@@ -39,9 +41,9 @@ function FinancialFlow({ data, locale }: { data: Anatomy; locale: string }) {
 }
 
 /** Only verified statements supplied by the provider-neutral data layer enter this view. */
-export function FinancialAnatomy({ assetId, locale, statements, fetchedAt, stale }: { assetId: string; locale: string; statements?: FinancialStatement[]; fetchedAt?: string; stale?: boolean }) {
+export function FinancialAnatomy({ assetId, locale, statements, fetchedAt, stale, showRevenueStructure = true }: { assetId: string; locale: string; statements?: FinancialStatement[]; fetchedAt?: string; stale?: boolean; showRevenueStructure?: boolean }) {
   const en = locale === "en-US";
-  const data = buildFinancialAnatomy(assetId, statements);
+  const data = buildFinancialAnatomy(assetId, statements, { includeRevenueSegments: showRevenueStructure });
   const name = (id: string) => labels[id][en ? 1 : 0];
   return <section className="financial-anatomy" aria-labelledby="financial-anatomy-title">
     <header><span>Financial Anatomy</span><h2 id="financial-anatomy-title">{en ? "How does revenue become profit?" : "Jak z tržeb vzniká zisk?"}</h2></header>
@@ -63,7 +65,7 @@ export function FinancialAnatomy({ assetId, locale, statements, fetchedAt, stale
       </details>
       <dl className="financial-margins">{[{ title: en ? "Revenue growth · YoY" : "Růst tržeb · meziročně", value: data.revenueGrowth }, { title: en ? "Gross margin" : "Hrubá marže", value: data.grossMargin }, { title: en ? "Operating margin" : "Provozní marže", value: data.operatingMargin }].map((item) => <div key={item.title}><dt>{item.title}</dt><dd>{item.value === undefined ? "—" : percent(item.value, locale)}</dd></div>)}</dl>
       {data.flowAvailable ? <FinancialFlow data={data} locale={locale} /> : <p role="status">{en ? "Loss-making periods are shown as signed values below; the flow is unavailable." : "Ztrátové období je uvedeno se zápornými hodnotami níže; tok není dostupný."}</p>}
-      <div className="financial-revenue-structure"><h3>{en ? "Revenue structure" : "Struktura tržeb"}</h3>{data.latest.segmentSource && <a className="industry-data-note" href={data.latest.segmentSource} target="_blank" rel="noreferrer">{en ? "Reported segment source" : "Zdroj vykázaných segmentů"}</a>}{data.segments.length ? <ul>{data.segments.map((segment, i) => <li key={i}><span>{segment.name === "Unallocated revenue" ? (en ? "Unallocated revenue" : "Nerozlišené tržby") : segment.name}</span><strong>{new Intl.NumberFormat(locale, { style: "currency", currency: data.latest.currency, notation: "compact" }).format(segment.revenue)}</strong></li>)}</ul> : <p>{en ? "Revenue segments unavailable." : "Segmenty tržeb nejsou dostupné."}</p>}</div>
+      {showRevenueStructure && <div className="financial-revenue-structure"><h3>{en ? "Revenue structure" : "Struktura tržeb"}</h3>{data.latest.segmentSource && <a className="industry-data-note" href={data.latest.segmentSource} target="_blank" rel="noreferrer">{en ? "Reported segment source" : "Zdroj vykázaných segmentů"}</a>}{data.segments.length ? <ul>{data.segments.map((segment, i) => <li key={i}><span>{segment.name === "Unallocated revenue" ? (en ? "Unallocated revenue" : "Nerozlišené tržby") : segment.name}</span><strong>{new Intl.NumberFormat(locale, { style: "currency", currency: data.latest.currency, notation: "compact" }).format(segment.revenue)}</strong></li>)}</ul> : <p>{en ? "Revenue segments unavailable." : "Segmenty tržeb nejsou dostupné."}</p>}</div>}
       <h3>{en ? "Financial history" : "Historie hospodaření"}</h3>
       {data.history.length >= 2 && <div className="financial-trends">{metrics.map((key) => {
         const values = data.history.map((period) => period[key]);

@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { rankIndustryMembers } from '../src/lib/finance/industry-data.ts';
-import { tableRows, compactNumber, parseIncomeStatement, parseRevenueSegments, parseSecAnnual, mergeFinancialHistory } from '../src/lib/finance/fundamentals-normalizers.ts';
+import { tableRows, compactNumber, parseIncomeStatement, parseRevenueSegments, parseSecAnnual, parseAmdAnnual, mergeFinancialHistory } from '../src/lib/finance/fundamentals-normalizers.ts';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const directory = resolve(root, 'src/lib/fundamentals/snapshots');
@@ -120,6 +120,19 @@ if(pltr) {
     for(const statement of reports) merged.set(statement.period,{...merged.get(statement.period),...statement,...(statement.segments ? { segmentSource: source } : {})});
     fundamentals.PLTR={symbol:'PLTR',provider:'sec-ixbrl + stock-analysis',fetchedAt:now,statements:[...merged.values()].sort((a,b)=>b.period.localeCompare(a.period))};
   } catch(error) { fundamentals.PLTR.errors=[...(fundamentals.PLTR.errors??[]),`SEC enrichment: ${error.message}`]; }
+}
+// AMD's primary filing replaces the secondary adjusted presentation with one consistent GAAP basis.
+const amd=companies.find((asset)=>asset.symbol==='AMD');
+if(amd) {
+  const source='https://ir.amd.com/financial-information/sec-filings/content/0000002488-26-000018/amd-20251227.htm';
+  try {
+    const reports=parseAmdAnnual(await download(source),amd,source);
+    if(reports.length!==3) throw new Error('Incomplete primary-source AMD statements or segments');
+    const record=fundamentals.AMD;
+    const merged=new Map(record.statements.map((statement)=>[statement.period,statement]));
+    for(const statement of reports) merged.set(statement.period,{...merged.get(statement.period),...statement});
+    fundamentals.AMD={symbol:'AMD',provider:'amd-sec-ixbrl + stock-analysis',fetchedAt:now,statements:[...merged.values()].sort((a,b)=>b.period.localeCompare(a.period))};
+  } catch(error) { fundamentals.AMD.errors=[...(fundamentals.AMD.errors??[]),`AMD filing enrichment: ${error.message}`]; }
 }
 const version=hash({industries,fundamentals});
 const snapshot={schemaVersion:1,version,updatedAt:now,industries,fundamentals};
