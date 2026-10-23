@@ -290,7 +290,7 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
         </div>
       </header>
       {asset.type === "stock" && (showRevenueMix && revenueBreakdown.status === "available"
-        ? <CompanyRevenueMix periods={revenueBreakdown.periods} locale={locale} profile={profile} companyLabel={asset.symbol} />
+        ? <CompanyRevenueMix periods={revenueBreakdown.periods} growth={revenueBreakdown.growth} locale={locale} profile={profile} companyLabel={asset.symbol} />
         : <CompanyPrimer assetId={asset.id} locale={locale} fundamentals={fundamentals} profile={profile} />)}
       {industry && context && <AssetIndustryContext key={`${assetId}:${context.industry}:${context.period}:${context.weighting}:${context.asOf}:${context.version}:${industry.version}`} assetId={assetId} locale={locale} industry={industry} navigation={context} />}
 

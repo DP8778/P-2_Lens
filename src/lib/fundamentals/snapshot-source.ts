@@ -8,7 +8,8 @@ import { canonicalInstrumentId } from "@/lib/instruments/identity";
 
 const statementSchema = z.object({
   assetId: z.string(), period: z.iso.date(), currency: z.string().regex(/^[A-Z]{3}$/), durationMonths: z.literal(12), source: z.url(), segmentSource: z.url().optional(),
-  sourceScale: z.number().positive().optional(), segmentBasis: z.enum(["reported", "retrospectively-adjusted"]).optional(),
+  sourceScale: z.number().positive().optional(), accountingBasis: z.literal("gaap-consolidated").optional(),
+  segmentBasis: z.enum(["reported", "retrospectively-adjusted"]).optional(),
   revenue: z.number().positive(), costOfRevenue: z.number().nonnegative(), grossProfit: z.number(), operatingExpenses: z.number().nonnegative(), operatingIncome: z.number(), netIncome: z.number(),
   segments: z.array(z.object({ name: z.string(), revenue: z.number().nonnegative() })).optional(),
   expenses: z.object({ salesMarketing: z.number().nonnegative().optional(), researchDevelopment: z.number().nonnegative().optional(), generalAdministrative: z.number().nonnegative().optional() }).optional(),

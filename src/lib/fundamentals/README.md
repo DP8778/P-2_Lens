@@ -89,6 +89,12 @@ No provider credits are spent by this fundamentals/universe publisher.
   FY2025 gross profit USD 18.183bn and operating income USD 3.741bn), while the
   filing's GAAP statement reports USD 17.152bn and USD 3.694bn. Lens therefore
   replaces the whole AMD period with the primary filing instead of mixing bases.
+  FY2022 is taken as a whole from AMD's 2024 Form 10-K and FY2021 from its 2023
+  Form 10-K. Every connected history period is marked as consolidated GAAP;
+  Financial Anatomy excludes a period whose accounting-basis marker differs.
+  Older filings contribute only FY2022/FY2021, so their older comparatives cannot
+  overwrite FY2023–FY2025 as presented in the newest filing. Primary periods also
+  survive a later secondary refresh for the same fiscal year.
 
 Every statement retains its source; segments retain their own source. Non-USD
 reports and incomplete/non-reconciling statements remain unavailable. This is

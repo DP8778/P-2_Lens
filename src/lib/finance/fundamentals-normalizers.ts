@@ -84,8 +84,13 @@ export function parseSecAnnual(html: string, asset: MarketAsset, source: string)
     const grossProfit = get("GrossProfit")!;
     const costCandidates = [get("CostOfRevenue"), get("CostOfGoodsAndServicesSold")].filter(validMoney);
     const costOfRevenue = costCandidates.find((value) => Math.abs(revenue - value - grossProfit) <= Math.max(1, revenue) * 0.005) ?? costCandidates[0];
+    const operatingIncome = get("OperatingIncomeLoss")!;
+    // Some primary filings show every operating-expense line but do not tag the displayed total.
+    // The reconciled total is the exact statement bridge, never a secondary-provider substitute.
+    const operatingExpenses = get("OperatingExpenses") ?? grossProfit - operatingIncome;
     const statement: FinancialStatement = { assetId: asset.id, period, currency: "USD", durationMonths: 12, source,
-      revenue, costOfRevenue: costOfRevenue!, grossProfit, operatingExpenses: get("OperatingExpenses")!, operatingIncome: get("OperatingIncomeLoss")!, netIncome: get("NetIncomeLoss")!,
+      accountingBasis: "gaap-consolidated",
+      revenue, costOfRevenue: costOfRevenue!, grossProfit, operatingExpenses, operatingIncome, netIncome: get("NetIncomeLoss")!,
       expenses: { salesMarketing: get("SellingAndMarketingExpense"), researchDevelopment: get("ResearchAndDevelopmentExpense"), generalAdministrative: get("GeneralAndAdministrativeExpense") },
     };
     statement.expenses = Object.fromEntries(Object.entries(statement.expenses!).filter(([, value]) => validMoney(value) && value >= 0));

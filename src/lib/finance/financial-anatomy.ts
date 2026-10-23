@@ -8,6 +8,8 @@ export interface FinancialStatement {
   segmentSource?: string;
   /** Source amounts are normalized to native currency units; this records the source table scale. */
   sourceScale?: number;
+  /** Comparable statement presentation; currency and duration alone do not establish comparability. */
+  accountingBasis?: "gaap-consolidated";
   /** Whether the segment presentation is current-period reported or retrospectively adjusted. */
   segmentBasis?: "reported" | "retrospectively-adjusted";
   revenue: number;
@@ -35,7 +37,9 @@ export function buildFinancialAnatomy(assetId: string, statements: FinancialStat
     .sort((a, b) => a.period.localeCompare(b.period));
   const latest = periods.at(-1);
   if (!latest) return { status: "unavailable" as const };
-  const history = periods.filter((s) => s.currency === latest.currency && s.durationMonths === latest.durationMonths);
+  const history = periods.filter((s) => s.currency === latest.currency && s.durationMonths === latest.durationMonths
+    && (!latest.accountingBasis || s.accountingBasis === latest.accountingBasis));
+  const excludedHistoryCount = periods.filter((s) => s.currency === latest.currency && s.durationMonths === latest.durationMonths).length - history.length;
   // Growth uses a comparable fiscal period one year earlier, never a mixed quarterly/annual comparison.
   const prior = history.findLast((s) => {
     const days = (Date.parse(latest.period) - Date.parse(s.period)) / 86_400_000;
@@ -78,7 +82,7 @@ export function buildFinancialAnatomy(assetId: string, statements: FinancialStat
     const outgoing = links.filter((link) => link.from === id).reduce((sum, link) => sum + link.value, 0);
     return [id, Math.max(incoming, outgoing)];
   }));
-  return { nodeValues, status: "available" as const, latest, history, segments, expenses, flowAvailable,
+  return { nodeValues, status: "available" as const, latest, history, excludedHistoryCount, segments, expenses, flowAvailable,
     links: links.filter((link) => link.value > 0),
     primaryRevenueSource: primaryRevenueSegment ? { ...primaryRevenueSegment, sharePct: primaryRevenueSegment.revenue / latest.revenue * 100 } : undefined,
     revenueGrowth: prior ? (latest.revenue / prior.revenue - 1) * 100 : undefined,

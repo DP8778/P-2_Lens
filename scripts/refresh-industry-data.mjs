@@ -121,15 +121,23 @@ if(pltr) {
     fundamentals.PLTR={symbol:'PLTR',provider:'sec-ixbrl + stock-analysis',fetchedAt:now,statements:[...merged.values()].sort((a,b)=>b.period.localeCompare(a.period))};
   } catch(error) { fundamentals.PLTR.errors=[...(fundamentals.PLTR.errors??[]),`SEC enrichment: ${error.message}`]; }
 }
-// AMD's primary filing replaces the secondary adjusted presentation with one consistent GAAP basis.
+// AMD's primary filings replace secondary adjusted presentations with one consistent GAAP basis.
 const amd=companies.find((asset)=>asset.symbol==='AMD');
 if(amd) {
   const source='https://ir.amd.com/financial-information/sec-filings/content/0000002488-26-000018/amd-20251227.htm';
+  const fy2024Source='https://ir.amd.com/financial-information/sec-filings/content/0000002488-25-000012/amd-20241228.htm';
+  const fy2023Source='https://ir.amd.com/financial-information/sec-filings/content/0000002488-24-000012/amd-20231230.htm';
   try {
     const reports=parseAmdAnnual(await download(source),amd,source);
     if(reports.length!==3) throw new Error('Incomplete primary-source AMD statements or segments');
+    const fy2022=parseSecAnnual(await download(fy2024Source),amd,fy2024Source).find((statement)=>statement.period==='2022-12-31');
+    const fy2021=parseSecAnnual(await download(fy2023Source),amd,fy2023Source).find((statement)=>statement.period==='2021-12-25');
+    if(!fy2022 || !fy2021) throw new Error('Incomplete primary-source AMD historical statements');
     const record=fundamentals.AMD;
     const merged=new Map(record.statements.map((statement)=>[statement.period,statement]));
+    // Load only the missing historical periods from older filings so their older comparatives
+    // can never replace FY2023-FY2025 as presented in the newest filing.
+    for(const statement of [fy2021,fy2022]) merged.set(statement.period,{...statement,sourceScale:1_000_000});
     for(const statement of reports) merged.set(statement.period,{...merged.get(statement.period),...statement});
     fundamentals.AMD={symbol:'AMD',provider:'amd-sec-ixbrl + stock-analysis',fetchedAt:now,statements:[...merged.values()].sort((a,b)=>b.period.localeCompare(a.period))};
   } catch(error) { fundamentals.AMD.errors=[...(fundamentals.AMD.errors??[]),`AMD filing enrichment: ${error.message}`]; }

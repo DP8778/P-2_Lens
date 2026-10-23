@@ -43,7 +43,7 @@ test("AMD filing parser keeps GAAP statements and retrospectively adjusted segme
   expect(statements[0]).toMatchObject({ period: "2025-12-27", revenue: 34_639_000_000, costOfRevenue: 17_487_000_000,
     grossProfit: 17_152_000_000, operatingExpenses: 13_458_000_000, operatingIncome: 3_694_000_000,
     segments: [{ name: "Data Center", revenue: 16_635_000_000 }, { name: "Client and Gaming", revenue: 14_550_000_000 }, { name: "Embedded", revenue: 3_454_000_000 }],
-    segmentBasis: "reported", sourceScale: 1_000_000 });
+    segmentBasis: "reported", sourceScale: 1_000_000, accountingBasis: "gaap-consolidated" });
   expect(statements[1].segmentBasis).toBe("retrospectively-adjusted");
   const secondary = { ...statements[0], source: "https://example.com/secondary", grossProfit: 18_183_000_000 };
   expect(mergeFinancialHistory(statements, [secondary])[0].grossProfit).toBe(17_152_000_000);
@@ -75,6 +75,21 @@ test("published AMD periods use primary GAAP totals and reconciled three-segment
   for (const statement of report.statements.slice(0, 3)) {
     expect(statement.segments?.reduce((sum, segment) => sum + segment.revenue, 0)).toBe(statement.revenue);
   }
+  expect(report.statements.map((statement) => statement.accountingBasis)).toEqual(Array(5).fill("gaap-consolidated"));
+  const fy2022 = report.statements.find((statement) => statement.period === "2022-12-31")!;
+  expect(fy2022).toMatchObject({
+    source: "https://ir.amd.com/financial-information/sec-filings/content/0000002488-25-000012/amd-20241228.htm",
+    revenue: 23_601_000_000,
+    costOfRevenue: 12_998_000_000,
+    grossProfit: 10_603_000_000,
+    operatingExpenses: 9_339_000_000,
+    operatingIncome: 1_264_000_000,
+    netIncome: 1_320_000_000,
+  });
+  expect(fy2022.revenue - fy2022.costOfRevenue).toBe(fy2022.grossProfit);
+  expect(fy2022.grossProfit - fy2022.operatingExpenses).toBe(fy2022.operatingIncome);
+  const secondaryRefresh = { ...fy2022, source: "https://stockanalysis.com/stocks/amd/financials/income-statement/", costOfRevenue: 11_550_000_000, grossProfit: 12_051_000_000, operatingExpenses: 10_787_000_000 };
+  expect(mergeFinancialHistory([fy2022], [secondaryRefresh])[0]).toEqual(fy2022);
 });
 
 test("published AI universe has provenance, ranked caps and honest sub-100 membership", () => {

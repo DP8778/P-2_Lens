@@ -9,7 +9,15 @@ export type RevenueBreakdownPeriod = {
   source: string;
   sourceScale?: number;
   segmentBasis?: FinancialStatement["segmentBasis"];
-  segments: { name: string; revenue: number; sharePct: number; changePct?: number }[];
+  segments: { name: string; revenue: number; sharePct: number; changePct?: number; absoluteChange?: number }[];
+};
+
+export type RevenueGrowthSummary = {
+  fiscalYear: number;
+  priorFiscalYear: number;
+  largestSegment: { name: string; revenue: number };
+  largestGrowthContributor: { name: string; absoluteChange: number };
+  changes: { name: string; absoluteChange: number }[];
 };
 
 const finite = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
@@ -33,6 +41,7 @@ export function buildRevenueBreakdown(assetId: string, statements: FinancialStat
   const prior = candidates.find((statement) => {
     const days = (Date.parse(latest.period) - Date.parse(statement.period)) / 86_400_000;
     return statement !== latest && statement.currency === latest.currency && statement.durationMonths === latest.durationMonths
+      && (!latest.accountingBasis || statement.accountingBasis === latest.accountingBasis)
       && days >= 350 && days <= 380 && validSegments(statement);
   });
   if (!prior?.segments) return { status: "unavailable" as const, reason: "missing-comparison" as const };
@@ -49,8 +58,17 @@ export function buildRevenueBreakdown(assetId: string, statements: FinancialStat
       const segment = statement.segments!.find((candidate) => candidate.name === latestSegment.name)!;
       const comparison = statement === latest ? priorByName.get(segment.name) : undefined;
       return { ...segment, sharePct: segment.revenue / statement.revenue * 100,
+        ...(comparison ? { absoluteChange: segment.revenue - comparison.revenue } : {}),
         ...(comparison && comparison.revenue > 0 ? { changePct: (segment.revenue / comparison.revenue - 1) * 100 } : {}) };
     }),
   }));
-  return { status: "available" as const, periods, latest: periods[0], prior: periods[1] };
+  const changes = periods[0].segments.map(({ name, absoluteChange }) => ({ name, absoluteChange: absoluteChange! }));
+  const growth: RevenueGrowthSummary = {
+    fiscalYear: periods[0].fiscalYear,
+    priorFiscalYear: periods[1].fiscalYear,
+    largestSegment: periods[0].segments.reduce((largest, segment) => segment.revenue > largest.revenue ? segment : largest),
+    largestGrowthContributor: changes.reduce((largest, segment) => segment.absoluteChange > largest.absoluteChange ? segment : largest),
+    changes,
+  };
+  return { status: "available" as const, periods, latest: periods[0], prior: periods[1], growth };
 }

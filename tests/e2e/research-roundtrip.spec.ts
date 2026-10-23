@@ -5,12 +5,13 @@ async function expectNoPageOverflow(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 }
 
-for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
+for (const viewport of [{ width: 1440, height: 1000 }, { width: 768, height: 900 }, { width: 390, height: 844 }]) {
   test(`theme research survives refresh and AMD round trip at ${viewport.width}px`, async ({ page }, testInfo) => {
     test.setTimeout(120_000);
     await page.setViewportSize(viewport);
     await page.emulateMedia({ reducedMotion: "reduce" });
     const requests = await mockResearchMarket(page);
+    await page.route("**/api/ai/company-research", (route) => route.abort());
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto("/cs-CZ/markets?theme=ai");
@@ -72,11 +73,33 @@ for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844
     await expect(context).toContainText(/Market-cap|kapitalizac/);
     await expect(context).toContainText("49/49");
     await expect(page.locator(".financial-anatomy")).toBeVisible();
+    const revenueMix = page.locator(".company-revenue-mix");
+    await expect(revenueMix.getByRole("heading", { name: "Čím AMD vydělává" })).toBeVisible();
+    await expect(revenueMix.getByText(/Celkové tržby:/)).toContainText("34,64");
+    await expect(revenueMix.getByRole("heading", { name: "Co táhlo růst tržeb?" })).toBeVisible();
+    await expect(revenueMix.getByLabel("Změny tržeb proti FY2024")).toContainText("Client and Gaming+4,901");
+    await expect(revenueMix.getByLabel("Změny tržeb proti FY2024")).toContainText("Data Center+4,056");
+    await expect(revenueMix.getByLabel("Změny tržeb proti FY2024")).toContainText("Embedded-103");
+    const fy2024 = revenueMix.getByRole("button", { name: "FY2024" });
+    await fy2024.focus();
+    await page.keyboard.press("Enter");
+    await expect(fy2024).toHaveAttribute("aria-pressed", "true");
+    await expect(revenueMix.getByText(/Celkové tržby:/)).toContainText("25,79");
+    await expect(revenueMix.getByRole("heading", { name: "Co táhlo růst tržeb?" })).toHaveCount(0);
+    await expect(revenueMix).toContainText("FY2024 je zobrazen ve struktuře");
+    await revenueMix.getByRole("button", { name: "FY2025" }).focus();
+    await page.keyboard.press("Space");
+    await expect(revenueMix.getByRole("button", { name: "FY2025" })).toHaveAttribute("aria-pressed", "true");
+    await revenueMix.screenshot({ path: testInfo.outputPath("amd-revenue-mix.png") });
+    await page.getByText("Podrobná historie hospodaření").click();
+    const fy2022 = page.getByRole("row").filter({ hasText: "2022-12-31" });
+    await expect(fy2022).toContainText(/10\s603\s000\s000/);
+    await expect(fy2022.getByRole("link")).toHaveAttribute("href", "https://ir.amd.com/financial-information/sec-filings/content/0000002488-25-000012/amd-20241228.htm");
     await expectNoPageOverflow(page);
     await page.screenshot({ path: testInfo.outputPath("amd-context.png"), fullPage: false });
-    // Asset Detail already extends its own daily history through today; Markets
-    // uses completed daily closes. Only that AMD tail is requested, never the universe.
-    expect(requests.historySymbols.slice(loadedHistoryCount)).toEqual(["AMD"]);
+    // The theme series may already cover the detail range. If a tail is needed,
+    // only AMD is requested, never the whole universe.
+    expect(requests.historySymbols.slice(loadedHistoryCount).every((symbol) => symbol === "AMD")).toBe(true);
     const companyHistoryCount = requests.historySymbols.length;
     const back = page.getByRole("navigation", { name: "Navigace aktiva" }).getByRole("link", { name: "Zpět na téma: Semiconductors" });
     await expect(back).toHaveAttribute("href", new URL(researchUrl).pathname + new URL(researchUrl).search);

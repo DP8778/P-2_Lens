@@ -188,7 +188,10 @@ obsahovou verzi a historii členství. Při selhání zdroje zachová poslední 
 FundamentalsSource dodává existujícímu Financial Anatomy skutečné roční výkazy
 Stock Analysis; PLTR je navíc ověřen proti primárnímu SEC iXBRL včetně
 Government/Commercial a samostatných provozních nákladů. Cenové API a portfolio
-zůstávají oddělené. Podrobná metodika, omezení pokrytí a pravidla publikace jsou v
+zůstávají oddělené. AMD používá pro srovnatelnou historii FY2021–FY2025 celé
+konsolidované GAAP výkazy z primárních 10-K a aktuální segmentovou prezentaci
+FY2025 s retrospektivně upravenými srovnávacími obdobími. Podrobná metodika,
+omezení pokrytí a pravidla publikace jsou v
 [src/lib/fundamentals/README.md](src/lib/fundamentals/README.md).
 
 Workflow `Refresh Lens industry data` umožňuje ruční i pravidelné obnovení.

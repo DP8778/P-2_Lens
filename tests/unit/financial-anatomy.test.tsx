@@ -31,6 +31,18 @@ test("revenue growth uses comparable fiscal periods and net additions are explic
   expect(data.links.find((link) => link.from === "netAdditions")?.value).toBe(50);
 });
 
+test("history excludes an annual statement on a different accounting basis", () => {
+  const latest = { ...statement, accountingBasis: "gaap-consolidated" as const };
+  const data = buildFinancialAnatomy("test", [
+    latest,
+    { ...statement, period: "2024-12-31", revenue: 900, costOfRevenue: 300 },
+  ]);
+  if (data.status !== "available") throw new Error("missing statement");
+  expect(data.history.map((period) => period.period)).toEqual(["2025-12-31"]);
+  expect(data.excludedHistoryCount).toBe(1);
+  expect(data.revenueGrowth).toBeUndefined();
+});
+
 test("missing, wrong-asset and inconsistent statements cannot fabricate a financial flow", () => {
   expect(buildFinancialAnatomy("test").status).toBe("unavailable");
   expect(buildFinancialAnatomy("another", [statement]).status).toBe("unavailable");

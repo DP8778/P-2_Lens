@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import type { CompanyProfile } from "@/data/company-profiles";
-import type { RevenueBreakdownPeriod } from "@/lib/finance/revenue-breakdown";
+import type { RevenueBreakdownPeriod, RevenueGrowthSummary } from "@/lib/finance/revenue-breakdown";
 
-export function CompanyRevenueMix({ periods, profile, locale, companyLabel }: {
+export function CompanyRevenueMix({ periods, growth, profile, locale, companyLabel }: {
   periods: RevenueBreakdownPeriod[];
+  growth: RevenueGrowthSummary;
   profile?: CompanyProfile;
   locale: "cs-CZ" | "en-US";
   companyLabel: string;
@@ -15,6 +16,10 @@ export function CompanyRevenueMix({ periods, profile, locale, companyLabel }: {
   const period = periods.find((candidate) => candidate.period === selectedPeriod) ?? periods[0];
   const amount = (value: number) => new Intl.NumberFormat(locale, {
     style: "currency", currency: period.currency, notation: "compact", maximumFractionDigits: 2,
+  }).format(value);
+  const changeAmount = (value: number) => new Intl.NumberFormat(locale, {
+    style: "currency", currency: period.currency, notation: "compact", maximumFractionDigits: 3,
+    signDisplay: "exceptZero",
   }).format(value);
   const percentage = (value: number, signed = false) => new Intl.NumberFormat(locale, {
     style: "percent", maximumFractionDigits: 1, ...(signed ? { signDisplay: "exceptZero" as const } : {}),
@@ -29,7 +34,16 @@ export function CompanyRevenueMix({ periods, profile, locale, companyLabel }: {
       </div>
     </div>
     {profile && <p className="company-revenue-description">{profile.description[locale]} <a href={profile.sourceUrl} target="_blank" rel="noreferrer">{profile.sourceLabel}</a></p>}
-    <p className="revenue-period-label"><strong>FY{period.fiscalYear}</strong> · {period.durationMonths} {en ? "months ended" : "měsíců do"} <time dateTime={period.period}>{new Date(`${period.period}T12:00:00Z`).toLocaleDateString(locale)}</time> · {period.currency}</p>
+    <p className="revenue-period-label"><strong>FY{period.fiscalYear}</strong> · {period.durationMonths} {en ? "months ended" : "měsíců do"} <time dateTime={period.period}>{new Date(`${period.period}T12:00:00Z`).toLocaleDateString(locale)}</time> · {period.currency} · <b>{en ? "Total revenue" : "Celkové tržby"}: {amount(period.revenue)}</b></p>
+    {period.fiscalYear === growth.fiscalYear && <section className="revenue-growth-summary" aria-labelledby="revenue-growth-title">
+      <h3 id="revenue-growth-title">{en ? "What drove revenue growth?" : "Co táhlo růst tržeb?"}</h3>
+      <p>{en
+        ? `${growth.largestSegment.name} is ${companyLabel}'s largest revenue segment. ${growth.largestGrowthContributor.name}, however, delivered the largest absolute increase versus FY${growth.priorFiscalYear}.`
+        : `${growth.largestSegment.name} tvoří největší část tržeb ${companyLabel}. Největší absolutní přírůstek proti FY${growth.priorFiscalYear} ale přinesl ${growth.largestGrowthContributor.name}.`}</p>
+      <ul aria-label={en ? `Revenue changes versus FY${growth.priorFiscalYear}` : `Změny tržeb proti FY${growth.priorFiscalYear}`}>
+        {growth.changes.map((change) => <li key={change.name}><span>{change.name}</span><strong>{changeAmount(change.absoluteChange)}</strong></li>)}
+      </ul>
+    </section>}
     <figure className="revenue-mix-figure" aria-labelledby="company-revenue-mix-title">
       <ul>{period.segments.map((segment) => <li key={segment.name}>
         <div className="revenue-segment-label"><strong>{segment.name}</strong><span>{amount(segment.revenue)} · {percentage(segment.sharePct)}</span></div>
@@ -38,12 +52,15 @@ export function CompanyRevenueMix({ periods, profile, locale, companyLabel }: {
           ? (en ? "Comparison base for FY2025" : "Srovnávací základ pro FY2025")
           : `${en ? "Year on year" : "Meziročně"} ${percentage(segment.changePct, true)}`}</p>
       </li>)}</ul>
-      <figcaption><strong>{en ? `Text summary for FY${period.fiscalYear}:` : `Textový přehled pro FY${period.fiscalYear}:`}</strong> {summary}.</figcaption>
+      <figcaption><details className="revenue-mix-methodology"><summary>{en ? "Methodology and text summary" : "Metodika a textový přehled"}</summary>
+        <p><strong>{en ? `Text summary for FY${period.fiscalYear}:` : `Textový přehled pro FY${period.fiscalYear}:`}</strong> {summary}.</p>
+        <p>{en ? "Amounts were normalized from a USD millions table to USD units." : "Částky jsou z tabulky v milionech USD převedeny na jednotky USD."}</p>
+        <p><a href={period.source} target="_blank" rel="noreferrer">{companyLabel} · {en ? "primary statement" : "primární výkaz"}</a></p>
+      </details></figcaption>
     </figure>
     <div className="revenue-mix-notes">
       <p>{en ? "Data Center includes server CPUs, GPU and AI accelerators, networking and other data-center products. The reported figure is not AI revenue." : "Data Center zahrnuje serverové CPU, GPU a AI akcelerátory, síťové prvky i další produkty pro datová centra. Vykázaný údaj proto není tržbou z AI."}</p>
       {period.segmentBasis === "retrospectively-adjusted" && <p>{en ? "FY2024 is shown in the segment structure retrospectively adjusted by AMD after Client and Gaming were combined in FY2025." : "FY2024 je zobrazen ve struktuře, kterou AMD retrospektivně upravilo po spojení segmentů Client a Gaming od FY2025."}</p>}
-      <p>{en ? "Amounts were normalized from a USD millions table to USD units." : "Částky jsou z tabulky v milionech USD převedeny na jednotky USD."} <a href={period.source} target="_blank" rel="noreferrer">{companyLabel} · {en ? "primary statement" : "primární výkaz"}</a></p>
     </div>
   </section>;
 }

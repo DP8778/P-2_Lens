@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "47c4e3e00bd17dc9",
+  "version": "331827bedbccffbd",
   "updatedAt": "2026-10-23T00:00:00.000Z",
   "industries": {
     "ai": {
@@ -5221,6 +5221,7 @@
           "currency": "USD",
           "durationMonths": 12,
           "source": "https://ir.amd.com/financial-information/sec-filings/content/0000002488-26-000018/amd-20251227.htm",
+          "accountingBasis": "gaap-consolidated",
           "revenue": 34639000000,
           "costOfRevenue": 17487000000,
           "grossProfit": 17152000000,
@@ -5245,6 +5246,7 @@
           "currency": "USD",
           "durationMonths": 12,
           "source": "https://ir.amd.com/financial-information/sec-filings/content/0000002488-26-000018/amd-20251227.htm",
+          "accountingBasis": "gaap-consolidated",
           "revenue": 25785000000,
           "costOfRevenue": 13060000000,
           "grossProfit": 12725000000,
@@ -5269,6 +5271,7 @@
           "currency": "USD",
           "durationMonths": 12,
           "source": "https://ir.amd.com/financial-information/sec-filings/content/0000002488-26-000018/amd-20251227.htm",
+          "accountingBasis": "gaap-consolidated",
           "revenue": 22680000000,
           "costOfRevenue": 12220000000,
           "grossProfit": 10460000000,
@@ -5301,42 +5304,27 @@
           "period": "2022-12-31",
           "currency": "USD",
           "durationMonths": 12,
-          "source": "https://stockanalysis.com/stocks/amd/financials/income-statement/",
+          "source": "https://ir.amd.com/financial-information/sec-filings/content/0000002488-25-000012/amd-20241228.htm",
+          "sourceScale": 1000000,
+          "accountingBasis": "gaap-consolidated",
           "revenue": 23601000000,
-          "costOfRevenue": 11550000000,
-          "grossProfit": 12051000000,
-          "operatingExpenses": 10787000000,
+          "costOfRevenue": 12998000000,
+          "grossProfit": 10603000000,
+          "operatingExpenses": 9339000000,
           "operatingIncome": 1264000000,
           "netIncome": 1320000000,
           "expenses": {
             "researchDevelopment": 5005000000
-          },
-          "segments": [
-            {
-              "name": "Data Center",
-              "revenue": 6043000000
-            },
-            {
-              "name": "Client",
-              "revenue": 6201000000
-            },
-            {
-              "name": "Gaming",
-              "revenue": 6805000000
-            },
-            {
-              "name": "Embedded",
-              "revenue": 4552000000
-            }
-          ],
-          "segmentSource": "https://stockanalysis.com/stocks/amd/financials/"
+          }
         },
         {
           "assetId": "twelvedata:XNGS:AMD",
           "period": "2021-12-25",
           "currency": "USD",
           "durationMonths": 12,
-          "source": "https://stockanalysis.com/stocks/amd/financials/income-statement/",
+          "source": "https://ir.amd.com/financial-information/sec-filings/content/0000002488-24-000012/amd-20231230.htm",
+          "sourceScale": 1000000,
+          "accountingBasis": "gaap-consolidated",
           "revenue": 16434000000,
           "costOfRevenue": 8505000000,
           "grossProfit": 7929000000,
@@ -5345,26 +5333,7 @@
           "netIncome": 3162000000,
           "expenses": {
             "researchDevelopment": 2845000000
-          },
-          "segments": [
-            {
-              "name": "Data Center",
-              "revenue": 3694000000
-            },
-            {
-              "name": "Client",
-              "revenue": 6887000000
-            },
-            {
-              "name": "Gaming",
-              "revenue": 5607000000
-            },
-            {
-              "name": "Embedded",
-              "revenue": 246000000
-            }
-          ],
-          "segmentSource": "https://stockanalysis.com/stocks/amd/financials/"
+          }
         }
       ]
     },
