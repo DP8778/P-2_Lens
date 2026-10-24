@@ -3193,3 +3193,72 @@ button.contribution-row[aria-pressed="true"] {
   .revenue-segment-label { align-items: start; flex-direction: column; gap: 3px; }
   .revenue-segment-label span { white-space: normal; }
 }
+
+/* Company detail shares the portfolio hero's plotting surface and navigator. */
+.asset-detail-header { padding: 24px 0; gap: 24px; }
+.asset-detail-identity h1 { font-size: clamp(30px, 3vw, 42px); }
+.company-history-chart { min-width: 0; margin: 0 0 30px; padding: 24px 0 16px; overflow: hidden; border: 1px solid #ffffff14; border-radius: 14px; background: #101214; }
+.company-chart-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 0 24px; }
+.company-chart-heading > div > span { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--color-text-muted); }
+.company-chart-heading h2 { margin: 7px 0 0; font-size: 22px; font-weight: 480; letter-spacing: -.03em; }
+.company-chart-tabs, .company-chart-scale { display: flex; gap: 3px; padding: 3px; border: 1px solid #ffffff16; border-radius: 9px; }
+.company-chart-tabs button, .company-chart-scale button { min-height: 36px; padding: 7px 12px; border-radius: 6px; color: var(--color-text-muted); font-size: 12px; }
+.company-chart-tabs button[aria-pressed="true"], .company-chart-scale button[aria-pressed="true"] { background: #ffffff0e; color: var(--color-text-primary); }
+.company-history-chart button:focus-visible { outline: 2px solid #cbc8ef; outline-offset: 2px; }
+.company-chart-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding: 26px 24px 22px; }
+.company-chart-metrics > div { min-width: 0; }
+.company-chart-metrics span { display: block; color: var(--color-text-muted); font-size: 11px; }
+.company-chart-metrics strong { display: block; margin-top: 8px; font-size: clamp(19px, 2.5vw, 29px); font-weight: 450; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.company-chart-options { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 0 24px 16px; }
+.company-chart-series-controls { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.company-chart-series-controls button { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; color: var(--color-text-secondary); font-size: 12px; }
+.company-chart-series-controls button[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
+.company-chart-series-controls i, .company-chart-readout i { display: inline-block; flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; }
+.company-chart-scale { flex-shrink: 0; }
+.company-chart-scale button { min-height: 30px; font-size: 11px; }
+.company-chart-scale button:disabled { opacity: .35; cursor: not-allowed; }
+.company-chart-readout { display: flex; flex-wrap: wrap; align-items: baseline; gap: 9px 20px; padding: 0 24px 14px; min-height: 38px; color: var(--color-text-secondary); font-size: 11px; font-variant-numeric: tabular-nums; }
+.company-chart-readout time { color: var(--color-text-muted); }
+.company-chart-readout > span { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.company-chart-readout strong { color: var(--color-text-primary); font-weight: 500; }
+.company-chart-plot { height: clamp(260px, 35vh, 360px); }
+.company-chart-tooltip { position: absolute; z-index: 3; top: 16px; min-width: 180px; max-width: calc(100% - 24px); padding: 13px 15px; border: 1px solid #ffffff24; border-radius: 9px; background: #17191bf2; box-shadow: 0 8px 28px #0005; pointer-events: none; font-size: 11px; }
+.company-chart-tooltip > strong { display: block; margin-bottom: 9px; color: var(--color-text-muted); font-weight: 500; }
+.company-chart-tooltip > span { display: flex; justify-content: space-between; gap: 14px; margin-top: 7px; }
+.company-chart-tooltip b { font-weight: 500; font-variant-numeric: tabular-nums; }
+.company-chart-provenance, .company-price-notice, .company-history-chart .asset-history-provenance { margin: 12px 24px 0; color: var(--color-text-muted); font-size: 11px; line-height: 1.6; }
+.company-chart-data, .company-chart-sources { margin: 12px 24px 0; color: var(--color-text-muted); font-size: 11px; }
+.company-chart-data summary, .company-chart-sources summary { width: fit-content; cursor: pointer; padding: 4px 0; }
+.company-chart-data p { margin: 10px 0; line-height: 1.6; }
+.company-chart-data table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.company-chart-data th, .company-chart-data td { padding: 10px; text-align: right; border-bottom: 1px solid #ffffff0e; white-space: nowrap; font-weight: 450; }
+.company-chart-data th:first-child { text-align: left; }
+.company-chart-sources ul { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; padding: 0; list-style: none; }
+.company-chart-sources a { text-decoration: underline; text-underline-offset: 3px; }
+.company-price-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; padding: 24px; }
+.company-price-controls h3 { font-size: 14px; font-weight: 450; }
+.company-price-state { display: grid; justify-items: start; gap: 16px; min-height: 120px; padding: 20px 24px; color: var(--color-text-secondary); font-size: 13px; }
+.company-price-state .primary-button { min-height: 38px; }
+.company-research-status { display: flex; align-items: start; justify-content: space-between; gap: 24px; margin-top: 34px; padding: 22px 0; border-block: 1px solid #ffffff12; }
+.company-research-status h2 { margin: 0 0 9px; font-size: 17px; font-weight: 450; }
+.company-research-status p { max-width: 740px; color: var(--color-text-muted); font-size: 12px; line-height: 1.7; }
+.company-research-status button { flex-shrink: 0; }
+@media (max-width: 760px) {
+  .company-chart-heading { align-items: start; flex-direction: column; }
+  .company-chart-metrics { gap: 14px; }
+  .company-chart-options { align-items: start; flex-direction: column; }
+}
+@media (max-width: 480px) {
+  .company-chart-heading, .company-chart-options { padding-inline: 16px; }
+  .company-chart-metrics { grid-template-columns: 1fr; gap: 12px; padding: 20px 16px; }
+  .company-chart-metrics > div { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .company-chart-metrics strong { margin-top: 0; font-size: 19px; white-space: nowrap; }
+  .company-chart-metrics span { max-width: 140px; }
+  .company-chart-readout { padding-inline: 16px; gap: 8px 12px; }
+  .company-chart-readout time { flex-basis: 100%; }
+  .company-chart-plot { height: 245px; margin-inline: 8px; }
+  .company-chart-tooltip { min-width: 150px; padding: 10px; font-size: 10px; }
+  .company-chart-provenance, .company-chart-data, .company-chart-sources, .company-price-notice, .company-history-chart .asset-history-provenance { margin-inline: 16px; }
+  .company-research-status { flex-direction: column; gap: 14px; }
+}
+.company-chart-plot text { font-size: 11px; }

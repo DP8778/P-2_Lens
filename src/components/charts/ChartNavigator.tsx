@@ -9,8 +9,9 @@ const clampRange = (range: [number, number], maxIndex: number): [number, number]
   return [start, end];
 };
 
-export function ChartNavigator({ data, range, onChange }: {
-  data: AnalysisPoint[];
+export function ChartNavigator({ data, range, onChange, locale = "cs-CZ" }: {
+  data: Pick<AnalysisPoint, "timestamp" | "portfolioValue">[];
+  locale?: string;
   range: [number, number];
   onChange: (range: [number, number]) => void;
 }) {
@@ -80,17 +81,17 @@ export function ChartNavigator({ data, range, onChange }: {
       <div className="navigator-inputs">
         <label>
           Od{" "}
-          <input aria-label="Začátek období" type="range" min="0" max={Math.max(0, maxIndex - 1)} value={displayRange[0]} aria-valuetext={dateLabel(dateAt(displayRange[0]))} onChange={(event) => onChange(clampRange([Number(event.target.value), displayRange[1]], maxIndex))} />
+          <input aria-label="Začátek období" type="range" min="0" max={Math.max(0, maxIndex - 1)} value={displayRange[0]} aria-valuetext={dateLabel(dateAt(displayRange[0]), locale)} onChange={(event) => onChange(clampRange([Number(event.target.value), displayRange[1]], maxIndex))} />
         </label>
         <label>
           Do{" "}
-          <input aria-label="Konec období" type="range" min={Math.min(1, maxIndex)} max={maxIndex} value={displayRange[1]} aria-valuetext={dateLabel(dateAt(displayRange[1]))} onChange={(event) => onChange(clampRange([displayRange[0], Number(event.target.value)], maxIndex))} />
+          <input aria-label="Konec období" type="range" min={Math.min(1, maxIndex)} max={maxIndex} value={displayRange[1]} aria-valuetext={dateLabel(dateAt(displayRange[1]), locale)} onChange={(event) => onChange(clampRange([displayRange[0], Number(event.target.value)], maxIndex))} />
         </label>
       </div>
       <div className="navigator-labels">
-        <span>{dateLabel(dateAt(displayRange[0]))}</span>
+        <span>{dateLabel(dateAt(displayRange[0]), locale)}</span>
         <span>Posuňte výběr nebo upravte jeho okraje</span>
-        <span>{dateLabel(dateAt(displayRange[1]))}</span>
+        <span>{dateLabel(dateAt(displayRange[1]), locale)}</span>
       </div>
     </div>
   );

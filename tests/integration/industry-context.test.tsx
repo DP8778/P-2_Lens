@@ -15,7 +15,6 @@ import { knownDemoInstruments } from "@/lib/instruments/identity";
 const push = jest.fn();
 jest.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 jest.mock("@/components/portfolio/PortfolioProvider", () => ({ usePortfolio: () => ({ assets: fundamentalsSource.getIndustries().ai.members.map((m) => m.asset), holdings: [], market: { quotes: [], prices: [], fxRates: [] } }) }));
-jest.mock("@/components/charts/AssetPriceChart", () => ({ AssetPriceChart: () => <div>Price chart</div> }));
 jest.mock("@/components/portfolio/AddAssetDialog", () => ({ AddAssetDialog: () => null }));
 jest.mock("@/components/assets/CompanyResearch", () => ({
   useCompanyResearch: () => ({ loading: false, refresh: jest.fn() }),
@@ -92,7 +91,7 @@ test.each(knownDemoInstruments)("demo $demoAssetId keeps its identity, graph, po
   expect(screen.getByRole("heading", { name: instrument.name, level: 1 })).toBeVisible();
   expect(screen.getByText(/Demo cena · nejde o tržní data/)).toBeVisible();
   expect(screen.getByRole("note")).toHaveTextContent("lens-demo-2026.09-v2");
-  expect(screen.getByText("Price chart")).toBeVisible();
+  expect(screen.getByTestId("asset-price-chart")).toBeVisible();
   expect(screen.getByRole("heading", { name: "Jak z tržeb vzniká zisk?" })).toBeVisible();
   expect(screen.getByText(/Ověřené období/)).toBeVisible();
   expect(screen.getByRole("heading", { name: "Demo pozice" })).toBeVisible();
@@ -129,6 +128,7 @@ test("company opens in the research period and primary back preserves the exact 
   expect(links[0]).toHaveAttribute("href", industryBackHref("cs-CZ", context));
   expect(links[1]).toHaveTextContent("Portfolio");
   expect(links[2]).toHaveTextContent("Markets");
+  await userEvent.click(screen.getByRole("button", { name: "Cena akcie" }));
   expect(within(screen.getByLabelText("Období grafu")).getByRole("button", { name: "3M" })).toHaveAttribute("aria-pressed", "true");
   expect(screen.getByLabelText("Kontext tématu")).toHaveTextContent("3M · Váženo kapitalizací");
   expect(screen.getByLabelText("Kontext tématu")).toHaveTextContent("Vývoj k 25. 9. 2026");

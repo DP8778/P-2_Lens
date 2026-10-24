@@ -26,7 +26,7 @@ export function AssetIndustryContext({ assetId, locale, industry, navigation }: 
   const name = marketThemes.find((theme) => theme.id === navigation.industry)?.name ?? navigation.industry;
   return <aside className="asset-industry-context" aria-label={en ? "Theme context" : "Kontext tématu"}>
     <header><strong>{en ? "Theme" : "Téma"} {name} · {en ? "Lens universe" : "Univerzum Lens"}</strong><span>{navigation.period} · {navigation.weighting === "equal" ? "Equal-weight" : en ? "Market-cap weighted" : "Váženo kapitalizací"}</span></header>
-    <p className="research-section-intro">{en ? "This saved theme view connects the company with the Lens universe you were exploring. The company price chart below keeps your selected period." : "Uložený pohled propojuje firmu s univerzem Lens, které jste procházeli. Cenový graf firmy níže přebírá zvolené období."}</p>
+    <p className="research-section-intro">{en ? "This saved theme view connects the company with the Lens universe you were exploring. The share-price view keeps your selected period." : "Uložený pohled propojuje firmu s univerzem Lens, které jste procházeli. Pohled Cena akcie zachovává zvolené období."}</p>
     {(navigation.asOf || navigation.version) && <p className="industry-data-note">
       {navigation.asOf && `${en ? "Performance as of" : "Vývoj k"} ${new Date(`${navigation.asOf}T12:00:00Z`).toLocaleDateString(locale)}`}
       {navigation.asOf && navigation.version && " · "}

@@ -73,6 +73,13 @@ export function CompanyOverview({ research, locale }: { research: ResearchState;
 
 export function CompanyResearchSections({ research, locale }: { research: ResearchState; locale: string }) {
   const en = locale === "en-US", data = research.data;
+  if (!data) return <section className="company-research-status" aria-labelledby="company-research-status-title" aria-live="polite">
+    <div><h2 id="company-research-status-title">{en ? "Company research" : "Firemní výzkum"}</h2>
+      <p role="status">{research.loading
+        ? (en ? "Looking up sourced company developments…" : "Vyhledávám firemní události se zdroji…")
+        : (en ? "Current developments, growth opportunities and risks are unavailable. Reported financials above remain available." : "Aktuální události, možnosti růstu a rizika nejsou dostupné. Výkazy firmy výše zůstávají k dispozici.")}</p>
+    </div><button className="research-refresh" onClick={research.refresh} disabled={research.loading}>{en ? "Refresh research" : "Obnovit výzkum"}</button>
+  </section>;
   return <div className="company-research" data-state={research.loading ? "loading" : data ? "ready" : "unavailable"}>
     <CompanyOverview research={research} locale={locale} />
     <section aria-labelledby="company-developments-title"><span className="research-eyebrow">{en ? "Sourced developments" : "Události se zdroji"}</span><h2 id="company-developments-title">{en ? "What has changed recently?" : "Co se kolem firmy změnilo?"}</h2>

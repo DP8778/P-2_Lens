@@ -15,7 +15,7 @@ import { CompanyResearchSections, useCompanyResearch } from "./CompanyResearch";
 import { CompanyPrimer } from "./CompanyPrimer";
 import { CompanyRevenueMix } from "./CompanyRevenueMix";
 import { FinancialAnatomy } from "./FinancialAnatomy";
-import { AssetPriceChart } from "@/components/charts/AssetPriceChart";
+import { CompanyHistoryChart } from "./CompanyHistoryChart";
 import { AddAssetDialog } from "@/components/portfolio/AddAssetDialog";
 import { usePortfolio } from "@/components/portfolio/PortfolioProvider";
 import { buildHoldings, getPortfolioValue, initialTransactions } from "@/lib/finance/portfolio-engine";
@@ -289,13 +289,19 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
           {quoteError && displayedQuote && <small>Aktualizace ceny se nezdařila; zobrazuji poslední dostupnou hodnotu.</small>}
         </div>
       </header>
+      <CompanyHistoryChart key={assetId} assetId={assetId} symbol={asset.symbol} currency={asset.currency} locale={locale}
+        statements={fundamentals?.statements} priceData={chartHistory} priceLoading={historyLoading} priceError={historyError}
+        priceControls={<div className="asset-timeframes" aria-label={en ? "Chart period" : "Období grafu"}>
+          {(["1W", "1M", "3M", "1Y", "ALL"] as const).map(value => <button key={value} aria-pressed={timeframe === value} onClick={() => setTimeframe(value)}>{value}</button>)}
+        </div>}
+        priceProvenance={displayedHistoryProvenance && <p className="asset-history-provenance">{displayedHistoryProvenance.source === "demo" ? (en ? "Demo history · not market data" : "Demo historie · nejde o tržní data") : displayedHistoryProvenance.source === "cache" ? (en ? "Saved Twelve Data history" : "Uložená historie Twelve Data") : (en ? "Twelve Data history" : "Historie Twelve Data")} · {en ? "data through" : "data do"} {new Date(`${displayedHistoryProvenance.asOf.slice(0, 10)}T12:00:00Z`).toLocaleDateString(locale)}</p>}
+      />
       {asset.type === "stock" && (showRevenueMix && revenueBreakdown.status === "available"
         ? <CompanyRevenueMix periods={revenueBreakdown.periods} growth={revenueBreakdown.growth} locale={locale} profile={profile} companyLabel={asset.symbol} />
         : <CompanyPrimer assetId={asset.id} locale={locale} fundamentals={fundamentals} profile={profile} />)}
       {industry && context && <AssetIndustryContext key={`${assetId}:${context.industry}:${context.period}:${context.weighting}:${context.asOf}:${context.version}:${industry.version}`} assetId={assetId} locale={locale} industry={industry} navigation={context} />}
 
-      {asset.type === "stock" && <p className="research-section-intro">{en ? "The price chart shows how the market values the stock. Business fundamentals and the sourced developments below help explain what may be behind that move." : "Cenový graf ukazuje tržní vývoj akcie. Podnikání a jeho změny pomáhají pochopit výkazy a zdrojované události níže."}</p>}
-      <section className="asset-performance-strip" aria-label="Výkonnost aktiva">
+      {displayedAnnualHistory.length > 0 && <section className="asset-performance-strip" aria-label="Výkonnost aktiva">
         <dl>
           <div><dt>1W</dt><dd className={performance.week === undefined ? "" : performance.week >= 0 ? "positive" : "negative"}>{performance.week === undefined ? "—" : percent(performance.week, locale)}</dd></div>
           <div><dt>1M</dt><dd className={performance.month === undefined ? "" : performance.month >= 0 ? "positive" : "negative"}>{performance.month === undefined ? "—" : percent(performance.month, locale)}</dd></div>
@@ -304,10 +310,10 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
           <div><dt>52W low</dt><dd>{performance.low52Week === undefined ? "—" : nativeMoney(performance.low52Week, asset.currency, locale)}</dd></div>
           <div><dt>Od 52W high</dt><dd className={performance.fromHigh === undefined ? "" : performance.fromHigh >= 0 ? "positive" : "negative"}>{performance.fromHigh === undefined ? "—" : percent(performance.fromHigh, locale)}</dd></div>
         </dl>
-      </section>
+      </section>}
       {demoEntry && <p className="asset-data-provenance" role="note">{en ? "Price, history and position valuation use the deterministic lens-demo-2026.09-v2 dataset. Financial statements below are separate sourced company data with their own reporting period." : "Cena, historie a ocenění pozice používají deterministický dataset lens-demo-2026.09-v2. Výkazy níže jsou samostatná zdrojovaná firemní data s vlastním účetním obdobím."}</p>}
 
-      {!displayedQuote && quoteError && (
+      {!displayedQuote && quoteError && (alternativeLoading || quoteAlternative) && (
         <section className="asset-quote-fallback" aria-live="polite">
           {alternativeLoading ? <p>Hledám jiný dostupný listing…</p> : quoteAlternative ? (
             <>
@@ -324,17 +330,6 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
           <dl>{Object.entries(quoteDiagnostic).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>
         </details>
       )}
-
-      <section className="asset-history-section" aria-labelledby="asset-history-title">
-        <div className="asset-section-heading">
-          <h2 id="asset-history-title">Vývoj ceny</h2>
-          <div className="asset-timeframes" aria-label="Období grafu">
-            {(["1W", "1M", "3M", "1Y", "ALL"] as const).map((value) => <button key={value} aria-pressed={timeframe === value} onClick={() => setTimeframe(value)}>{value}</button>)}
-          </div>
-        </div>
-        {historyLoading ? <div className="asset-chart-state">Načítám historická data…</div> : historyError ? <div className="asset-chart-state asset-history-unavailable" role="status">Historická data momentálně nejsou dostupná.</div> : <AssetPriceChart data={chartHistory} currency={asset.currency} locale={locale} />}
-        {displayedHistoryProvenance && <p className="asset-history-provenance">{displayedHistoryProvenance.source === "demo" ? (en ? "Demo history" : "Demo historie") : displayedHistoryProvenance.source === "cache" ? (en ? "Saved Twelve Data history" : "Uložená historie Twelve Data") : (en ? "Twelve Data history" : "Historie Twelve Data")} · {en ? "data through" : "data do"} {new Date(`${displayedHistoryProvenance.asOf.slice(0, 10)}T12:00:00Z`).toLocaleDateString(locale)}</p>}
-      </section>
 
       {asset.type === "stock" && <FinancialAnatomy assetId={asset.id} locale={locale} statements={fundamentals?.statements} fetchedAt={fundamentals?.fetchedAt} stale={!!fundamentals?.errors?.length} showRevenueStructure={!showRevenueMix} />}
 

@@ -14,6 +14,7 @@ import { chartOptions as o } from "./chart-options";
 import { ChartControls, type ChartSettings } from "./ChartControls";
 import { HeroChartTooltip } from "./HeroChartTooltip";
 import { ChartNavigator } from "./ChartNavigator";
+import { ChartSurface } from "./ChartSurface";
 import { ChartAnnotations } from "./ChartAnnotations";
 import { ChartSummary } from "./ChartSummary";
 import { ChartLegend } from "./ChartLegend";
@@ -42,9 +43,6 @@ export function PortfolioHeroChart({
   const [selectedEventId, setSelectedEventId] = useState<string>();
   const svgRef = useRef<SVGSVGElement>(null);
   const gradient = useId().replaceAll(":", "");
-  const plotGradient = `${gradient}-plot`;
-  const plotAura = `${gradient}-aura`;
-  const plotTexture = `${gradient}-texture`;
   const lineGradient = `${gradient}-line`;
   const lineGlow = `${gradient}-glow`;
   const data = state.mode === "contribution" ? analysis.points : visibleAnalysis.points;
@@ -239,26 +237,6 @@ export function PortfolioHeroChart({
             <title>{isDrawdown ? "Pokles od maxima" : "Vývoj portfolia"}</title>
             <desc>{summary}</desc>
             <defs>
-              <linearGradient id={plotGradient} x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#14161b" />
-                <stop offset="48%" stopColor="#0d0f13" />
-                <stop offset="100%" stopColor="#090a0d" />
-              </linearGradient>
-              <radialGradient id={plotAura} cx="62%" cy="20%" r="78%">
-                <stop offset="0%" stopColor="#c7c3ee" stopOpacity=".085" />
-                <stop offset="42%" stopColor="#8e91a7" stopOpacity=".025" />
-                <stop offset="100%" stopColor="#050608" stopOpacity="0" />
-              </radialGradient>
-              <filter id={plotTexture} x="0" y="0" width="100%" height="100%">
-                <feTurbulence
-                  type="fractalNoise"
-                  baseFrequency=".72"
-                  numOctaves="3"
-                  seed="17"
-                  stitchTiles="stitch"
-                />
-                <feColorMatrix type="saturate" values="0" />
-              </filter>
               <linearGradient id={lineGradient} x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor={isDrawdown ? "#c9a5aa" : "#c7cbd3"} />
                 <stop offset="54%" stopColor={isDrawdown ? "#ddb8bd" : "#f3f1eb"} />
@@ -276,16 +254,7 @@ export function PortfolioHeroChart({
                 <stop offset="100%" stopColor="#dce0e8" stopOpacity="0" />
               </linearGradient>
             </defs>
-            <rect width={o.width} height={o.height} fill={`url(#${plotGradient})`} />
-            <rect width={o.width} height={o.height} fill={`url(#${plotAura})`} />
-            <rect
-              width={o.width}
-              height={o.height}
-              fill="#d9dce5"
-              opacity=".035"
-              filter={`url(#${plotTexture})`}
-              pointerEvents="none"
-            />
+            <ChartSurface id={gradient} />
             {rangeMode && rangeStart !== null && rangeHover !== null && (
               <rect
                 className="range-selection-overlay"

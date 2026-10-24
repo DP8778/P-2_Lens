@@ -194,6 +194,12 @@ FY2025 s retrospektivně upravenými srovnávacími obdobími. Podrobná metodik
 omezení pokrytí a pravidla publikace jsou v
 [src/lib/fundamentals/README.md](src/lib/fundamentals/README.md).
 
+Detail firmy začíná interaktivním SVG grafem se stejnou plochou a navigátorem
+jako hlavní graf portfolia. Přepíná samostatnou cenovou historii a roční
+hospodaření (tržby, provozní a čistý zisk), včetně srovnání Index 100.
+Bez cenové služby zůstávají dostupné ověřené výsledovky; cena není nahrazována
+syntetickými daty. Roční body a cenové řady mají oddělená období a zdroje.
+
 Workflow `Refresh Lens industry data` umožňuje ruční i pravidelné obnovení.
 Plánovač GitHubu začne fungovat až po zařazení workflow do výchozí větve; nový
 snapshot se v produkci projeví po nasazení. Nejde o scraping při každém otevření
