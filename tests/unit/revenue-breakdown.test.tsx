@@ -34,6 +34,7 @@ test("period switch keeps segment order, visible values and explains the recast 
   if (data.status !== "available") throw new Error("AMD breakdown unavailable");
   render(<CompanyRevenueMix periods={data.periods} growth={data.growth} locale="cs-CZ" companyLabel="AMD" />);
   expect(screen.getByRole("heading", { name: "Čím AMD vydělává" })).toBeInTheDocument();
+  expect(screen.getByRole("img", { name: /Struktura tržeb AMD, FY2025/ })).toBeVisible();
   expect(screen.getByText(/Celkové tržby:/)).toHaveTextContent(/34,64/);
   expect(screen.getByRole("heading", { name: "Co táhlo růst tržeb?" }).nextElementSibling).toHaveTextContent("Data Center tvoří největší část tržeb AMD");
   expect(screen.getByLabelText("Změny tržeb proti FY2024")).toHaveTextContent(/Client and Gaming[\s\S]*\+4,901/);
@@ -47,6 +48,7 @@ test("period switch keeps segment order, visible values and explains the recast 
   fy2024.focus();
   await userEvent.keyboard("{Enter}");
   expect(screen.getByText(/FY2024 je zobrazen ve struktuře/)).toBeInTheDocument();
+  expect(screen.getByRole("img", { name: /Struktura tržeb AMD, FY2024/ })).toHaveAccessibleName(/48,8/);
   expect(screen.getByText(/Celkové tržby:/)).toHaveTextContent(/25,79/);
   expect(screen.queryByRole("heading", { name: "Co táhlo růst tržeb?" })).not.toBeInTheDocument();
   expect(screen.getAllByText(/Srovnávací základ pro FY2025/)).toHaveLength(3);

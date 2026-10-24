@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { CompanyProfile } from "@/data/company-profiles";
 import type { RevenueBreakdownPeriod, RevenueGrowthSummary } from "@/lib/finance/revenue-breakdown";
+import { ShareDonut, shareColors } from "@/components/charts/ShareDonut";
 
 export function CompanyRevenueMix({ periods, growth, profile, locale, companyLabel }: {
   periods: RevenueBreakdownPeriod[];
@@ -45,13 +46,15 @@ export function CompanyRevenueMix({ periods, growth, profile, locale, companyLab
       </ul>
     </section>}
     <figure className="revenue-mix-figure" aria-labelledby="company-revenue-mix-title">
-      <ul>{period.segments.map((segment) => <li key={segment.name}>
-        <div className="revenue-segment-label"><strong>{segment.name}</strong><span>{amount(segment.revenue)} · {percentage(segment.sharePct)}</span></div>
-        <div className="revenue-segment-track" aria-hidden="true"><span style={{ width: `${segment.sharePct}%` }} /></div>
+      <div className="revenue-mix-visual">
+      <ShareDonut locale={locale} segments={period.segments} center={amount(period.revenue)} caption={`FY${period.fiscalYear} · ${en ? "total revenue" : "celkové tržby"}`} label={`${en ? "Revenue mix" : "Struktura tržeb"} ${companyLabel}, FY${period.fiscalYear}. ${summary}.`} />
+      <ul>{period.segments.map((segment, index) => <li key={segment.name}>
+        <div className="revenue-segment-label"><strong><i style={{ background: shareColors[index] }} aria-hidden="true" />{segment.name}</strong><span>{amount(segment.revenue)} · {percentage(segment.sharePct)}</span></div>
         <p>{segment.changePct === undefined
           ? (en ? "Comparison base for FY2025" : "Srovnávací základ pro FY2025")
           : `${en ? "Year on year" : "Meziročně"} ${percentage(segment.changePct, true)}`}</p>
       </li>)}</ul>
+      </div>
       <figcaption><details className="revenue-mix-methodology"><summary>{en ? "Methodology and text summary" : "Metodika a textový přehled"}</summary>
         <p><strong>{en ? `Text summary for FY${period.fiscalYear}:` : `Textový přehled pro FY${period.fiscalYear}:`}</strong> {summary}.</p>
         <p>{en ? "Amounts were normalized from a USD millions table to USD units." : "Částky jsou z tabulky v milionech USD převedeny na jednotky USD."}</p>

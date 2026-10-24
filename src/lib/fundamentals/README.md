@@ -105,3 +105,20 @@ in the displayed year. Fiscal year-ends differ. YoY compares matched companies
 with comparable prior-year annual periods. Both coverage denominators are shown;
 no extrapolation to missing companies. Median return and rising percentage use
 available price observations; Top 10 concentration uses all membership caps.
+
+## Reviewed AMD market context
+
+`src/lib/finance/market-position.ts` is a separate, manually reviewed public-source
+snapshot (reviewed 2026-10-24), independent of statement refresh and AI research.
+It separates CY2025 global logic semiconductor sales (SIA/WSTS) from Q2 2026 x86
+server CPU unit shares (Mercury Research via Tom's Hardware) and desktop AIB
+volume/shares (JPR, with rounded shares reported by Tom's Hardware). Secondary
+reporting and rounding are disclosed in the UI. These denominators must never be
+combined into one "AMD market share", used to estimate an AI accelerator share,
+or divided by AMD's consolidated revenue. Review these observations when newer
+quarterly reports become available; the UI displays the observation period and
+review date rather than claiming live market data.
+
+Business descriptions and strategies link AMD FY2025 10-K, NVIDIA FY2026 results
+and platform announcements, and Intel FY2025 10-K. The "what to watch" statements
+are labelled Lens interpretation, not measured competitive advantages or forecasts.

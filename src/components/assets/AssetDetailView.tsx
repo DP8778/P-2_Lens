@@ -16,6 +16,7 @@ import { CompanyPrimer } from "./CompanyPrimer";
 import { CompanyRevenueMix } from "./CompanyRevenueMix";
 import { FinancialAnatomy } from "./FinancialAnatomy";
 import { CompanyHistoryChart } from "./CompanyHistoryChart";
+import { CompanyMarketPosition } from "./CompanyMarketPosition";
 import { AddAssetDialog } from "@/components/portfolio/AddAssetDialog";
 import { usePortfolio } from "@/components/portfolio/PortfolioProvider";
 import { buildHoldings, getPortfolioValue, initialTransactions } from "@/lib/finance/portfolio-engine";
@@ -299,6 +300,7 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
       {asset.type === "stock" && (showRevenueMix && revenueBreakdown.status === "available"
         ? <CompanyRevenueMix periods={revenueBreakdown.periods} growth={revenueBreakdown.growth} locale={locale} profile={profile} companyLabel={asset.symbol} />
         : <CompanyPrimer assetId={asset.id} locale={locale} fundamentals={fundamentals} profile={profile} />)}
+      {asset.type === "stock" && <CompanyMarketPosition assetId={assetId} locale={locale} />}
       {industry && context && <AssetIndustryContext key={`${assetId}:${context.industry}:${context.period}:${context.weighting}:${context.asOf}:${context.version}:${industry.version}`} assetId={assetId} locale={locale} industry={industry} navigation={context} />}
 
       {displayedAnnualHistory.length > 0 && <section className="asset-performance-strip" aria-label="Výkonnost aktiva">
