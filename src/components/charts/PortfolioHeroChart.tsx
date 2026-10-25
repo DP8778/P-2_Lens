@@ -238,9 +238,9 @@ export function PortfolioHeroChart({
             <desc>{summary}</desc>
             <defs>
               <linearGradient id={lineGradient} x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor={isDrawdown ? "#c9a5aa" : "#c7cbd3"} />
-                <stop offset="54%" stopColor={isDrawdown ? "#ddb8bd" : "#f3f1eb"} />
-                <stop offset="100%" stopColor={isDrawdown ? "#c9a5aa" : "#d8d5f2"} />
+                <stop offset="0%" stopColor={isDrawdown ? "var(--color-data-negative)" : "var(--chart-line)"} />
+                <stop offset="54%" stopColor={isDrawdown ? "var(--color-data-negative)" : "var(--chart-line)"} />
+                <stop offset="100%" stopColor={isDrawdown ? "var(--color-data-negative)" : "var(--chart-line)"} />
               </linearGradient>
               <filter id={lineGlow} x="-10%" y="-25%" width="120%" height="150%">
                 <feGaussianBlur stdDeviation="4.5" />
@@ -248,10 +248,10 @@ export function PortfolioHeroChart({
               <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="0%"
-                  stopColor={isDrawdown ? "#b98e94" : "#dce0e8"}
+                  stopColor={isDrawdown ? "var(--color-data-negative)" : "var(--chart-line)"}
                   stopOpacity=".17"
                 />
-                <stop offset="100%" stopColor="#dce0e8" stopOpacity="0" />
+                <stop offset="100%" stopColor="var(--chart-line)" stopOpacity="0" />
               </linearGradient>
             </defs>
             <ChartSurface id={gradient} />
@@ -262,8 +262,8 @@ export function PortfolioHeroChart({
                 y={o.top}
                 width={Math.abs(g.x(rangeHover) - g.x(rangeStart))}
                 height={o.height - o.top - o.bottom}
-                fill="#eef0f20b"
-                stroke="#d8dbe066"
+                fill="var(--color-accent-soft)"
+                stroke="var(--color-border-strong)"
                 strokeDasharray="4 4"
               />
             )}
@@ -279,8 +279,8 @@ export function PortfolioHeroChart({
                   y={o.top}
                   width={Math.max(2, g.x(to) - g.x(from))}
                   height={o.height - o.top - o.bottom}
-                  fill="#eef0f20b"
-                  stroke="#d8dbe055"
+                  fill="var(--color-accent-soft)"
+                  stroke="var(--color-border-strong)"
                   strokeDasharray="4 4"
                   pointerEvents="none"
                 />
@@ -292,7 +292,7 @@ export function PortfolioHeroChart({
                 <text
                   x={o.width - o.right + 14}
                   y={g.y(t) + 4}
-                  fill="#989ca5"
+                  fill="var(--color-text-muted)"
                   fontSize="12"
                   fontFamily="Arial"
                 >
@@ -331,7 +331,7 @@ export function PortfolioHeroChart({
             <path
               d={g.line(g.key)}
               fill="none"
-              stroke={isDrawdown ? "#c9a5aa" : "#d8d5f2"}
+              stroke={isDrawdown ? "var(--color-data-negative)" : "var(--chart-line)"}
               strokeWidth="7"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -356,22 +356,22 @@ export function PortfolioHeroChart({
                   x2={g.x(data.indexOf(analysis.trough))}
                   y1={g.y(analysis.trough[g.key])}
                   y2={o.height - o.bottom}
-                  stroke="#ffffff1a"
+                  stroke="var(--color-border-default)"
                   strokeDasharray="2 4"
                 />
                 <circle
                   cx={g.x(data.indexOf(analysis.trough))}
                   cy={o.height - o.bottom}
                   r="7"
-                  fill="#1b1c22"
-                  stroke="#92959f"
+                  fill="var(--color-bg-surface)"
+                  stroke="var(--chart-benchmark)"
                 />
                 <text
                   x={g.x(data.indexOf(analysis.trough))}
                   y={o.height - o.bottom + 4}
                   textAnchor="middle"
                   fontSize="10"
-                  fill="#eeeee9"
+                  fill="var(--chart-line)"
                 >
                   ↓
                 </text>
@@ -383,8 +383,8 @@ export function PortfolioHeroChart({
                   const index = data.findIndex((item) => item.timestamp === analysis.drawdown.peak?.date);
                   return index < 0 ? null : (
                     <g aria-label={`Vrchol ${dateLabel(analysis.drawdown.peak.date, locale)}`}>
-                      <circle cx={g.x(index)} cy={g.y(0)} r="4" fill="#aeb2ba" />
-                      <text x={g.x(index)} y={g.y(0) + 18} textAnchor="middle" fill="#989ca5" fontSize="10">Vrchol</text>
+                      <circle cx={g.x(index)} cy={g.y(0)} r="4" fill="var(--chart-benchmark)" />
+                      <text x={g.x(index)} y={g.y(0) + 18} textAnchor="middle" fill="var(--color-text-muted)" fontSize="10">Vrchol</text>
                     </g>
                   );
                 })()}
@@ -407,14 +407,14 @@ export function PortfolioHeroChart({
                     cx={g.x(data.indexOf(analysis.trough))}
                     cy={g.y(analysis.trough.drawdown)}
                     r="6"
-                    fill="#c9a5aa"
+                    fill="var(--color-data-negative)"
                   />
                 </g>
                 <text
                   x={g.x(data.indexOf(analysis.trough))}
                   y={Math.max(18, g.y(analysis.trough.drawdown) - 14)}
                   textAnchor="middle"
-                  fill="#e4c5c9"
+                  fill="var(--color-data-negative)"
                   fontSize="12"
                 >
                   {percent(analysis.trough.drawdown, locale)}
@@ -425,13 +425,13 @@ export function PortfolioHeroChart({
                       cx={g.x(data.indexOf(analysis.recovery))}
                       cy={g.y(0)}
                       r="5"
-                      fill="#eeeee9"
+                      fill="var(--chart-line)"
                     />
                     <text
                       x={g.x(data.indexOf(analysis.recovery))}
                       y={g.y(0) + 18}
                       textAnchor="middle"
-                      fill="#989ca5"
+                      fill="var(--color-text-muted)"
                       fontSize="10"
                     >
                       Obnova
@@ -446,7 +446,7 @@ export function PortfolioHeroChart({
                 x={g.x(index)}
                 y={o.height - 12}
                 textAnchor={i === 0 ? "start" : i === 2 ? "end" : "middle"}
-                fill="#989ca5"
+                fill="var(--color-text-muted)"
                 fontSize="12"
                 fontFamily="Arial"
               >
@@ -479,20 +479,20 @@ export function PortfolioHeroChart({
                     x2={g.x(event.index)}
                     y1={o.height - o.bottom - 17}
                     y2={o.height - o.bottom}
-                    stroke="#aeb2ba66"
+                    stroke="var(--color-border-strong)"
                   />
                   <circle
                     cx={g.x(event.index)}
                     cy={o.height - o.bottom - 22}
                     r="7"
-                    fill="#15171b"
-                    stroke="#bfc2c9"
+                    fill="var(--color-bg-elevated)"
+                    stroke="var(--chart-line)"
                   />
                   <text
                     x={g.x(event.index)}
                     y={o.height - o.bottom - 18}
                     textAnchor="middle"
-                    fill="#f0f0ec"
+                    fill="var(--color-text-primary)"
                     fontSize="9"
                   >
                     {event.type === "buy" ? "+" : "−"}
@@ -506,15 +506,15 @@ export function PortfolioHeroChart({
                   x2={g.x(active)}
                   y1={o.top}
                   y2={o.height - o.bottom}
-                  stroke="#ffffff55"
+                  stroke="var(--color-border-strong)"
                   strokeDasharray="3 4"
                 />
                 <circle
                   cx={g.x(active)}
                   cy={g.y(point[g.key])}
                   r="5"
-                  fill="#eeeee9"
-                  stroke="#0d0e11"
+                  fill="var(--chart-line)"
+                  stroke="var(--color-bg-surface)"
                   strokeWidth="2"
                 />
               </g>

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./tokens.css";
 @import "./lens.css";
+@import "./workspace.css";
 
 * {
   box-sizing: border-box;
@@ -30,7 +31,8 @@ select {
   outline: 2px solid var(--color-data-accent);
 }
 ::selection {
-  background: #c9c4f2;
+  background: var(--color-accent-soft);
+  color: var(--color-text-primary);
 }
 
 .sr-only {
@@ -80,7 +82,7 @@ select {
   text-transform: uppercase;
 }
 .section-title {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: inherit;
   font-size: clamp(1.35rem, 2vw, 1.7rem);
   font-weight: 500;
   letter-spacing: -0.025em;

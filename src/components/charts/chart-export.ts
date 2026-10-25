@@ -9,6 +9,11 @@ export function exportPortfolioChart(
 ) {
   const ns = "http://www.w3.org/2000/svg";
   const clone = svg.cloneNode(true) as SVGSVGElement;
+  const appearance = getComputedStyle(svg);
+  // Keep standalone SVG downloads independent of the application's stylesheet.
+  for (const match of svg.outerHTML.matchAll(/var\((--[\w-]+)\)/g)) {
+    clone.style.setProperty(match[1], appearance.getPropertyValue(match[1]));
+  }
   clone.setAttribute("xmlns", ns);
   clone.setAttribute("viewBox", "0 -70 1000 460");
   clone.setAttribute("width", "1000");
@@ -19,7 +24,7 @@ export function exportPortfolioChart(
     y: "-70",
     width: "1000",
     height: "460",
-    fill: "#0d0e11",
+    fill: appearance.getPropertyValue("--color-bg-surface").trim(),
   }))
     background.setAttribute(key, value);
   clone.prepend(background);
@@ -27,7 +32,7 @@ export function exportPortfolioChart(
   for (const [key, value] of Object.entries({
     x: "20",
     y: "-40",
-    fill: "#eeeee9",
+    fill: appearance.getPropertyValue("--color-text-primary").trim(),
     "font-size": "18",
     "font-family": "Arial",
   }))
@@ -37,7 +42,7 @@ export function exportPortfolioChart(
   const legend = title.cloneNode() as SVGTextElement;
   legend.setAttribute("y", "-16");
   legend.setAttribute("font-size", "12");
-  legend.setAttribute("fill", "#b2b4bc");
+  legend.setAttribute("fill", appearance.getPropertyValue("--color-text-secondary").trim());
   legend.textContent =
     settings.mode === "performance"
       ? `Portfolio: plná čára${settings.showBenchmark ? ` · ${analysis.benchmark}: přerušovaná` : ""}${analysis.compare ? ` · ${analysis.compare}: tečkovaná` : ""}${settings.showBenchmark || analysis.compare ? " · index 100" : settings.display === "value" ? " · CZK" : " · výnos %"} · Demo data`

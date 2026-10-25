@@ -204,3 +204,11 @@ Workflow `Refresh Lens industry data` umožňuje ruční i pravidelné obnovení
 Plánovač GitHubu začne fungovat až po zařazení workflow do výchozí větve; nový
 snapshot se v produkci projeví po nasazení. Nejde o scraping při každém otevření
 stránky a import nespotřebovává kredity cenového poskytovatele.
+
+### Vzhled aplikace
+
+- Světlé prostředí je výchozí; přepínač v hlavičce a Nastavení používají společnou preferenci `lens.appearance`.
+- Volba přetrvá obnovení i navigaci a synchronizuje se mezi kartami. Pokud prohlížeč úložiště zakáže, přepnutí dál funguje pro aktuální stránku.
+- `src/styles/tokens.css` definuje obě palety včetně datových řad a grafických ploch. `workspace.css` sjednocuje hierarchii navigace, ovládání a analytických bloků.
+- SVG export vkládá použité barevné tokeny přímo do souboru, aby zůstal čitelný i mimo aplikaci.
+- `tests/e2e/appearance.spec.ts` ověřuje oba motivy při 390/768/1440 px, kontrast textu a finančních řad, ovládání koláče, ukládání preference, Nastavení, samostatný SVG export a zakázané úložiště.

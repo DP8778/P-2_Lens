@@ -7,6 +7,7 @@ import { Logo } from "./Logo";
 import { PortfolioProvider } from "@/components/portfolio/PortfolioProvider";
 import { AnalysisProvider } from "@/components/portfolio/AnalysisProvider";
 import { GlobalAssetSearch } from "./GlobalAssetSearch";
+import { AppearanceToggle } from "./AppearanceToggle";
 export function AppShell({
   children,
   locale,
@@ -39,6 +40,7 @@ export function AppShell({
             </nav>
             <GlobalAssetSearch locale={locale} />
             <div className="nav-account">
+              <AppearanceToggle locale={locale} />
               <Link className="icon-control" href={`/${locale}/settings`} aria-label="Nastavení">
                 <Settings size={18} />
               </Link>

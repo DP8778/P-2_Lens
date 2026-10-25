@@ -74,9 +74,9 @@ export function ChartNavigator({ data, range, onChange, locale = "cs-CZ" }: {
         }}
         onPointerCancel={() => { drag.current = null; setPreview(null); }}
       >
-        <path d={path} fill="none" stroke="#777b83" strokeWidth="1.3" />
-        <rect x={(displayRange[0] / denominator) * 1000} y="1" width={((displayRange[1] - displayRange[0]) / denominator) * 1000} height="50" fill="#ffffff0b" stroke="#ffffff55" rx="4" />
-        {displayRange.map((value, index) => <rect key={index} x={(value / denominator) * 1000 - 3} y="12" width="6" height="28" rx="2" fill="#bcbcc8" />)}
+        <path d={path} fill="none" stroke="var(--chart-benchmark)" strokeWidth="1.3" />
+        <rect x={(displayRange[0] / denominator) * 1000} y="1" width={((displayRange[1] - displayRange[0]) / denominator) * 1000} height="50" fill="var(--color-accent-soft)" stroke="var(--color-border-strong)" rx="4" />
+        {displayRange.map((value, index) => <rect key={index} x={(value / denominator) * 1000 - 3} y="12" width="6" height="28" rx="2" fill="var(--color-data-accent)" />)}
       </svg>
       <div className="navigator-inputs">
         <label>

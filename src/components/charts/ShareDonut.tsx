@@ -1,4 +1,4 @@
-export const shareColors = ["#b5b2e4", "#8fc5b5", "#d3b486", "#868b97"];
+export const shareColors = ["var(--share-1)", "var(--share-2)", "var(--share-3)", "var(--share-4)"];
 
 /** Values are already validated percentages, with an always-visible legend supplied by the caller. */
 export function ShareDonut({ segments, center, caption, label, locale = "cs-CZ" }: {
@@ -8,7 +8,7 @@ export function ShareDonut({ segments, center, caption, label, locale = "cs-CZ" 
   const circumference = 2 * Math.PI * 92;
   return <svg className="share-donut" viewBox="0 0 260 260" role="img" aria-label={label}>
     <title>{label}</title>
-    <circle cx="130" cy="130" r="92" fill="none" stroke="#ffffff08" strokeWidth="28" />
+    <circle cx="130" cy="130" r="92" fill="none" stroke="var(--color-bg-subtle)" strokeWidth="28" />
     {segments.map((segment, index) => <circle key={segment.name} cx="130" cy="130" r="92" fill="none"
       stroke={segment.color ?? shareColors[index % shareColors.length]} strokeWidth="28"
       strokeDasharray={`${circumference * segment.sharePct / 100} ${circumference}`}

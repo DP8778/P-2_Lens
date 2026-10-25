@@ -5,10 +5,10 @@ export const chartOptions = {
   right: 80,
   top: 28,
   bottom: 42,
-  line: "#eeeee9",
-  benchmark: "#969ba4",
-  compare: "#b5b2e4",
-  grid: "#ffffff0d",
+  line: "var(--chart-line)",
+  benchmark: "var(--chart-benchmark)",
+  compare: "var(--chart-compare)",
+  grid: "var(--chart-grid)",
 };
 export const chartModes = [
   { value: "performance", label: "Vývoj" },

@@ -5,7 +5,7 @@ export function ChartSurface({ id, width = o.width, height = o.height }: { id: s
   return <g aria-hidden="true">
     <defs>
       <linearGradient id={`${id}-plot`} x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#14161b" /><stop offset="48%" stopColor="#0d0f13" /><stop offset="100%" stopColor="#090a0d" />
+        <stop offset="0%" stopColor="var(--chart-surface-top)" /><stop offset="48%" stopColor="var(--chart-surface-mid)" /><stop offset="100%" stopColor="var(--chart-surface-bottom)" />
       </linearGradient>
       <radialGradient id={`${id}-aura`} cx="62%" cy="20%" r="78%">
         <stop offset="0%" stopColor="#c7c3ee" stopOpacity=".085" /><stop offset="42%" stopColor="#8e91a7" stopOpacity=".025" /><stop offset="100%" stopColor="#050608" stopOpacity="0" />

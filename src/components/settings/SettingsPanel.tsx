@@ -9,15 +9,12 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Select } from "@/components/ui/Select";
 import type { Locale } from "@/i18n/getDictionary";
 import { track } from "@/lib/analytics/events";
+import { useAppearance } from "@/components/layout/AppearanceToggle";
 
 export function SettingsPanel({ locale }: { locale: Locale }) {
   const router = useRouter();
   const [privacy, setPrivacy] = useState(false);
-  const [theme, setTheme] = useState("dark");
-  const setAppearance = (value: string) => {
-    setTheme(value);
-    document.documentElement.dataset.theme = value === "dark" ? "dark" : "light";
-  };
+  const { theme, setAppearance } = useAppearance();
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card className="p-5">
@@ -66,7 +63,7 @@ export function SettingsPanel({ locale }: { locale: Locale }) {
           <button
             aria-pressed={theme === "light"}
             onClick={() => setAppearance("light")}
-            className={`min-h-28 rounded-xl border p-4 text-left ${theme === "light" ? "border-[var(--color-text-primary)]" : "border-[var(--color-border-default)]"}`}
+            className="appearance-preview light-preview"
           >
             <Sun className="mb-6" />
             <strong className="text-sm">Světlý</strong>
@@ -74,7 +71,7 @@ export function SettingsPanel({ locale }: { locale: Locale }) {
           <button
             aria-pressed={theme === "dark"}
             onClick={() => setAppearance("dark")}
-            className={`min-h-28 rounded-xl border bg-[#17211e] p-4 text-left text-white ${theme === "dark" ? "border-[#b9b2ef]" : "border-transparent"}`}
+            className="appearance-preview dark-preview"
           >
             <Moon className="mb-6" />
             <strong className="text-sm">Tmavý</strong>

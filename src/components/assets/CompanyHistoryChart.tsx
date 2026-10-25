@@ -9,7 +9,7 @@ import type { MarketPricePoint } from "@/lib/market-data/types";
 const metricLabels: Record<CompanyHistoryMetric, [string, string]> = {
   revenue: ["Tržby", "Revenue"], operatingIncome: ["Provozní zisk", "Operating income"], netIncome: ["Čistý zisk", "Net income"],
 };
-const colors = { revenue: "#e7e5f3", operatingIncome: "#a7c9bc", netIncome: "#b5b2e4" };
+const colors = { revenue: "var(--chart-revenue)", operatingIncome: "var(--chart-operating)", netIncome: "var(--chart-net)" };
 
 export function CompanyHistoryChart({ assetId, symbol, currency, locale, statements, priceData, priceLoading, priceError, priceControls, priceProvenance }: {
   assetId: string; symbol: string; currency: string; locale: string; statements?: FinancialStatement[];
@@ -45,7 +45,7 @@ export function CompanyHistoryChart({ assetId, symbol, currency, locale, stateme
     </header>
     {view === "financial" ? financialContent : <>
       <div className="company-price-controls"><h3>{en ? "Price development" : "Vývoj ceny"}</h3>{priceControls}</div>
-      {priceLoading ? <p className="company-price-state" role="status">{en ? "Loading price history…" : "Načítám historická data…"}</p> : priceError || !priceData.length ? <div className="company-price-state" role="status"><p className="asset-history-unavailable">{en ? "Price history is currently unavailable." : "Historická data momentálně nejsou dostupná."}</p>{financialAvailable && <button className="primary-button" onClick={() => setRequestedView("financial")}>{en ? "Explore verified statements" : "Prohlédnout ověřené výkazy"}</button>}</div> : <div data-testid="asset-price-chart"><CompanySeriesPlot key={`price:${priceData[0]?.date}:${priceData.at(-1)?.date}`} dates={priceData.map(point => point.date)} series={[{ label: symbol, color: "#e7e5f3", values: priceData.map(point => point.close) }]} locale={locale} label={`${symbol} · ${en ? "share price" : "cena akcie"}`} formatValue={value => formatAmount(value)} /></div>}
+      {priceLoading ? <p className="company-price-state" role="status">{en ? "Loading price history…" : "Načítám historická data…"}</p> : priceError || !priceData.length ? <div className="company-price-state" role="status"><p className="asset-history-unavailable">{en ? "Price history is currently unavailable." : "Historická data momentálně nejsou dostupná."}</p>{financialAvailable && <button className="primary-button" onClick={() => setRequestedView("financial")}>{en ? "Explore verified statements" : "Prohlédnout ověřené výkazy"}</button>}</div> : <div data-testid="asset-price-chart"><CompanySeriesPlot key={`price:${priceData[0]?.date}:${priceData.at(-1)?.date}`} dates={priceData.map(point => point.date)} series={[{ label: symbol, color: "var(--chart-revenue)", values: priceData.map(point => point.close) }]} locale={locale} label={`${symbol} · ${en ? "share price" : "cena akcie"}`} formatValue={value => formatAmount(value)} /></div>}
       {priceProvenance}
     </>}
     {view === "financial" && priceError && <p className="company-price-notice" role="status"><span>{en ? "Price history is currently unavailable." : "Historická data momentálně nejsou dostupná."}</span> {en ? "The chart shows sourced company statements." : "Graf zobrazuje hospodaření z ověřených výkazů."}</p>}

@@ -22,11 +22,13 @@ export function IndustryMarketMap({ overview, timeframe, locale, navigation }: {
           const item = map.data.find((entry) => entry.name === node.name);
           if (!item || node.depth !== 1) return <g />;
           const value = item.row.returnPct;
-          const fill = value === undefined ? "#292d31" : value < -15 ? "#573b3c" : value < -5 ? "#443334" : value < 0 ? "#383030" : value > 15 ? "#365248" : value > 5 ? "#30453f" : value > 0 ? "#2d3835" : "#34393e";
+          const intensity = value === undefined || value === 0 ? 0 : Math.abs(value) > 15 ? 26 : Math.abs(value) > 5 ? 18 : 10;
+          const tone = value !== undefined && value < 0 ? "var(--color-data-negative)" : "var(--color-data-positive)";
+          const fill = `color-mix(in srgb, ${tone} ${intensity}%, var(--color-bg-subtle))`;
           return <Link href={industryAssetHref(locale, item.row.asset.id, navigation)} aria-label={description(item)} onFocus={() => setActive(item.row.asset.id)} onMouseEnter={() => setActive(item.row.asset.id)} className="industry-treemap-link">
-            <title>{description(item)}</title><rect x={node.x} y={node.y} width={node.width} height={node.height} fill={fill} stroke="#141719" strokeWidth={2} />
-            {node.width > 38 && node.height > 22 && <text x={node.x + node.width / 2} y={node.y + node.height / 2 - (node.height > 44 ? 4 : -4)} textAnchor="middle" fill="#e7e9eb" fontSize={node.width > 90 ? 14 : 11}>{item.name}</text>}
-            {node.width > 58 && node.height > 44 && <text x={node.x + node.width / 2} y={node.y + node.height / 2 + 14} textAnchor="middle" fill="#bcc4c8" fontSize={11}>{value === undefined ? "—" : percent(value, locale)}</text>}
+            <title>{description(item)}</title><rect x={node.x} y={node.y} width={node.width} height={node.height} fill={fill} stroke="var(--color-bg-surface)" strokeWidth={2} />
+            {node.width > 38 && node.height > 22 && <text x={node.x + node.width / 2} y={node.y + node.height / 2 - (node.height > 44 ? 4 : -4)} textAnchor="middle" fill="var(--color-text-primary)" fontSize={node.width > 90 ? 14 : 11}>{item.name}</text>}
+            {node.width > 58 && node.height > 44 && <text x={node.x + node.width / 2} y={node.y + node.height / 2 + 14} textAnchor="middle" fill="var(--color-text-secondary)" fontSize={11}>{value === undefined ? "—" : percent(value, locale)}</text>}
           </Link>;
         }} />
       </ResponsiveContainer>

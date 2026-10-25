@@ -269,6 +269,7 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
 
       <header className="asset-detail-header">
         <div className="asset-detail-identity">
+          <span className="company-ticker">{asset.symbol}</span>
           <h1>{asset.name}</h1>
           <p>{asset.symbol} · {asset.exchange} · {asset.currency}</p>
           {holding && <span>{demoEntry ? (en ? "Demo position" : "Demo pozice") : (en ? "In portfolio" : "V portfoliu")} · {holding.quantity.toLocaleString(locale, { maximumFractionDigits: 8 })} ks</span>}
@@ -290,6 +291,12 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
           {quoteError && displayedQuote && <small>Aktualizace ceny se nezdařila; zobrazuji poslední dostupnou hodnotu.</small>}
         </div>
       </header>
+      {asset.type === "stock" && <nav className="company-section-nav" aria-label={en ? "Company sections" : "Sekce firmy"}>
+        <a href="#company-history-title">{en ? "Development" : "Vývoj"}</a>
+        {showRevenueMix && <a href="#company-revenue-mix-title">{en ? "Revenue mix" : "Struktura tržeb"}</a>}
+        {assetId === "twelvedata:XNGS:AMD" && <a href="#company-market-title">{en ? "Market & competitors" : "Trh a konkurence"}</a>}
+        <a href="#financial-anatomy-title">{en ? "Revenue to profit" : "Od tržeb k zisku"}</a>
+      </nav>}
       <CompanyHistoryChart key={assetId} assetId={assetId} symbol={asset.symbol} currency={asset.currency} locale={locale}
         statements={fundamentals?.statements} priceData={chartHistory} priceLoading={historyLoading} priceError={historyError}
         priceControls={<div className="asset-timeframes" aria-label={en ? "Chart period" : "Období grafu"}>

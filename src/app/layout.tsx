@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "@/styles/globals.css";
+import { appearanceInitScript } from "@/lib/appearance";
 
 export const metadata: Metadata = {
   title: { default: "Lens", template: "%s · Lens" },
@@ -7,7 +8,8 @@ export const metadata: Metadata = {
 };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="cs">
+    <html lang="cs" data-theme="light" suppressHydrationWarning>
+      <head><script id="lens-appearance" dangerouslySetInnerHTML={{ __html: appearanceInitScript }} /></head>
       <body>{children}</body>
     </html>
   );

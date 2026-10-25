@@ -75,17 +75,17 @@ export function CompanySeriesPlot({ dates, series, locale, label, formatValue, a
         <defs><linearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={series[0].color} stopOpacity=".18" /><stop offset="100%" stopColor={series[0].color} stopOpacity="0" /></linearGradient></defs>
         {Array.from({ length: 4 }, (_, index) => high - (high - low) * index / 3).map(value => <g key={value}>
           <line x1={o.left} x2={o.width - o.right} y1={y(value)} y2={y(value)} stroke={o.grid} />
-          <text x={o.width - o.right + 10} y={y(value) + 4} fill="#989ca5" fontSize="11">{tickValue(value)}</text>
+          <text x={o.width - o.right + 10} y={y(value) + 4} fill="var(--color-text-muted)" fontSize="11">{tickValue(value)}</text>
         </g>)}
         <path d={`${path(series[0])} L${x(end)},${y(low)} L${x(start)},${y(low)} Z`} fill={`url(#${id}-fill)`} />
-        {low < 0 && <line x1={o.left} x2={o.width - o.right} y1={y(0)} y2={y(0)} stroke="#ffffff40" strokeDasharray="4 4" />}
+        {low < 0 && <line x1={o.left} x2={o.width - o.right} y1={y(0)} y2={y(0)} stroke="var(--color-border-strong)" strokeDasharray="4 4" />}
         {series.map((item, index) => <g key={item.label}>
           <path d={path(item)} fill="none" stroke={item.color} strokeWidth={index === 0 ? "2.3" : "1.8"} strokeDasharray={index === 2 ? "5 4" : undefined} vectorEffect="non-scaling-stroke" />
           {annual && item.values.slice(start, end + 1).map((value, offset) => <circle key={offset} cx={x(start + offset)} cy={y(value)} r="3" fill={item.color} />)}
-          <circle cx={x(active)} cy={y(item.values[active])} r="4" fill={item.color} stroke="#101214" strokeWidth="2" />
+          <circle cx={x(active)} cy={y(item.values[active])} r="4" fill={item.color} stroke="var(--color-bg-surface)" strokeWidth="2" />
         </g>)}
-        <line x1={x(active)} x2={x(active)} y1={o.top} y2={o.height - o.bottom} stroke="#ffffff50" strokeDasharray="3 4" />
-        {[...new Set([start, Math.floor((start + end) / 2), end])].map(index => <text key={index} x={x(index)} y={o.height - 12} textAnchor={index === start ? "start" : index === end ? "end" : "middle"} fill="#989ca5" fontSize="12">{dateLabel(dates[index])}</text>)}
+        <line x1={x(active)} x2={x(active)} y1={o.top} y2={o.height - o.bottom} stroke="var(--color-border-strong)" strokeDasharray="3 4" />
+        {[...new Set([start, Math.floor((start + end) / 2), end])].map(index => <text key={index} x={x(index)} y={o.height - 12} textAnchor={index === start ? "start" : index === end ? "end" : "middle"} fill="var(--color-text-muted)" fontSize="12">{dateLabel(dates[index])}</text>)}
       </svg>
       {(hover !== null || selection !== null) && <div className="company-chart-tooltip" role="status" style={{ left: tooltipLeft, width: tooltipWidth }}>
         <strong>{dateLabel(dates[active])}</strong>{series.map(item => <span key={item.label}>{item.label}<b>{formatValue(item.values[active])}</b></span>)}

@@ -36,15 +36,6 @@ export function CompanyRevenueMix({ periods, growth, profile, locale, companyLab
     </div>
     {profile && <p className="company-revenue-description">{profile.description[locale]} <a href={profile.sourceUrl} target="_blank" rel="noreferrer">{profile.sourceLabel}</a></p>}
     <p className="revenue-period-label"><strong>FY{period.fiscalYear}</strong> · {period.durationMonths} {en ? "months ended" : "měsíců do"} <time dateTime={period.period}>{new Date(`${period.period}T12:00:00Z`).toLocaleDateString(locale)}</time> · {period.currency} · <b>{en ? "Total revenue" : "Celkové tržby"}: {amount(period.revenue)}</b></p>
-    {period.fiscalYear === growth.fiscalYear && <section className="revenue-growth-summary" aria-labelledby="revenue-growth-title">
-      <h3 id="revenue-growth-title">{en ? "What drove revenue growth?" : "Co táhlo růst tržeb?"}</h3>
-      <p>{en
-        ? `${growth.largestSegment.name} is ${companyLabel}'s largest revenue segment. ${growth.largestGrowthContributor.name}, however, delivered the largest absolute increase versus FY${growth.priorFiscalYear}.`
-        : `${growth.largestSegment.name} tvoří největší část tržeb ${companyLabel}. Největší absolutní přírůstek proti FY${growth.priorFiscalYear} ale přinesl ${growth.largestGrowthContributor.name}.`}</p>
-      <ul aria-label={en ? `Revenue changes versus FY${growth.priorFiscalYear}` : `Změny tržeb proti FY${growth.priorFiscalYear}`}>
-        {growth.changes.map((change) => <li key={change.name}><span>{change.name}</span><strong>{changeAmount(change.absoluteChange)}</strong></li>)}
-      </ul>
-    </section>}
     <figure className="revenue-mix-figure" aria-labelledby="company-revenue-mix-title">
       <div className="revenue-mix-visual">
       <ShareDonut locale={locale} segments={period.segments} center={amount(period.revenue)} caption={`FY${period.fiscalYear} · ${en ? "total revenue" : "celkové tržby"}`} label={`${en ? "Revenue mix" : "Struktura tržeb"} ${companyLabel}, FY${period.fiscalYear}. ${summary}.`} />
@@ -61,6 +52,15 @@ export function CompanyRevenueMix({ periods, growth, profile, locale, companyLab
         <p><a href={period.source} target="_blank" rel="noreferrer">{companyLabel} · {en ? "primary statement" : "primární výkaz"}</a></p>
       </details></figcaption>
     </figure>
+    {period.fiscalYear === growth.fiscalYear && <section className="revenue-growth-summary" aria-labelledby="revenue-growth-title">
+      <h3 id="revenue-growth-title">{en ? "What drove revenue growth?" : "Co táhlo růst tržeb?"}</h3>
+      <p>{en
+        ? `${growth.largestSegment.name} is ${companyLabel}'s largest revenue segment. ${growth.largestGrowthContributor.name}, however, delivered the largest absolute increase versus FY${growth.priorFiscalYear}.`
+        : `${growth.largestSegment.name} tvoří největší část tržeb ${companyLabel}. Největší absolutní přírůstek proti FY${growth.priorFiscalYear} ale přinesl ${growth.largestGrowthContributor.name}.`}</p>
+      <ul aria-label={en ? `Revenue changes versus FY${growth.priorFiscalYear}` : `Změny tržeb proti FY${growth.priorFiscalYear}`}>
+        {growth.changes.map((change) => <li key={change.name}><span>{change.name}</span><strong>{changeAmount(change.absoluteChange)}</strong></li>)}
+      </ul>
+    </section>}
     <div className="revenue-mix-notes">
       <p>{en ? "Data Center includes server CPUs, GPU and AI accelerators, networking and other data-center products. The reported figure is not AI revenue." : "Data Center zahrnuje serverové CPU, GPU a AI akcelerátory, síťové prvky i další produkty pro datová centra. Vykázaný údaj proto není tržbou z AI."}</p>
       {period.segmentBasis === "retrospectively-adjusted" && <p>{en ? "FY2024 is shown in the segment structure retrospectively adjusted by AMD after Client and Gaming were combined in FY2025." : "FY2024 je zobrazen ve struktuře, kterou AMD retrospektivně upravilo po spojení segmentů Client a Gaming od FY2025."}</p>}
