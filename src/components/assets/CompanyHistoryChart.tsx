@@ -18,6 +18,7 @@ export function CompanyHistoryChart({ assetId, symbol, currency, locale, stateme
   const en = locale === "en-US";
   const history = buildCompanyHistory(assetId, statements);
   const financialAvailable = !!history?.periods.length;
+  const pricesUnavailable = en ? "Historical share prices are unavailable." : "Historické ceny akcie nejsou dostupné.";
   const [requestedView, setRequestedView] = useState<"financial" | "price" | null>(null);
   const view = requestedView ?? (priceData.length > 1 || !financialAvailable ? "price" : "financial");
   const [metrics, setMetrics] = useState<CompanyHistoryMetric[]>([...companyHistoryMetrics]);
@@ -37,17 +38,19 @@ export function CompanyHistoryChart({ assetId, symbol, currency, locale, stateme
     <details className="company-chart-sources"><summary>{en ? "Statement sources" : "Zdroje výkazů"}</summary><ul>{history.periods.map(period => <li key={period.period}><a href={period.source} target="_blank" rel="noreferrer">FY{period.period.slice(0, 4)} · {en ? "primary statement" : "výkaz"} ↗</a></li>)}</ul></details>
   </>;
   return <section className="company-history-chart surface" aria-labelledby="company-history-title">
-    <header className="company-chart-heading"><div><span>{en ? "Company in time" : "Firma v čase"}</span><h2 id="company-history-title">{en ? `How is ${symbol} developing?` : `Jak se vyvíjí ${symbol}?`}</h2></div>
-      <div className="company-chart-tabs" role="group" aria-label={en ? "Chart content" : "Obsah grafu"}>
-        {financialAvailable && <button aria-pressed={view === "financial"} onClick={() => setRequestedView("financial")}>{en ? "Business performance" : "Hospodaření"}</button>}
-        <button aria-pressed={view === "price"} onClick={() => setRequestedView("price")}>{en ? "Share price" : "Cena akcie"}</button>
+    <header className="company-chart-heading"><div><span>{en ? "Company in time" : "Firma v čase"}</span><h2 id="company-history-title" tabIndex={-1}>{en ? `How is ${symbol} developing?` : `Jak se vyvíjí ${symbol}?`}</h2></div>
+      <div className="company-chart-view">
+        <div className="company-chart-tabs" role="group" aria-label={en ? "Chart content" : "Obsah grafu"}>
+          {(financialAvailable || view === "financial") && <button aria-pressed={view === "financial"} onClick={() => setRequestedView("financial")}>{en ? "Business performance" : "Hospodaření"}</button>}
+          <button aria-pressed={view === "price"} onClick={() => setRequestedView("price")}>{en ? "Share price" : "Cena akcie"}</button>
+        </div>
+        {view === "financial" && !priceLoading && (priceError || !priceData.length) && <p className="company-price-notice" role="status">{pricesUnavailable}</p>}
       </div>
     </header>
-    {view === "financial" ? financialContent : <>
-      <div className="company-price-controls"><h3>{en ? "Price development" : "Vývoj ceny"}</h3>{priceControls}</div>
-      {priceLoading ? <p className="company-price-state" role="status">{en ? "Loading price history…" : "Načítám historická data…"}</p> : priceError || !priceData.length ? <div className="company-price-state" role="status"><p className="asset-history-unavailable">{en ? "Price history is currently unavailable." : "Historická data momentálně nejsou dostupná."}</p>{financialAvailable && <button className="primary-button" onClick={() => setRequestedView("financial")}>{en ? "Explore verified statements" : "Prohlédnout ověřené výkazy"}</button>}</div> : <div data-testid="asset-price-chart"><CompanySeriesPlot key={`price:${priceData[0]?.date}:${priceData.at(-1)?.date}`} dates={priceData.map(point => point.date)} series={[{ label: symbol, color: "var(--chart-revenue)", values: priceData.map(point => point.close) }]} locale={locale} label={`${symbol} · ${en ? "share price" : "cena akcie"}`} formatValue={value => formatAmount(value)} /></div>}
-      {priceProvenance}
+    {view === "financial" ? financialContent ?? <p className="company-price-state" role="status">{en ? "Verified financial history is unavailable." : "Ověřená historie hospodaření není dostupná."}</p> : <>
+      <div className="company-price-controls"><h3>{en ? "Historical share prices" : "Historické ceny akcie"}</h3>{priceControls}</div>
+      {priceLoading ? <p className="company-price-state" role="status">{en ? "Loading historical share prices…" : "Načítám historické ceny akcie…"}</p> : priceError || !priceData.length ? <div className="company-price-state" role="status"><p className="asset-history-unavailable">{pricesUnavailable}</p>{financialAvailable && <button className="primary-button" onClick={() => setRequestedView("financial")}>{en ? "Back to business performance" : "Zpět na Hospodaření"}</button>}</div> : <div data-testid="asset-price-chart"><CompanySeriesPlot key={`price:${priceData[0]?.date}:${priceData.at(-1)?.date}`} dates={priceData.map(point => point.date)} series={[{ label: symbol, color: "var(--chart-revenue)", values: priceData.map(point => point.close) }]} locale={locale} label={`${symbol} · ${en ? "share price" : "cena akcie"}`} formatValue={value => formatAmount(value)} /></div>}
+      {!priceLoading && !priceError && priceData.length > 0 && priceProvenance}
     </>}
-    {view === "financial" && priceError && <p className="company-price-notice" role="status"><span>{en ? "Price history is currently unavailable." : "Historická data momentálně nejsou dostupná."}</span> {en ? "The chart shows sourced company statements." : "Graf zobrazuje hospodaření z ověřených výkazů."}</p>}
   </section>;
 }

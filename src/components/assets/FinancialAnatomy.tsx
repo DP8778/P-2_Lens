@@ -48,7 +48,7 @@ export function FinancialAnatomy({ assetId, locale, statements, fetchedAt, stale
   const name = (id: string) => labels[id][en ? 1 : 0];
   const metrics = data.status === "available" && data.latest.presentation === "operating-expenses" ? allMetrics.filter((key) => key !== "grossProfit") : allMetrics;
   return <section className="financial-anatomy" aria-labelledby="financial-anatomy-title">
-    <header><span>Financial Anatomy</span><h2 id="financial-anatomy-title">{en ? "How does revenue become profit?" : "Jak z tržeb vzniká zisk?"}</h2></header>
+    <header><span>Financial Anatomy</span><h2 id="financial-anatomy-title" tabIndex={-1}>{en ? "How does revenue become profit?" : "Jak z tržeb vzniká zisk?"}</h2></header>
     <p className="research-section-intro">{en ? "This chart breaks down the income statement: verified revenue is reconciled through costs to operating and net income. It is not a cash-flow statement and remains separate from the share price." : "Graf rozkládá výsledovku: ověřené tržby propojuje přes náklady s provozním a čistým ziskem. Nejde o cash-flow a výkazy zůstávají oddělené od ceny akcie."}</p>
     {data.status === "unavailable" ? <div className="financial-unavailable" role="status">
       <h3>{en ? "Financial statements are unavailable" : "Finanční výkazy nejsou dostupné"}</h3>

@@ -28,7 +28,7 @@ for (const width of [1440, 768, 390]) {
     await chart.getByRole("button", { name: "USD", exact: true }).click();
     await chart.getByRole("button", { name: "Cena akcie", exact: true }).click();
     await expect(chart.locator('[role="graphics-document"]')).toHaveCount(0);
-    await chart.getByRole("button", { name: "Prohlédnout ověřené výkazy" }).click();
+    await chart.getByRole("button", { name: "Zpět na Hospodaření" }).click();
     await expect(chart.locator('[role="graphics-document"]')).toBeVisible();
     await chart.getByText("Data grafu a zdroje", { exact: true }).click();
     await chart.getByRole("button", { name: "Hospodaření", exact: true }).focus();

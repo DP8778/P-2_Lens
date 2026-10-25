@@ -14,6 +14,7 @@ export default defineConfig({
     ? undefined
     : {
         command: "node node_modules/next/dist/bin/next start",
+        env: { TWELVE_DATA_API_KEY: process.env.TWELVE_DATA_API_KEY || "ui-regression-no-upstream" },
         url: "http://localhost:3000/cs-CZ/login",
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

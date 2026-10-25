@@ -149,7 +149,7 @@ test("unavailable secondary listing offers an explicit available alternative", a
   await page.route("**/api/market/fx?*", (route) => route.fulfill({ json: { base: "USD", quote: "CZK", rate: 22, timestamp: "2026-09-18T13:30:00.000Z", freshness: "fresh", source: "network" } }));
 
   await page.goto(`/cs-CZ/assets/${encodeURIComponent(bmv.id)}`);
-  await expect(page.getByText("Cena pro BMV není dostupná.")).toBeVisible();
+  await expect(page.getByText("Kurz pro BMV není dostupný.")).toBeVisible();
   await expect(page.locator(".asset-quote-fallback")).toContainText("DUOL · NASDAQ · USD");
   await expect(page.locator(".asset-quote-fallback")).toContainText("234,56 USD");
   await expect(page.getByText(/raw provider quote failure/i)).toHaveCount(0);
@@ -164,7 +164,7 @@ test("history failure keeps quote and metadata usable without exposing provider 
 
   await expect(page.getByRole("heading", { name: "Apple Inc." })).toBeVisible();
   await expect(page.locator(".asset-detail-quote")).toContainText("331,34 USD");
-  await expect(page.getByText("Historická data momentálně nejsou dostupná.")).toBeVisible();
+  await expect(page.getByText("Historické ceny akcie nejsou dostupné.")).toBeVisible();
   await expect(page.locator(".asset-information-section > summary")).toHaveText("Detaily instrumentu");
   await expect(page.getByText(/No data is available/i)).toHaveCount(0);
 });

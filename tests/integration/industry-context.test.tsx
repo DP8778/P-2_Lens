@@ -69,7 +69,7 @@ test("empty saved context discloses missing data instead of inventing returns", 
 });
 test("direct Asset Detail has no industry context and a compact unavailable price state", async () => {
   render(<AssetDetailView assetId={asset.id} locale="cs-CZ" />);
-  const unavailable = await screen.findByText("Historická data momentálně nejsou dostupná.");
+  const unavailable = await screen.findByText("Historické ceny akcie nejsou dostupné.");
   expect(unavailable).toHaveClass("asset-history-unavailable");
   expect(screen.queryByLabelText("Kontext tématu")).not.toBeInTheDocument();
   expect(within(screen.getByLabelText("Období grafu")).getByRole("button", { name: "1Y" })).toHaveAttribute("aria-pressed", "true");
@@ -110,8 +110,8 @@ test("known company keeps identity and financial statements when prices are unav
   />);
 
   expect(screen.getByRole("heading", { name: instrument.name, level: 1 })).toBeVisible();
-  expect(await screen.findByText(`Cena pro ${instrument.exchange} není dostupná.`)).toBeVisible();
-  expect(await screen.findByText("Historická data momentálně nejsou dostupná.")).toBeVisible();
+  expect(await screen.findByText(`Kurz pro ${instrument.exchange} není dostupný.`)).toBeVisible();
+  expect(await screen.findByText("Historické ceny akcie nejsou dostupné.")).toBeVisible();
   expect(within(screen.getByRole("region", { name: "Co firma dělá a jak vydělává?" })).getByText(/Compute & Networking/)).not.toHaveTextContent("+89,6 %");
   expect(screen.getByRole("heading", { name: "Jak z tržeb vzniká zisk?" })).toBeVisible();
   expect(screen.queryByText("Finanční výkazy nejsou dostupné")).not.toBeInTheDocument();

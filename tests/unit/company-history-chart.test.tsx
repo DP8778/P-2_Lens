@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CompanyHistoryChart } from "@/components/assets/CompanyHistoryChart";
 import { CompanyResearchSections } from "@/components/assets/CompanyResearch";
@@ -14,31 +14,35 @@ test("offline company detail plots reported annual statements and retains an exp
   const { container } = render(<CompanyHistoryChart {...props} />);
   expect(screen.getByRole("graphics-document", { name: /AMD · roční hospodaření/ })).toBeVisible();
   expect(container.querySelector(".company-chart-metrics")).toHaveTextContent("34,64");
-  expect(screen.getByText("Historická data momentálně nejsou dostupná.")).toBeVisible();
+  expect(screen.getByText("Historické ceny akcie nejsou dostupné.")).toBeVisible();
+  expect(container.querySelector(".company-chart-heading .company-price-notice")).toHaveTextContent("Historické ceny akcie nejsou dostupné.");
+  expect(container.querySelector(".company-price-state")).not.toBeInTheDocument();
+  await userEvent.click(screen.getByText("Zdroje výkazů"));
+  expect(screen.getByRole("link", { name: "FY2025 · výkaz ↗" })).toHaveAttribute("href", statements[0].source);
   expect(screen.queryByTestId("asset-price-chart")).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: "Cena akcie" }));
   expect(screen.queryByRole("graphics-document")).not.toBeInTheDocument();
-  await userEvent.click(screen.getByRole("button", { name: "Prohlédnout ověřené výkazy" }));
+  await userEvent.click(screen.getByRole("button", { name: "Zpět na Hospodaření" }));
   expect(screen.getByRole("graphics-document")).toBeVisible();
 });
 
 test("hero chart supports pinned keyboard selection, index comparison and navigator range", async () => {
   const { container } = render(<CompanyHistoryChart {...props} />);
   const graph = screen.getByRole("graphics-document");
-  graph.focus();
+  act(() => graph.focus());
   await userEvent.keyboard("{Home}{Enter}");
   expect(container.querySelector(".company-chart-readout")).toHaveTextContent("FY2021");
-  graph.blur();
+  act(() => graph.blur());
   expect(container.querySelector(".company-chart-readout")).toHaveTextContent("FY2021");
-  graph.focus(); await userEvent.keyboard("{Escape}");
+  act(() => graph.focus()); await userEvent.keyboard("{Escape}");
   expect(container.querySelector(".company-chart-readout")).toHaveTextContent("FY2025");
   await userEvent.click(screen.getByRole("button", { name: "Index 100" }));
-  const indexedGraph = screen.getByRole("graphics-document"); indexedGraph.focus();
+  const indexedGraph = screen.getByRole("graphics-document"); act(() => indexedGraph.focus());
   await userEvent.keyboard("{Home}");
   expect(within(container.querySelector(".company-chart-readout") as HTMLElement).getAllByText("100")).toHaveLength(3);
   fireEvent.change(screen.getByRole("slider", { name: "Začátek období" }), { target: { value: "2" } });
   expect(screen.getByRole("slider", { name: "Začátek období" })).toHaveValue("2");
-  indexedGraph.focus(); await userEvent.keyboard("{Home}");
+  act(() => indexedGraph.focus()); await userEvent.keyboard("{Home}");
   expect(container.querySelector(".company-chart-readout")).toHaveTextContent("FY2023");
 });
 
@@ -69,4 +73,59 @@ test("missing AI research is one compact, actionable state", () => {
   expect(screen.getByRole("button", { name: "Obnovit výzkum" })).toBeEnabled();
   expect(screen.getAllByRole("status")).toHaveLength(1);
   expect(screen.queryByRole("heading", { name: "Čím se firma zabývá?" })).not.toBeInTheDocument();
+});
+
+const pricePoints = [
+  { assetId: id, date: "2026-09-01", close: 180, currency: "USD", adjustedForSplits: true },
+  { assetId: id, date: "2026-09-02", close: 185, currency: "USD", adjustedForSplits: true },
+];
+
+test.each([
+  ["cs-CZ", "Cena akcie", "Hospodaření", "Načítám historické ceny akcie…", "Historické ceny akcie nejsou dostupné.", "Zpět na Hospodaření"],
+  ["en-US", "Share price", "Business performance", "Loading historical share prices…", "Historical share prices are unavailable.", "Back to business performance"],
+])("%s distinguishes price loading and failure while financial statements remain usable", async (locale, price, financial, loading, unavailable, back) => {
+  const { rerender, container } = render(<CompanyHistoryChart {...props} locale={locale} priceLoading priceError={false} />);
+  expect(screen.getByRole("graphics-document")).toBeVisible();
+  expect(screen.queryByText(unavailable)).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: price }));
+  expect(screen.getByRole("status")).toHaveTextContent(loading);
+  rerender(<CompanyHistoryChart {...props} locale={locale} />);
+  expect(screen.getByRole("button", { name: price })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("status")).toHaveTextContent(unavailable);
+  expect(screen.queryByRole("graphics-document")).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: back }));
+  expect(screen.getByRole("button", { name: financial })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("graphics-document")).toBeVisible();
+  expect(container.querySelector(".company-chart-metrics")).toHaveTextContent("FY2025");
+});
+
+test("an explicit financial choice survives a successful price request", async () => {
+  const { rerender } = render(<CompanyHistoryChart {...props} priceLoading priceError={false} />);
+  await userEvent.click(screen.getByRole("button", { name: "Hospodaření" }));
+  rerender(<CompanyHistoryChart {...props} priceError={false} priceData={pricePoints} />);
+  expect(screen.getByRole("graphics-document", { name: /roční hospodaření/ })).toBeVisible();
+  expect(screen.queryByTestId("asset-price-chart")).not.toBeInTheDocument();
+});
+
+test.each(["cs-CZ", "en-US"])("%s offers no statements or return action when reports are missing", async locale => {
+  const { rerender, container } = render(<CompanyHistoryChart {...props} locale={locale} statements={[]} />);
+  expect(screen.queryByRole("button", { name: /Hospodaření|Business performance|Zpět|Back/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole("graphics-document")).not.toBeInTheDocument();
+  expect(container.querySelector(".company-chart-sources")).not.toBeInTheDocument();
+  rerender(<CompanyHistoryChart {...props} locale={locale} statements={[]} priceError={false} priceData={pricePoints} />);
+  expect(screen.getByTestId("asset-price-chart")).toBeVisible();
+  expect(screen.queryByRole("button", { name: /Hospodaření|Business performance/ })).not.toBeInTheDocument();
+});
+
+test("an explicit price choice survives late reports and a missing financial selection is honest", async () => {
+  const { rerender } = render(<CompanyHistoryChart {...props} statements={[]} priceLoading priceError={false} />);
+  await userEvent.click(screen.getByRole("button", { name: "Cena akcie" }));
+  rerender(<CompanyHistoryChart {...props} />);
+  expect(screen.getByRole("button", { name: "Cena akcie" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.queryByRole("graphics-document")).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Hospodaření" }));
+  rerender(<CompanyHistoryChart {...props} statements={[]} />);
+  expect(screen.getByText("Ověřená historie hospodaření není dostupná.")).toBeVisible();
+  expect(screen.getByRole("button", { name: "Hospodaření" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.queryByText("Zpět na Hospodaření")).not.toBeInTheDocument();
 });

@@ -72,8 +72,8 @@ test("known NVIDIA keeps statements when price provider is unavailable", async (
   await page.route("**/api/ai/company-research", route => route.abort());
   await page.goto("/cs-CZ/assets/twelvedata%3AXNGS%3ANVDA");
   await expect(page.getByRole("heading", { name: "NVIDIA Corporation", level: 1 })).toBeVisible();
-  await expect(page.getByText(/Cena pro NASDAQ není dostupná/)).toBeVisible();
-  await expect(page.getByText("Historická data momentálně nejsou dostupná.")).toBeVisible();
+  await expect(page.getByText(/Kurz pro NASDAQ není dostupný/)).toBeVisible();
+  await expect(page.getByText("Historické ceny akcie nejsou dostupné.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Jak z tržeb vzniká zisk?" })).toBeVisible();
   await page.screenshot({ path: artifact("05-nvidia-statements-without-prices.png"), fullPage: true });
 });

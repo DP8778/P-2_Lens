@@ -175,9 +175,12 @@ test("touch layout stays within the viewport and keeps data usable offline", asy
   );
   await expect(page.getByTestId("portfolio-value")).toBeVisible();
   await page.locator("#holdings").scrollIntoViewIfNeeded();
-  const mobileRowHeight = await page.locator(".holdings-table tbody tr").first().evaluate((element) => Math.round(element.getBoundingClientRect().height));
-  expect(mobileRowHeight).toBeLessThanOrEqual(130);
-  await expect(page.locator(".holdings-table tbody tr").first().locator("td").nth(4)).not.toBeVisible();
+  const mobileRow = page.locator(".holdings-table tbody tr").first();
+  // Wrapped workspace rows must remain fully readable within one viewport.
+  await mobileRow.scrollIntoViewIfNeeded();
+  await expect(mobileRow).toBeInViewport({ ratio: 1 });
+  await expect(mobileRow.getByRole("link").first()).toBeVisible();
+  await expect(mobileRow.locator("td").nth(4)).not.toBeVisible();
   await page.getByRole("link", { name: "Detail BTC", exact: true }).click();
   await expect(page).toHaveURL(/\/cs-CZ\/assets\/btc$/);
   await page.goto("/cs-CZ/dashboard");

@@ -67,7 +67,7 @@ export function CompanyOverview({ research, locale }: { research: ResearchState;
       <p className="research-freshness">{en ? "Research updated" : "Výzkum aktualizován"}: <time dateTime={research.data.researchedAt}>{new Date(research.data.researchedAt).toLocaleString(locale)}</time>{(!researchIsFresh(research.data) || research.error) && (en ? " · Saved research" : " · Uložený výzkum")}</p>
       <ResearchItems data={research.data} section="overview" locale={locale} />
     </>}
-    {!research.data && !research.loading && <p className="research-section-intro">{en ? "A company description will appear only with cited evidence. Verified prices and statements remain available below." : "Popis firmy zobrazíme pouze s citovanými podklady. Ověřené ceny a výkazy jsou dál dostupné níže."}</p>}
+    {!research.data && !research.loading && <p className="research-section-intro">{en ? "A company description will appear only with cited evidence. Share prices and financial statements have their own availability in separate sections." : "Popis firmy zobrazíme pouze s citovanými podklady. Ceny akcie a hospodaření mají vlastní dostupnost v samostatných sekcích."}</p>}
   </section>;
 }
 
@@ -77,7 +77,7 @@ export function CompanyResearchSections({ research, locale }: { research: Resear
     <div><h2 id="company-research-status-title">{en ? "Additional web research" : "Doplňkový webový výzkum"}</h2>
       <p role="status">{research.loading
         ? (en ? "Looking up sourced company developments…" : "Vyhledávám firemní události se zdroji…")
-        : (en ? "Current developments, growth opportunities and risks are unavailable. Reported financials above remain available." : "Doplňkový aktuální výzkum není dostupný. Připravený tržní kontext a ověřené výkazy výše zůstávají k dispozici.")}</p>
+        : (en ? "Current developments, growth opportunities and risks are unavailable. Availability of share prices and financial statements is shown in the sections above." : "Doplňkový aktuální výzkum není dostupný. Dostupnost cen akcie a výkazů je uvedena v příslušných sekcích výše.")}</p>
     </div><button className="research-refresh" onClick={research.refresh} disabled={research.loading}>{en ? "Refresh research" : "Obnovit výzkum"}</button>
   </section>;
   return <div className="company-research" data-state={research.loading ? "loading" : data ? "ready" : "unavailable"}>

@@ -31,6 +31,7 @@ import { allocation, money, percent } from "@/components/charts/chart-formatters
 import { MOCK_AS_OF, portfolioDataset } from "@/data/mock/portfolioDataset";
 import { companyProfileFor } from "@/data/company-profiles";
 import { buildRevenueBreakdown } from "@/lib/finance/revenue-breakdown";
+import { buildCompanyHistory } from "@/lib/finance/company-history";
 
 type AssetRange = "1W" | "1M" | "3M" | "1Y" | "ALL";
 const rangeDays: Record<Exclude<AssetRange, "ALL">, number> = { "1W": 7, "1M": 30, "3M": 90, "1Y": 365 };
@@ -246,6 +247,8 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
   const profile = companyProfileFor(assetId);
   const revenueBreakdown = buildRevenueBreakdown(assetId, fundamentals?.statements);
   const showRevenueMix = profile?.featuredRevenueMix && revenueBreakdown.status === "available";
+  const showAdvertisingContext = asset?.type === "stock" && asset.id === "twelvedata:XNGM:TTD";
+  const showPlatformEconomics = showAdvertisingContext && !!buildCompanyHistory(assetId, fundamentals?.statements);
 
   const backNavigation = <nav className="asset-detail-navigation" aria-label={en ? "Asset navigation" : "Navigace aktiva"}>
     {context && <Link className="asset-back-link asset-context-navigation" href={industryBackHref(locale, context)}><ArrowLeft size={15} />{en ? "Back to theme" : "Zpět na téma"}: {themeName}</Link>}
@@ -276,7 +279,7 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
           {holding && <span>{demoEntry ? (en ? "Demo position" : "Demo pozice") : (en ? "In portfolio" : "V portfoliu")} · {holding.quantity.toLocaleString(locale, { maximumFractionDigits: 8 })} ks</span>}
         </div>
         <div className="asset-detail-quote" aria-live="polite">
-          {quoteLoading && !displayedQuote ? <strong>Načítám cenu…</strong> : displayedQuote ? (
+          {quoteLoading && !displayedQuote ? <strong>{en ? "Loading quote…" : "Načítám kurz…"}</strong> : displayedQuote ? (
             <>
               <strong>{nativeMoney(displayedQuote.price, displayedQuote.currency, locale)}</strong>
               {(change !== undefined || changePercent !== undefined) && (
@@ -288,15 +291,17 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
               )}
               <small>{quoteState} · {demoEntry ? (en ? "data as of" : "data k") : (en ? "updated" : "aktualizováno")} {new Date(displayedQuote.timestamp).toLocaleString(locale)}</small>
             </>
-          ) : <strong className="quote-unavailable">Cena pro {asset.exchange} není dostupná.</strong>}
-          {quoteError && displayedQuote && <small>Aktualizace ceny se nezdařila; zobrazuji poslední dostupnou hodnotu.</small>}
+          ) : <strong className="quote-unavailable">{en ? `Quote for ${asset.exchange} is unavailable.` : `Kurz pro ${asset.exchange} není dostupný.`}</strong>}
+          {quoteError && displayedQuote && <small>{en ? "Quote update failed; showing the last available quote." : "Aktualizace kurzu se nezdařila; zobrazuji poslední dostupný kurz."}</small>}
         </div>
       </header>
       {asset.type === "stock" && <nav className="company-section-nav" aria-label={en ? "Company sections" : "Sekce firmy"}>
         <a href="#company-history-title">{en ? "Development" : "Vývoj"}</a>
+        {showPlatformEconomics && <a href="#platform-economics-title">{en ? "Platform economics" : "Ekonomika platformy"}</a>}
         {showRevenueMix && <a href="#company-revenue-mix-title">{en ? "Revenue mix" : "Struktura tržeb"}</a>}
         {assetId === "twelvedata:XNGS:AMD" && <a href="#company-market-title">{en ? "Market & competitors" : "Trh a konkurence"}</a>}
         <a href="#financial-anatomy-title">{en ? "Revenue to profit" : "Od tržeb k zisku"}</a>
+        {showAdvertisingContext && <a href="#advertising-market-title">{en ? "Market & competitors" : "Trh a konkurence"}</a>}
       </nav>}
       {asset.id === "twelvedata:XNGM:TTD" && <CompanyPrimer assetId={asset.id} locale={locale} fundamentals={fundamentals} profile={profile} />}
       <CompanyHistoryChart key={assetId} assetId={assetId} symbol={asset.symbol} currency={asset.currency} locale={locale}
@@ -309,7 +314,7 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
       {asset.type === "stock" && asset.id !== "twelvedata:XNGM:TTD" && (showRevenueMix && revenueBreakdown.status === "available"
         ? <CompanyRevenueMix periods={revenueBreakdown.periods} growth={revenueBreakdown.growth} locale={locale} profile={profile} companyLabel={asset.symbol} />
         : <CompanyPrimer assetId={asset.id} locale={locale} fundamentals={fundamentals} profile={profile} />)}
-      {asset.symbol === "TTD" && asset.id === "twelvedata:XNGM:TTD" && <><PlatformEconomics locale={locale} statements={fundamentals?.statements} /><FinancialAnatomy assetId={asset.id} locale={locale} statements={fundamentals?.statements} fetchedAt={fundamentals?.fetchedAt} stale={!!fundamentals?.errors?.length} showRevenueStructure={false} /><AdvertisingMarketContext locale={locale} /></>}
+      {showAdvertisingContext && <>{showPlatformEconomics && <PlatformEconomics locale={locale} statements={fundamentals?.statements} />}<FinancialAnatomy assetId={asset.id} locale={locale} statements={fundamentals?.statements} fetchedAt={fundamentals?.fetchedAt} stale={!!fundamentals?.errors?.length} showRevenueStructure={false} /><AdvertisingMarketContext locale={locale} /></>}
       {asset.type === "stock" && <CompanyMarketPosition assetId={assetId} locale={locale} />}
       {industry && context && <AssetIndustryContext key={`${assetId}:${context.industry}:${context.period}:${context.weighting}:${context.asOf}:${context.version}:${industry.version}`} assetId={assetId} locale={locale} industry={industry} navigation={context} />}
 

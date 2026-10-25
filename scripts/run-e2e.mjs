@@ -2,6 +2,9 @@ import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import next from "next";
 
+// Let browser fixtures intercept provider requests without needing a real API key.
+process.env.TWELVE_DATA_API_KEY ||= "ui-regression-no-upstream";
+
 const app = next({ dev: false, dir: process.cwd() });
 const port = Number(process.env.LENS_E2E_PORT ?? 3000);
 await app.prepare();
