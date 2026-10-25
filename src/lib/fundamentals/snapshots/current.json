@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "8e64c7f54a8ad593",
+  "version": "9125e66205e70686",
   "updatedAt": "2026-10-23T00:00:00.000Z",
   "industries": {
     "ai": {
@@ -23944,7 +23944,7 @@
           "sourceScale": 1000,
           "accountingBasis": "gaap-consolidated",
           "presentation": "operating-expenses",
-          "publishedAt": "2026-02-25",
+          "publishedAt": "2026-02-27",
           "retrievedAt": "2026-10-25T17:40:00.000Z",
           "valueStatus": "reported",
           "revenue": 2896284000,
@@ -23961,7 +23961,7 @@
             "value": 13394683000,
             "source": "https://www.sec.gov/Archives/edgar/data/1671933/000167193326000014/ttd-20251231.htm",
             "sourceScale": 1000,
-            "publishedAt": "2026-02-25",
+            "publishedAt": "2026-02-27",
             "retrievedAt": "2026-10-25T17:40:00.000Z",
             "status": "reported"
           }
@@ -23975,7 +23975,7 @@
           "sourceScale": 1000,
           "accountingBasis": "gaap-consolidated",
           "presentation": "operating-expenses",
-          "publishedAt": "2026-02-25",
+          "publishedAt": "2026-02-27",
           "retrievedAt": "2026-10-25T17:40:00.000Z",
           "valueStatus": "reported",
           "revenue": 2444831000,
@@ -23992,7 +23992,7 @@
             "value": 12040872000,
             "source": "https://www.sec.gov/Archives/edgar/data/1671933/000167193326000014/ttd-20251231.htm",
             "sourceScale": 1000,
-            "publishedAt": "2026-02-25",
+            "publishedAt": "2026-02-27",
             "retrievedAt": "2026-10-25T17:40:00.000Z",
             "status": "reported"
           }
@@ -24006,7 +24006,7 @@
           "sourceScale": 1000,
           "accountingBasis": "gaap-consolidated",
           "presentation": "operating-expenses",
-          "publishedAt": "2026-02-25",
+          "publishedAt": "2026-02-27",
           "retrievedAt": "2026-10-25T17:40:00.000Z",
           "valueStatus": "reported",
           "revenue": 1946120000,
@@ -24023,7 +24023,7 @@
             "value": 9611000000,
             "source": "https://www.sec.gov/Archives/edgar/data/1671933/000167193325000029/ttd-20241231.htm",
             "sourceScale": 1000000,
-            "publishedAt": "2025-02-12",
+            "publishedAt": "2025-02-21",
             "retrievedAt": "2026-10-25T17:40:00.000Z",
             "status": "reported"
           }

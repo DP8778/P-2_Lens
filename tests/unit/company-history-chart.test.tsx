@@ -65,7 +65,7 @@ test("index rejects nonpositive profit baselines and financial history keeps the
 
 test("missing AI research is one compact, actionable state", () => {
   render(<CompanyResearchSections locale="cs-CZ" research={{ loading: false, error: "no_key", refresh: jest.fn(), data: undefined }} />);
-  expect(screen.getByRole("heading", { name: "Firemní výzkum" })).toBeVisible();
+  expect(screen.getByRole("heading", { name: "Doplňkový webový výzkum" })).toBeVisible();
   expect(screen.getByRole("button", { name: "Obnovit výzkum" })).toBeEnabled();
   expect(screen.getAllByRole("status")).toHaveLength(1);
   expect(screen.queryByRole("heading", { name: "Čím se firma zabývá?" })).not.toBeInTheDocument();

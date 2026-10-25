@@ -144,9 +144,9 @@ export function parseTtdAnnual(html: string, asset: MarketAsset, source: string,
     const [revenue, operatingExpenses, operatingIncome, netIncome, platformOperations, salesMarketing, technologyDevelopment, generalAdministrative] = fields.map((values) => values[index] * 1000);
     const statement: FinancialStatement = { assetId: asset.id, period: `${year}-12-31`, currency: "USD", durationMonths: 12,
       source, sourceScale: 1000, accountingBasis: "gaap-consolidated", presentation: "operating-expenses",
-      publishedAt: "2026-02-25", retrievedAt, valueStatus: "reported", revenue, operatingExpenses, operatingIncome, netIncome,
+      publishedAt: "2026-02-27", retrievedAt, valueStatus: "reported", revenue, operatingExpenses, operatingIncome, netIncome,
       expenses: { platformOperations, salesMarketing, technologyDevelopment, generalAdministrative },
-      ...(spends[index] ? { grossSpend: { value: spends[index] * 1000, source, sourceScale: 1000, publishedAt: "2026-02-25", retrievedAt, status: "reported" as const } } : {}),
+      ...(spends[index] ? { grossSpend: { value: spends[index] * 1000, source, sourceScale: 1000, publishedAt: "2026-02-27", retrievedAt, status: "reported" as const } } : {}),
     };
     return validStatement(statement) ? [statement] : [];
   });

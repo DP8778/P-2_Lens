@@ -154,8 +154,9 @@ The SEC page was readable through the research browser on 2026-10-25; direct
 HTTP downloads on this Mac returned 403. Initial reviewed numeric cells are
 therefore transcribed from the primary table; `ttd-2025-table.html` is labelled
 an offline numeric-cell transcription for parser tests, not an archived filing.
-The app does not claim that a live SEC refresh succeeded. Publication date for
-the financial data is the company's FY2025 results release, 2026-02-25.
+The app does not claim that a live SEC refresh succeeded. Publication dates identify the linked primary reports: FY2025 10-K signed/filed
+2026-02-27 and FY2024 10-K signed/filed 2025-02-21. The earlier FY2025
+results release (2026-02-25) is a separate supporting source.
 
 `advertising-context.ts` separates the US CY2025 IAB/PwC industry revenue
 estimate from global TTD spend/net revenue. No competitor shares are computed.
