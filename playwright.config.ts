@@ -9,7 +9,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: "html",
   expect: { timeout: 15_000 },
-  use: { baseURL: process.env.PW_BASE_URL ?? "http://localhost:3000", trace: "on-first-retry" },
+  use: { timezoneId: "Europe/Prague", baseURL: process.env.PW_BASE_URL ?? "http://localhost:3000", trace: "on-first-retry" },
   webServer: process.env.PW_MANAGED_SERVER
     ? undefined
     : {

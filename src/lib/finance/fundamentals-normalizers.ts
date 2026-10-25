@@ -1,4 +1,5 @@
 import type { FinancialStatement } from "./financial-anatomy";
+import { reconcilesStatement } from "./financial-anatomy.ts";
 import type { MarketAsset } from "../market-data/types";
 
 export const decodeText = (value: string) => value.replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#160;|&nbsp;/g, " ").trim();
@@ -19,10 +20,7 @@ function arrayField(text: string, key: string): unknown[] {
 }
 const validMoney = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
 export function validStatement(s: FinancialStatement) {
-  const near = (a: number, b: number) => Math.abs(a - b) <= Math.max(1, Math.abs(a), Math.abs(b)) * 0.005;
-  return /^\d{4}-\d{2}-\d{2}$/.test(s.period) && [s.revenue, s.costOfRevenue, s.grossProfit, s.operatingExpenses, s.operatingIncome, s.netIncome].every(validMoney)
-    && s.revenue > 0 && s.costOfRevenue >= 0 && s.operatingExpenses >= 0
-    && near(s.revenue - s.costOfRevenue, s.grossProfit) && near(s.grossProfit - s.operatingExpenses, s.operatingIncome);
+  return /^\d{4}-\d{2}-\d{2}$/.test(s.period) && reconcilesStatement(s);
 }
 export function parseIncomeStatement(html: string, asset: MarketAsset, source: string): FinancialStatement[] {
   // Only parse an explicitly USD annual statement. Other currencies remain unavailable.
@@ -76,7 +74,7 @@ function secAnnualFacts(html: string): SecFact[] {
 }
 
 /** Read inline XBRL contexts/units/scales; dimensional facts never become consolidated totals. */
-export function parseSecAnnual(html: string, asset: MarketAsset, source: string): FinancialStatement[] {
+export function parseSecAnnual(html: string, asset: MarketAsset, source: string): Extract<FinancialStatement, { grossProfit: number }>[] {
   const facts = secAnnualFacts(html);
   return [...new Set(facts.map((fact) => fact.end))].flatMap((period) => {
     const get = (...names: string[]) => names.map((name) => facts.find((f) => f.end === period && !f.dimensions.length && f.name === `us-gaap:${name}`)?.value).find(validMoney);
@@ -105,7 +103,7 @@ export function parseSecAnnual(html: string, asset: MarketAsset, source: string)
 }
 
 /** AMD's 2025 filing supplies GAAP statements plus its new three-segment presentation and recast comparatives. */
-export function parseAmdAnnual(html: string, asset: MarketAsset, source: string): FinancialStatement[] {
+export function parseAmdAnnual(html: string, asset: MarketAsset, source: string): Extract<FinancialStatement, { grossProfit: number }>[] {
   const facts = secAnnualFacts(html);
   return parseSecAnnual(html, asset, source).flatMap((statement) => {
     const segments = [
@@ -127,13 +125,46 @@ export function parseAmdAnnual(html: string, asset: MarketAsset, source: string)
   });
 }
 
+/** TTD FY2025 10-K p.63: a direct operating-expense presentation, in thousands USD. */
+export function parseTtdAnnual(html: string, asset: MarketAsset, source: string, retrievedAt: string): FinancialStatement[] {
+  if (asset.symbol !== "TTD" || !source.endsWith("/ttd-20251231.htm")) return [];
+  const numbers = (row: string[]) => row.slice(1).filter((cell) => /^[\d,]+$/.test(cell)).map((cell) => Number(cell.replaceAll(",", "")));
+  const tables = [...html.matchAll(/<table\b[^>]*>[\s\S]*?<\/table>/gi)].map(([table]) => tableRows(table));
+  const table = tables.find((rows) => rows.some((row) => row[0] === "Platform operations")
+    && rows.some((row) => row[0] === "Revenue" && numbers(row).length === 3));
+  if (!table || !decodeText(html).includes("In thousands, except per share amounts")) return [];
+  const row = (label: string) => numbers(table.find((cells) => cells[0] === label) ?? []);
+  const fields = ["Revenue", "Total operating expenses", "Income from operations", "Net income", "Platform operations", "Sales and marketing", "Technology and development", "General and administrative"].map(row);
+  if (fields.some((values) => values.length !== 3)) return [];
+  const years = table.flat().filter((cell) => /^(2025|2024|2023)$/.test(cell));
+  if (years.join(",") !== "2025,2024,2023") return [];
+  const spend = tables.flat().find((cells) => /^Gross spend/.test(cells[0] ?? ""));
+  const spends = spend ? numbers(spend).slice(0, 2) : [];
+  return years.flatMap((year, index) => {
+    const [revenue, operatingExpenses, operatingIncome, netIncome, platformOperations, salesMarketing, technologyDevelopment, generalAdministrative] = fields.map((values) => values[index] * 1000);
+    const statement: FinancialStatement = { assetId: asset.id, period: `${year}-12-31`, currency: "USD", durationMonths: 12,
+      source, sourceScale: 1000, accountingBasis: "gaap-consolidated", presentation: "operating-expenses",
+      publishedAt: "2026-02-25", retrievedAt, valueStatus: "reported", revenue, operatingExpenses, operatingIncome, netIncome,
+      expenses: { platformOperations, salesMarketing, technologyDevelopment, generalAdministrative },
+      ...(spends[index] ? { grossSpend: { value: spends[index] * 1000, source, sourceScale: 1000, publishedAt: "2026-02-25", retrievedAt, status: "reported" as const } } : {}),
+    };
+    return validStatement(statement) ? [statement] : [];
+  });
+}
+
 /** Keep primary-source periods when a routine secondary refresh presents a different accounting basis. */
 export function mergeFinancialHistory(previous: FinancialStatement[], incoming: FinancialStatement[]): FinancialStatement[] {
-  const periods = new Map(previous.map((statement) => [statement.period, statement]));
+  const key = (s: FinancialStatement) => `${s.period}:${s.durationMonths}:${s.currency}`;
+  const periods = new Map(previous.map((statement) => [key(statement), statement]));
   for (const statement of incoming) {
-    const old = periods.get(statement.period);
+    const old = periods.get(key(statement));
     const primary = (url: string) => url.startsWith("https://www.sec.gov/") || url.includes("/sec-filings/content/");
-    periods.set(statement.period, old && primary(old.source) && !primary(statement.source) ? old : statement);
+    if (!validStatement(statement)) continue;
+    const keepPrimary = old && primary(old.source) && !primary(statement.source);
+    // A primary refresh may omit a separately sourced, previously verified spend observation.
+    // Preserve it only for exactly the same period/currency/duration and revenue basis.
+    const spend = old?.revenue === statement.revenue && old?.presentation === statement.presentation ? old?.grossSpend : undefined;
+    periods.set(key(statement), keepPrimary ? old : { ...statement, ...(statement.grossSpend ? {} : spend ? { grossSpend: spend } : {}) });
   }
   return [...periods.values()].sort((a, b) => b.period.localeCompare(a.period));
 }

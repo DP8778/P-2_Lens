@@ -11,9 +11,10 @@ const labels: Record<string, [string, string]> = {
   salesMarketing: ["Prodej a marketing", "Sales & marketing"], researchDevelopment: ["Výzkum a vývoj", "R&D"],
   generalAdministrative: ["Správa a administrativa", "G&A"], otherExpenses: ["Ostatní provozní náklady", "Other operating expenses"],
   netDeductions: ["Daně a ostatní vlivy · netto", "Taxes & other effects · net"],
+  platformOperations: ["Provoz platformy", "Platform operations"], technologyDevelopment: ["Technologie a vývoj", "Technology and development"],
   netAdditions: ["Ostatní čistý přínos", "Other net additions"],
 };
-const metrics = ["revenue", "grossProfit", "operatingIncome", "netIncome"] as const;
+const allMetrics = ["revenue", "grossProfit", "operatingIncome", "netIncome"] as const;
 
 function FinancialFlow({ data, locale }: { data: Anatomy; locale: string }) {
   const en = locale === "en-US";
@@ -45,6 +46,7 @@ export function FinancialAnatomy({ assetId, locale, statements, fetchedAt, stale
   const en = locale === "en-US";
   const data = buildFinancialAnatomy(assetId, statements, { includeRevenueSegments: showRevenueStructure });
   const name = (id: string) => labels[id][en ? 1 : 0];
+  const metrics = data.status === "available" && data.latest.presentation === "operating-expenses" ? allMetrics.filter((key) => key !== "grossProfit") : allMetrics;
   return <section className="financial-anatomy" aria-labelledby="financial-anatomy-title">
     <header><span>Financial Anatomy</span><h2 id="financial-anatomy-title">{en ? "How does revenue become profit?" : "Jak z tržeb vzniká zisk?"}</h2></header>
     <p className="research-section-intro">{en ? "This chart breaks down the income statement: verified revenue is reconciled through costs to operating and net income. It is not a cash-flow statement and remains separate from the share price." : "Graf rozkládá výsledovku: ověřené tržby propojuje přes náklady s provozním a čistým ziskem. Nejde o cash-flow a výkazy zůstávají oddělené od ceny akcie."}</p>
@@ -63,21 +65,22 @@ export function FinancialAnatomy({ assetId, locale, statements, fetchedAt, stale
       {fetchedAt && <p className="industry-data-note">{en ? "Statements retrieved" : "Výkazy načteny"} · {new Date(fetchedAt).toLocaleDateString(locale)}{stale ? (en ? " · Refresh failed; last verified data" : " · Obnovení selhalo; poslední ověřená data") : ""}</p>}
       <p className="industry-data-note">{data.latest.period} · {data.latest.durationMonths} {en ? "months" : "měsíců"} · {data.latest.currency} · <a href={data.latest.source} target="_blank" rel="noreferrer">{en ? "Statement source" : "Zdroj výkazu"}</a></p>
       </details>
-      <dl className="financial-margins">{[{ title: en ? "Revenue growth · YoY" : "Růst tržeb · meziročně", value: data.revenueGrowth }, { title: en ? "Gross margin" : "Hrubá marže", value: data.grossMargin }, { title: en ? "Operating margin" : "Provozní marže", value: data.operatingMargin }].map((item) => <div key={item.title}><dt>{item.title}</dt><dd>{item.value === undefined ? "—" : percent(item.value, locale)}</dd></div>)}</dl>
+      <dl className="financial-margins">{[{ title: en ? "Revenue growth · YoY" : "Růst tržeb · meziročně", value: data.revenueGrowth }, { title: en ? "Gross margin" : "Hrubá marže", value: data.grossMargin }, { title: en ? "Operating margin" : "Provozní marže", value: data.operatingMargin }].filter((item) => item.value !== undefined || item.title !== (en ? "Gross margin" : "Hrubá marže")).map((item) => <div key={item.title}><dt>{item.title}</dt><dd>{item.value === undefined ? "—" : percent(item.value, locale)}</dd></div>)}</dl>
+      {data.latest.presentation === "operating-expenses" && <p className="industry-data-note">{en ? "The issuer reports operating costs directly below revenue. Gross profit and gross margin are not reported; Lens does not fabricate them." : "Firma vykazuje provozní náklady přímo pod tržbami. Hrubý zisk ani hrubou marži samostatně nevykazuje; Lens je nedoplňuje."}</p>}
       {data.flowAvailable ? <FinancialFlow data={data} locale={locale} /> : <p role="status">{en ? "Loss-making periods are shown as signed values below; the flow is unavailable." : "Ztrátové období je uvedeno se zápornými hodnotami níže; tok není dostupný."}</p>}
-      {showRevenueStructure && <div className="financial-revenue-structure"><h3>{en ? "Revenue structure" : "Struktura tržeb"}</h3>{data.latest.segmentSource && <a className="industry-data-note" href={data.latest.segmentSource} target="_blank" rel="noreferrer">{en ? "Reported segment source" : "Zdroj vykázaných segmentů"}</a>}{data.segments.length ? <ul>{data.segments.map((segment, i) => <li key={i}><span>{segment.name === "Unallocated revenue" ? (en ? "Unallocated revenue" : "Nerozlišené tržby") : segment.name}</span><strong>{new Intl.NumberFormat(locale, { style: "currency", currency: data.latest.currency, notation: "compact" }).format(segment.revenue)}</strong></li>)}</ul> : <p>{en ? "Revenue segments unavailable." : "Segmenty tržeb nejsou dostupné."}</p>}</div>}
+      {showRevenueStructure && data.latest.presentation !== "operating-expenses" && <div className="financial-revenue-structure"><h3>{en ? "Revenue structure" : "Struktura tržeb"}</h3>{data.latest.segmentSource && <a className="industry-data-note" href={data.latest.segmentSource} target="_blank" rel="noreferrer">{en ? "Reported segment source" : "Zdroj vykázaných segmentů"}</a>}{data.segments.length ? <ul>{data.segments.map((segment, i) => <li key={i}><span>{segment.name === "Unallocated revenue" ? (en ? "Unallocated revenue" : "Nerozlišené tržby") : segment.name}</span><strong>{new Intl.NumberFormat(locale, { style: "currency", currency: data.latest.currency, notation: "compact" }).format(segment.revenue)}</strong></li>)}</ul> : <p>{en ? "Revenue segments unavailable." : "Segmenty tržeb nejsou dostupné."}</p>}</div>}
       <h3>{en ? "Financial history" : "Historie hospodaření"}</h3>
       {data.excludedHistoryCount > 0 && <p className="industry-data-note">{en
         ? `${data.excludedHistoryCount} period(s) were omitted because their statement basis is not comparable with the latest period.`
         : `${data.excludedHistoryCount} období bylo vynecháno, protože jeho báze výkazu není srovnatelná s nejnovějším obdobím.`}</p>}
       {data.history.length >= 2 && <div className="financial-trends">{metrics.map((key) => {
-        const values = data.history.map((period) => period[key]);
+        const values = data.history.map((period) => period[key]!);
         const low = Math.min(...values), high = Math.max(...values);
         const y = (value: number) => high === low ? 40 : 68 - (value - low) / (high - low) * 56;
-        const summary = `${name(key)}: ${data.history.map((period) => `${period.period}: ${period[key].toLocaleString(locale)} ${period.currency}`).join("; ")}`;
+        const summary = `${name(key)}: ${data.history.map((period) => `${period.period}: ${period[key]!.toLocaleString(locale)} ${period.currency}`).join("; ")}`;
         return <figure key={key}><figcaption>{name(key)}</figcaption><svg viewBox="0 0 240 80" role="img" aria-label={summary}><polyline points={values.map((value, i) => `${8 + i / (values.length - 1) * 224},${y(value)}`).join(" ")} fill="none" stroke="currentColor" strokeWidth="1.5" /><circle cx="232" cy={y(values.at(-1)!)} r="3" fill="currentColor" /></svg><small>{data.history[0].period} → {data.latest.period}</small></figure>;
       })}</div>}
-      <details className="industry-disclosure" open={!data.flowAvailable}><summary>{en ? "Detailed financial history" : "Podrobná historie hospodaření"}</summary><div className="industry-table-scroll"><table className="financial-history"><caption>{data.latest.accountingBasis === "gaap-consolidated" ? (en ? "Comparable consolidated GAAP periods; amounts in" : "Srovnatelná konsolidovaná období GAAP; částky v") : (en ? "Comparable periods; amounts in" : "Srovnatelná období; částky v")} {data.latest.currency}</caption><thead><tr><th>{en ? "Period" : "Období"}</th>{metrics.map((key) => <th key={key}>{name(key)}</th>)}</tr></thead><tbody>{data.history.map((statement) => <tr key={statement.period}><th><a href={statement.source} target="_blank" rel="noreferrer">{statement.period}</a></th>{metrics.map((key) => <td key={key}>{statement[key].toLocaleString(locale)}</td>)}</tr>)}</tbody></table></div></details>
+      <details className="industry-disclosure" open={!data.flowAvailable}><summary>{en ? "Detailed financial history" : "Podrobná historie hospodaření"}</summary><div className="industry-table-scroll"><table className="financial-history"><caption>{data.latest.accountingBasis === "gaap-consolidated" ? (en ? "Comparable consolidated GAAP periods; amounts in" : "Srovnatelná konsolidovaná období GAAP; částky v") : (en ? "Comparable periods; amounts in" : "Srovnatelná období; částky v")} {data.latest.currency}</caption><thead><tr><th>{en ? "Period" : "Období"}</th>{metrics.map((key) => <th key={key}>{name(key)}</th>)}</tr></thead><tbody>{data.history.map((statement) => <tr key={statement.period}><th><a href={statement.source} target="_blank" rel="noreferrer">{statement.period}</a></th>{metrics.map((key) => <td key={key}>{statement[key]?.toLocaleString(locale) ?? "—"}</td>)}</tr>)}</tbody></table></div></details>
     </>}
   </section>;
 }

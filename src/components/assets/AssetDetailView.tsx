@@ -16,6 +16,7 @@ import { CompanyPrimer } from "./CompanyPrimer";
 import { CompanyRevenueMix } from "./CompanyRevenueMix";
 import { FinancialAnatomy } from "./FinancialAnatomy";
 import { CompanyHistoryChart } from "./CompanyHistoryChart";
+import { PlatformEconomics, AdvertisingMarketContext } from "./PlatformEconomics";
 import { CompanyMarketPosition } from "./CompanyMarketPosition";
 import { AddAssetDialog } from "@/components/portfolio/AddAssetDialog";
 import { usePortfolio } from "@/components/portfolio/PortfolioProvider";
@@ -297,6 +298,7 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
         {assetId === "twelvedata:XNGS:AMD" && <a href="#company-market-title">{en ? "Market & competitors" : "Trh a konkurence"}</a>}
         <a href="#financial-anatomy-title">{en ? "Revenue to profit" : "Od tržeb k zisku"}</a>
       </nav>}
+      {asset.id === "twelvedata:XNGM:TTD" && <CompanyPrimer assetId={asset.id} locale={locale} fundamentals={fundamentals} profile={profile} />}
       <CompanyHistoryChart key={assetId} assetId={assetId} symbol={asset.symbol} currency={asset.currency} locale={locale}
         statements={fundamentals?.statements} priceData={chartHistory} priceLoading={historyLoading} priceError={historyError}
         priceControls={<div className="asset-timeframes" aria-label={en ? "Chart period" : "Období grafu"}>
@@ -304,9 +306,10 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
         </div>}
         priceProvenance={displayedHistoryProvenance && <p className="asset-history-provenance">{displayedHistoryProvenance.source === "demo" ? (en ? "Demo history · not market data" : "Demo historie · nejde o tržní data") : displayedHistoryProvenance.source === "cache" ? (en ? "Saved Twelve Data history" : "Uložená historie Twelve Data") : (en ? "Twelve Data history" : "Historie Twelve Data")} · {en ? "data through" : "data do"} {new Date(`${displayedHistoryProvenance.asOf.slice(0, 10)}T12:00:00Z`).toLocaleDateString(locale)}</p>}
       />
-      {asset.type === "stock" && (showRevenueMix && revenueBreakdown.status === "available"
+      {asset.type === "stock" && asset.id !== "twelvedata:XNGM:TTD" && (showRevenueMix && revenueBreakdown.status === "available"
         ? <CompanyRevenueMix periods={revenueBreakdown.periods} growth={revenueBreakdown.growth} locale={locale} profile={profile} companyLabel={asset.symbol} />
         : <CompanyPrimer assetId={asset.id} locale={locale} fundamentals={fundamentals} profile={profile} />)}
+      {asset.symbol === "TTD" && asset.id === "twelvedata:XNGM:TTD" && <><PlatformEconomics locale={locale} statements={fundamentals?.statements} /><FinancialAnatomy assetId={asset.id} locale={locale} statements={fundamentals?.statements} fetchedAt={fundamentals?.fetchedAt} stale={!!fundamentals?.errors?.length} showRevenueStructure={false} /><AdvertisingMarketContext locale={locale} /></>}
       {asset.type === "stock" && <CompanyMarketPosition assetId={assetId} locale={locale} />}
       {industry && context && <AssetIndustryContext key={`${assetId}:${context.industry}:${context.period}:${context.weighting}:${context.asOf}:${context.version}:${industry.version}`} assetId={assetId} locale={locale} industry={industry} navigation={context} />}
 
@@ -340,7 +343,7 @@ export function AssetDetailView({ assetId, locale, fundamentals, industry, indus
         </details>
       )}
 
-      {asset.type === "stock" && <FinancialAnatomy assetId={asset.id} locale={locale} statements={fundamentals?.statements} fetchedAt={fundamentals?.fetchedAt} stale={!!fundamentals?.errors?.length} showRevenueStructure={!showRevenueMix} />}
+      {asset.type === "stock" && asset.id !== "twelvedata:XNGM:TTD" && <FinancialAnatomy assetId={asset.id} locale={locale} statements={fundamentals?.statements} fetchedAt={fundamentals?.fetchedAt} stale={!!fundamentals?.errors?.length} showRevenueStructure={!showRevenueMix} />}
 
       {asset.type === "stock" && <CompanyResearchSections research={research} locale={locale} />}
 

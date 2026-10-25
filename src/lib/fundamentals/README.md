@@ -122,3 +122,41 @@ review date rather than claiming live market data.
 Business descriptions and strategies link AMD FY2025 10-K, NVIDIA FY2026 results
 and platform announcements, and Intel FY2025 10-K. The "what to watch" statements
 are labelled Lens interpretation, not measured competitive advantages or forecasts.
+
+## Reviewed company examples outside index membership
+
+The snapshot `instruments` catalogue provides independently verified listings to
+company detail and fundamentals lookup. TTD is **not** added to any thematic
+membership. Nasdaq Trader's listing feed on 2026-10-25 reports Class A TTD in
+category G (Nasdaq Global Market, MIC XNGM), USD, with provider symbol TTD. The
+canonical application identity is `twelvedata:XNGM:TTD`; no live quote is implied.
+Markets links directly to AMD and TTD. Server-side identity and statement lookup
+works without the optional price API or AI configuration.
+
+TTD FY2023–FY2025 consolidated GAAP statements use the FY2025 SEC 10-K, p.63,
+with thousands USD multiplied by 1,000. The explicit `operating-expenses`
+variant omits costOfRevenue, grossProfit and grossMargin: four operating expense
+categories reconcile once against revenue. Gross spend comes from the FY2025
+10-K management table for FY2024–25 (thousands) and the FY2024 10-K for FY2023
+(rounded millions). Each observation preserves its own source scale, publication
+and retrieval date. Revenue/gross spend is labelled a derived ratio, never a
+contractual fee, revenue decomposition or market share. No product revenue
+segments or geographic revenue splits are inferred.
+
+The registered TTD primary adapter validates the three-column annual table.
+Secondary refresh cannot overwrite its primary periods. A primary fetch/parse
+failure retains the prior record, its original fetchedAt and a visible error.
+A changed TTD listing aborts publication for manual identity review. A new
+primary report requires an explicitly reviewed registration, not blind reuse of
+a secondary gross-profit template. This intentionally bounds this iteration.
+
+The SEC page was readable through the research browser on 2026-10-25; direct
+HTTP downloads on this Mac returned 403. Initial reviewed numeric cells are
+therefore transcribed from the primary table; `ttd-2025-table.html` is labelled
+an offline numeric-cell transcription for parser tests, not an archived filing.
+The app does not claim that a live SEC refresh succeeded. Publication date for
+the financial data is the company's FY2025 results release, 2026-02-25.
+
+`advertising-context.ts` separates the US CY2025 IAB/PwC industry revenue
+estimate from global TTD spend/net revenue. No competitor shares are computed.
+Company strategy, reported risks and Lens interpretation are labelled separately.

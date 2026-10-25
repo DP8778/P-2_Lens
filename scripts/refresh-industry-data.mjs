@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { rankIndustryMembers } from '../src/lib/finance/industry-data.ts';
-import { tableRows, compactNumber, parseIncomeStatement, parseRevenueSegments, parseSecAnnual, parseAmdAnnual, mergeFinancialHistory } from '../src/lib/finance/fundamentals-normalizers.ts';
+import { tableRows, compactNumber, parseIncomeStatement, parseRevenueSegments, parseSecAnnual, parseAmdAnnual, parseTtdAnnual, mergeFinancialHistory } from '../src/lib/finance/fundamentals-normalizers.ts';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const directory = resolve(root, 'src/lib/fundamentals/snapshots');
@@ -83,8 +83,20 @@ for(const [id,symbols] of Object.entries(candidates)) {
   console.log(`${id}: ${ranked.members.length}/100 members from ${ranked.candidateCount} candidates`);
 }
 const companies=[...new Map(Object.values(industries).flatMap((industry)=>industry.members.map((row)=>[row.asset.symbol,row.asset]))).values()];
+// Reviewed examples are a catalogue, never artificial index members.
+const instruments=[...(previous?.instruments ?? [])];
+const ttdListing=listings.get('TTD');
+const savedTtd=instruments.find((entry)=>entry.asset.symbol==='TTD');
+if(savedTtd && (!ttdListing || ttdListing.id!==savedTtd.asset.id)) throw new Error('TTD listing changed; review identity before publishing');
+if(savedTtd) { savedTtd.asset=ttdListing; savedTtd.verifiedAt=now; }
+for(const entry of instruments) if(!companies.some((asset)=>asset.id===entry.asset.id)) companies.push(entry.asset);
 const fundamentals={};
 for(const asset of companies) {
+  if(asset.symbol==='TTD') {
+    const old=previous?.fundamentals.TTD;
+    fundamentals.TTD=old ?? {symbol:'TTD',provider:'sec-primary-reviewed',fetchedAt:now,statements:[]};
+    continue; // This presentation is enriched only from the registered primary filing below.
+  }
   const source=`https://stockanalysis.com/stocks/${asset.symbol.toLowerCase()}/financials/income-statement/`;
   try {
     const html=await download(source);
@@ -142,8 +154,21 @@ if(amd) {
     fundamentals.AMD={symbol:'AMD',provider:'amd-sec-ixbrl + stock-analysis',fetchedAt:now,statements:[...merged.values()].sort((a,b)=>b.period.localeCompare(a.period))};
   } catch(error) { fundamentals.AMD.errors=[...(fundamentals.AMD.errors??[]),`AMD filing enrichment: ${error.message}`]; }
 }
-const version=hash({industries,fundamentals});
-const snapshot={schemaVersion:1,version,updatedAt:now,industries,fundamentals};
+if(savedTtd) {
+  const source='https://www.sec.gov/Archives/edgar/data/1671933/000167193326000014/ttd-20251231.htm';
+  try {
+    const reports=parseTtdAnnual(await download(source),savedTtd.asset,source,now);
+    if(reports.length!==3) throw new Error('Incomplete TTD primary statements; preserving reviewed periods');
+    fundamentals.TTD={symbol:'TTD',provider:'sec-primary-reviewed',fetchedAt:now,
+      statements:mergeFinancialHistory(fundamentals.TTD?.statements ?? [],reports)};
+  } catch(error) {
+    const record=fundamentals.TTD ?? previous?.fundamentals.TTD;
+    if(!record?.statements.length) throw error;
+    fundamentals.TTD={...record,errors:[...(record.errors ?? []),`TTD primary refresh: ${error.message}`]};
+  }
+}
+const version=hash({industries,fundamentals,instruments});
+const snapshot={schemaVersion:1,version,updatedAt:now,industries,fundamentals,instruments};
 await mkdir(directory,{recursive:true});
 await mkdir(resolve(directory,'memberships'),{recursive:true});
 for (const industry of Object.values(industries)) {

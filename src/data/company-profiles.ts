@@ -9,6 +9,15 @@ export type CompanyProfile = {
 /** Short issuer descriptions reviewed against the linked primary company reports. */
 const profiles: readonly CompanyProfile[] = [
   {
+    assetId: "twelvedata:XNGM:TTD",
+    description: {
+      "cs-CZ": "The Trade Desk provozuje nákupní reklamní platformu (DSP). Agentury a inzerenti přes ni vybírají reklamní prostor a řídí kampaně. Platí poplatek za platformu a služby či data; firma většinu nákladů na nakoupený prostor vykazuje netto. Má jeden provozní segment. CTV je reklamní kanál, Kokai platforma a UID2 identitní iniciativa, nikoli vykázané výnosové segmenty.",
+      "en-US": "The Trade Desk operates a demand-side advertising platform (DSP). Agencies and advertisers use it to buy inventory and manage campaigns, paying platform fees and for services or data. Most purchased inventory costs are reported net. It has one operating segment; CTV, Kokai and UID2 are not reported revenue segments.",
+    },
+    sourceLabel: "The Trade Desk · FY2025 Form 10-K",
+    sourceUrl: "https://www.sec.gov/Archives/edgar/data/1671933/000167193326000014/ttd-20251231.htm",
+  },
+  {
     assetId: "twelvedata:XNGS:AAPL",
     description: {
       "cs-CZ": "Apple navrhuje a prodává spotřební elektroniku a provozuje služby navázané na zařízení, software a svůj ekosystém.",

@@ -77,6 +77,7 @@ test("published AMD periods use primary GAAP totals and reconciled three-segment
   }
   expect(report.statements.map((statement) => statement.accountingBasis)).toEqual(Array(5).fill("gaap-consolidated"));
   const fy2022 = report.statements.find((statement) => statement.period === "2022-12-31")!;
+  if (fy2022.presentation === "operating-expenses") throw new Error("AMD must retain its reported gross-profit presentation");
   expect(fy2022).toMatchObject({
     source: "https://ir.amd.com/financial-information/sec-filings/content/0000002488-25-000012/amd-20241228.htm",
     revenue: 23_601_000_000,

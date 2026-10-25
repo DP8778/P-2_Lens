@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "331827bedbccffbd",
+  "version": "8e64c7f54a8ad593",
   "updatedAt": "2026-10-23T00:00:00.000Z",
   "industries": {
     "ai": {
@@ -5232,9 +5232,18 @@
             "researchDevelopment": 8091000000
           },
           "segments": [
-            { "name": "Data Center", "revenue": 16635000000 },
-            { "name": "Client and Gaming", "revenue": 14550000000 },
-            { "name": "Embedded", "revenue": 3454000000 }
+            {
+              "name": "Data Center",
+              "revenue": 16635000000
+            },
+            {
+              "name": "Client and Gaming",
+              "revenue": 14550000000
+            },
+            {
+              "name": "Embedded",
+              "revenue": 3454000000
+            }
           ],
           "segmentSource": "https://ir.amd.com/financial-information/sec-filings/content/0000002488-26-000018/amd-20251227.htm",
           "sourceScale": 1000000,
@@ -5257,9 +5266,18 @@
             "researchDevelopment": 6456000000
           },
           "segments": [
-            { "name": "Data Center", "revenue": 12579000000 },
-            { "name": "Client and Gaming", "revenue": 9649000000 },
-            { "name": "Embedded", "revenue": 3557000000 }
+            {
+              "name": "Data Center",
+              "revenue": 12579000000
+            },
+            {
+              "name": "Client and Gaming",
+              "revenue": 9649000000
+            },
+            {
+              "name": "Embedded",
+              "revenue": 3557000000
+            }
           ],
           "segmentSource": "https://ir.amd.com/financial-information/sec-filings/content/0000002488-26-000018/amd-20251227.htm",
           "sourceScale": 1000000,
@@ -23911,6 +23929,126 @@
           "segmentSource": "https://stockanalysis.com/stocks/tls/financials/"
         }
       ]
+    },
+    "TTD": {
+      "symbol": "TTD",
+      "fetchedAt": "2026-10-25T17:40:00.000Z",
+      "provider": "sec-primary-reviewed",
+      "statements": [
+        {
+          "assetId": "twelvedata:XNGM:TTD",
+          "period": "2025-12-31",
+          "currency": "USD",
+          "durationMonths": 12,
+          "source": "https://www.sec.gov/Archives/edgar/data/1671933/000167193326000014/ttd-20251231.htm",
+          "sourceScale": 1000,
+          "accountingBasis": "gaap-consolidated",
+          "presentation": "operating-expenses",
+          "publishedAt": "2026-02-25",
+          "retrievedAt": "2026-10-25T17:40:00.000Z",
+          "valueStatus": "reported",
+          "revenue": 2896284000,
+          "operatingExpenses": 2306963000,
+          "operatingIncome": 589321000,
+          "netIncome": 443304000,
+          "expenses": {
+            "platformOperations": 619067000,
+            "salesMarketing": 644300000,
+            "technologyDevelopment": 525141000,
+            "generalAdministrative": 518455000
+          },
+          "grossSpend": {
+            "value": 13394683000,
+            "source": "https://www.sec.gov/Archives/edgar/data/1671933/000167193326000014/ttd-20251231.htm",
+            "sourceScale": 1000,
+            "publishedAt": "2026-02-25",
+            "retrievedAt": "2026-10-25T17:40:00.000Z",
+            "status": "reported"
+          }
+        },
+        {
+          "assetId": "twelvedata:XNGM:TTD",
+          "period": "2024-12-31",
+          "currency": "USD",
+          "durationMonths": 12,
+          "source": "https://www.sec.gov/Archives/edgar/data/1671933/000167193326000014/ttd-20251231.htm",
+          "sourceScale": 1000,
+          "accountingBasis": "gaap-consolidated",
+          "presentation": "operating-expenses",
+          "publishedAt": "2026-02-25",
+          "retrievedAt": "2026-10-25T17:40:00.000Z",
+          "valueStatus": "reported",
+          "revenue": 2444831000,
+          "operatingExpenses": 2017664000,
+          "operatingIncome": 427167000,
+          "netIncome": 393076000,
+          "expenses": {
+            "platformOperations": 472012000,
+            "salesMarketing": 546517000,
+            "technologyDevelopment": 463319000,
+            "generalAdministrative": 535816000
+          },
+          "grossSpend": {
+            "value": 12040872000,
+            "source": "https://www.sec.gov/Archives/edgar/data/1671933/000167193326000014/ttd-20251231.htm",
+            "sourceScale": 1000,
+            "publishedAt": "2026-02-25",
+            "retrievedAt": "2026-10-25T17:40:00.000Z",
+            "status": "reported"
+          }
+        },
+        {
+          "assetId": "twelvedata:XNGM:TTD",
+          "period": "2023-12-31",
+          "currency": "USD",
+          "durationMonths": 12,
+          "source": "https://www.sec.gov/Archives/edgar/data/1671933/000167193326000014/ttd-20251231.htm",
+          "sourceScale": 1000,
+          "accountingBasis": "gaap-consolidated",
+          "presentation": "operating-expenses",
+          "publishedAt": "2026-02-25",
+          "retrievedAt": "2026-10-25T17:40:00.000Z",
+          "valueStatus": "reported",
+          "revenue": 1946120000,
+          "operatingExpenses": 1745640000,
+          "operatingIncome": 200480000,
+          "netIncome": 178940000,
+          "expenses": {
+            "platformOperations": 365598000,
+            "salesMarketing": 447970000,
+            "technologyDevelopment": 411794000,
+            "generalAdministrative": 520278000
+          },
+          "grossSpend": {
+            "value": 9611000000,
+            "source": "https://www.sec.gov/Archives/edgar/data/1671933/000167193325000029/ttd-20241231.htm",
+            "sourceScale": 1000000,
+            "publishedAt": "2025-02-12",
+            "retrievedAt": "2026-10-25T17:40:00.000Z",
+            "status": "reported"
+          }
+        }
+      ]
     }
-  }
+  },
+  "instruments": [
+    {
+      "asset": {
+        "id": "twelvedata:XNGM:TTD",
+        "provider": "twelvedata",
+        "providerSymbol": "TTD",
+        "symbol": "TTD",
+        "name": "The Trade Desk, Inc. · Class A",
+        "type": "stock",
+        "exchange": "NASDAQ",
+        "micCode": "XNGM",
+        "currency": "USD",
+        "country": "United States",
+        "timezone": "America/New_York"
+      },
+      "source": "https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt",
+      "verifiedAt": "2026-10-25T17:40:00.000Z",
+      "listingCategory": "G"
+    }
+  ]
 }
